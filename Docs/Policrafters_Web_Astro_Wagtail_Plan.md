@@ -325,12 +325,172 @@ Subir imágenes de prueba desde el admin de Wagtail y confirmar que las renditio
 
 ---
 
-## 5. Próximos pasos concretos
-- [ ] Crear bucket R2 y token de acceso
-- [ ] Agregar `policrafters.com` a Cloudflare y generar Origin CA cert
-- [ ] Crear repos `policrafters-cms` y `policrafters-web` en GitHub (`ariasjf00`)
-- [ ] Generar y registrar las 3 llaves SSH (cms deploy, web deploy, gh-actions deploy)
-- [ ] Scaffolding inicial de Wagtail
-- [ ] Scaffolding inicial de Astro
-- [ ] `Dockerfile` del contenedor de Wagtail
-- [ ] `.env.production` con variables de R2/CORS
+## 5. Arranque en desarrollo local (antes de tocar el VPS)
+
+Repos ya creados en GitHub (`ariasjf00/policrafters-cms`, `ariasjf00/policrafters-web`). Equipo: backend/CMS a cargo del desarrollador principal, frontend (Astro) a cargo de un segundo desarrollador, trabajando en paralelo desde VS Code. Las fases de VPS/Traefik/Cloudflare (secciones 4 y 6-8 de este documento) se retoman cuando haya páginas navegables end-to-end en local.
+
+### 5.1 Estrategia de ramas
+
+```
+main        → siempre desplegable, protegida (requiere PR)
+develop     → integración de trabajo en curso
+feature/*   → una rama por tarea (feature/home-page, feature/model-detail, etc.)
+```
+
+Activar "Require pull request before merging" en `main` en ambos repos.
+
+### 5.2 Setup local del backend (Wagtail)
+
+Requisitos: Python 3.11+, Docker solo para Postgres local (no para el proyecto Django).
+
+```bash
+git clone git@github.com:ariasjf00/policrafters-cms.git
+cd policrafters-cms
+python3 -m venv venv && source venv/bin/activate
+pip install wagtail django-storages[s3] boto3 django-cors-headers python-decouple psycopg2-binary
+wagtail start policrafters_cms .
+```
+
+Postgres local en un solo contenedor (sin Traefik, sin producción):
+
+```yaml
+# docker-compose.local.yml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: policrafters_cms
+      POSTGRES_USER: policrafters
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5433:5432"   # 5433 para no chocar con el Postgres del CRM si corre localmente
+    volumes:
+      - cms_pg_data:/var/lib/postgresql/data
+volumes:
+  cms_pg_data:
+```
+
+```bash
+docker compose -f docker-compose.local.yml up -d
+```
+
+`.env.local` (agregar a `.gitignore`, nunca se commitea):
+
+```
+DEBUG=True
+DATABASE_URL=postgres://policrafters:localdev@localhost:5433/policrafters_cms
+SECRET_KEY=dev-only-key
+CORS_ALLOWED_ORIGINS=http://localhost:4321
+```
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver 0.0.0.0:8000
+```
+
+Django corre nativo en VS Code (no en Docker) para autoreload instantáneo. Admin en `http://localhost:8000/admin/`, API en `http://localhost:8000/api/v2/pages/` una vez registrado el `PagesAPIViewSet`.
+
+### 5.3 Setup local del frontend (Astro)
+
+```bash
+git clone git@github.com:ariasjf00/policrafters-web.git
+cd policrafters-web
+npm create astro@latest . -- --template minimal --typescript strict
+npx astro add tailwind
+npm install gsap
+```
+
+`.env.local`:
+```
+WAGTAIL_API_URL=http://localhost:8000/api/v2
+```
+
+```bash
+npm run dev
+```
+
+Astro en `http://localhost:4321`, consumiendo el backend en `localhost:8000`. No requiere Docker.
+
+### 5.4 Contrato de la API — clave para trabajar en paralelo
+
+Para que el frontend no dependa de que el backend termine todos los modelos de Wagtail, se define primero la "forma" de cada tipo de página en un `API_CONTRACT.md` compartido por ambos desarrolladores.
+
+Ejemplo — contrato de `ModelPage`:
+
+```json
+{
+  "type": "collections.ModelPage",
+  "title": "string",
+  "locale": "en | es",
+  "fields": {
+    "hero_image": { "url": "string", "alt": "string" },
+    "specs": [{ "label": "string", "value": "string" }],
+    "gallery": [{ "url": "string", "alt": "string" }],
+    "pdf_datasheet": "string | null",
+    "brand": { "name": "string", "slug": "string" }
+  }
+}
+```
+
+Con este contrato, el frontend construye componentes contra un JSON mock local (`src/mocks/model-page.json`) sin esperar al endpoint real. Cuando el backend publique el modelo real con esos mismos `api_fields`, solo cambia el `fetch` del mock a la URL real — sin retrabajo si el contrato se respetó. Empezar por el contrato de **Home** y **una sola `ModelPage`**, suficiente para desbloquear al frontend desde el día 2.
+
+### 5.5 Orden cronológico sugerido — primeras 2 semanas
+
+| Día | Backend / CMS | Frontend (Astro) |
+|---|---|---|
+| 1 | Setup Wagtail local + Postgres + admin funcionando | Setup Astro local + Tailwind + estructura de carpetas/layout base |
+| 2 | Modelo `HomePage` + `ModelPage` mínimos, `api_fields` definidos, expone API | Con `API_CONTRACT.md`, arma mocks JSON y arranca layout de Home con datos falsos |
+| 3-4 | Carga 2-3 páginas reales de prueba vía admin de Wagtail | Conecta `fetch` real a `localhost:8000`, valida que mock y respuesta real coincidan |
+| 5 | Modelos de `CollectionIndexPage`, `RenovationPage`, `ServicePage`, `BrandPage` | Sigue maquetando Home/Collection con GSAP mientras el backend avanza |
+| Semana 2 | Ajustes de API según necesidades del frontend (iteración conjunta) | Módulo Collection tipo Falper: submenú, breadcrumbs, detalle de modelo |
+
+---
+
+## 6. Bitácora de la puesta en marcha (lecciones reales)
+
+Notas del arranque efectivo en local de ambos repos, para que sirvan de referencia rápida ante los mismos tropiezos.
+
+### 6.1 `policrafters-cms` (Wagtail)
+
+- **Repo creado en GitHub como `policrafters_cms`** (guión bajo), no `policrafters-cms` (guión) — GitHub normaliza el nombre. La carpeta local puede seguir llamándose con guión, solo el remote usa guión bajo. Siempre copiar el nombre exacto desde el botón "Code → SSH" en vez de escribirlo de memoria.
+- **`zsh` interpreta los corchetes como glob**: `pip install django-storages[s3]` falla en zsh con `no matches found`. Solución: comillas → `pip install "django-storages[s3]"`.
+- **`.gitignore` debe crearse ANTES del primer `git add .`**, nunca después. Si se hace `git add .` sin `.gitignore`, `venv/` completo queda trackeado (en este caso infló el primer push a 58 MB / ~21,600 objetos). Un `.gitignore` creado después no lo corrige retroactivamente — hay que borrar `.git` local y reiniciar el historial (`rm -rf .git && git init`) si el repo es nuevo y nadie más lo ha clonado, o `git rm -r --cached venv` si ya hay más historial que conservar.
+- Verificación de rigor antes de cada primer commit: `git status | grep venv` (o `node_modules` en el otro repo) debe devolver vacío.
+
+### 6.2 `policrafters-web` (Astro)
+
+- **Node version**: la máquina tenía Node 25 (versión "current", no LTS). Se instaló `nvm` para poder fijar una LTS por proyecto sin desinstalar nada:
+  ```bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  source ~/.zshrc
+  ```
+- Primer intento con `nvm install 20` **no fue suficiente** — Astro 7.x exige Node `>=22.12.0`. Node 20 quedó obsoleto para este proyecto específico. Se corrigió con:
+  ```bash
+  nvm install 22 && nvm use 22
+  echo "22" > .nvmrc
+  ```
+  Cada terminal nueva requiere `nvm use 22` (o `nvm use` si hay `.nvmrc`) — no queda fijo globalmente solo por instalarlo una vez.
+- **`npm create astro@latest .` se niega a correr si la carpeta no está vacía** (aunque solo tenga `.gitignore`, `.nvmrc`, etc.), y en la versión usada no ofrece opción de "continuar de todas formas". Workaround: generar el scaffold en una carpeta temporal vacía (`policrafters-web-temp`) y mover el contenido a la carpeta real después, fusionando a mano el `.gitignore` generado por Astro con el propio (sin duplicar reglas).
+- Al mover archivos por Finder, revisar que no se arrastren `node_modules/`, `.DS_Store` ni `.vscode/` desde la carpeta temporal — no aportan nada y hay que reinstalar `node_modules` limpio de todas formas (`npm install`).
+- El scaffold dejó `"name": "policrafters-web-temp"` heredado del nombre de la carpeta temporal en `package.json` **y** `package-lock.json` (dos posiciones en el lock) — hay que corregirlo a mano en ambos archivos antes del primer commit.
+- **Astro genera `AGENTS.md` y un symlink `CLAUDE.md → AGENTS.md`** automáticamente — es una convención reciente del ecosistema para dar contexto a asistentes de IA (comandos preferidos, links de documentación), no algo que haya que crear ni revisar; se sube a git normalmente.
+- **Un componente `.astro` necesita el frontmatter con `---` de apertura Y de cierre.** Un archivo que solo tiene el `---` de cierre (sin el de apertura en la primera línea) produce `Could not import ... Failed to load module SSR`, un error que suena a problema de ruta pero en realidad es de sintaxis.
+- Si el mismo error de importación persiste con el archivo ya sintácticamente correcto, verificar que el **nombre de la carpeta en disco coincide exactamente** con el import (`../layouts/Layout.astro` vs. una carpeta creada con typo o mayúscula distinta) — en este caso el error real era un folder mal nombrado, no el contenido del archivo.
+- `npx astro add tailwind` (Tailwind v4, vía plugin de Vite) no crea un layout compartido automáticamente — hay que crearlo a mano (`src/layouts/Layout.astro`) e importar `../styles/global.css` ahí para que los estilos apliquen.
+
+---
+
+## 7. Próximos pasos concretos
+- [x] Crear repos `policrafters-cms` y `policrafters-web` en GitHub (`ariasjf00`)
+- [ ] Setup local de Wagtail (backend) — Postgres en Docker, Django nativo en VS Code
+- [ ] Setup local de Astro (frontend) — `npm run dev`
+- [ ] Definir y documentar `API_CONTRACT.md` (Home + una ModelPage)
+- [ ] Modelos mínimos de `HomePage` y `ModelPage` con `api_fields`
+- [ ] Mocks JSON en Astro para desbloquear maquetado sin esperar backend
+- [ ] Primeras páginas reales cargadas vía admin de Wagtail
+- [ ] *(Cuando haya flujo navegable end-to-end en local)* Crear bucket R2 y token de acceso
+- [ ] *(VPS)* Agregar `policrafters.com` a Cloudflare y generar Origin CA cert
+- [ ] *(VPS)* Generar y registrar las 3 llaves SSH (cms deploy, web deploy, gh-actions deploy)
+- [ ] *(VPS)* `Dockerfile` del contenedor de Wagtail
+- [ ] *(VPS)* `.env.production` con variables de R2/CORS
