@@ -1,11 +1,295 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import home from "../mocks/home.json";
+
+const data = home;
+const f = data.fields;
+
+const isEs = data.locale === "es";
+const menu = isEs
+	? [
+			{ label: "Inicio", href: "/" },
+			{ label: "Proyectos", href: "/proyectos" },
+			{ label: "Colecciones", href: "/colecciones" },
+			{ label: "Marcas", href: "/marcas" },
+			{ label: "Contacto", href: "/contacto" }
+		]
+	: [
+			{ label: "Home", href: "/" },
+			{ label: "Projects", href: "/projects" },
+			{ label: "Collections", href: "/collections" },
+			{ label: "Brands", href: "/brands" },
+			{ label: "Contact", href: "/contact" }
+		];
 ---
 
-<Layout title="Policrafters">
-	<main class="min-h-screen flex items-center justify-center bg-slate-900">
-		<h1 class="text-4xl font-bold text-white">
-			Policrafters — Astro + Tailwind funcionando
-		</h1>
-	</main>
-</Layout>
+<html lang={data.locale}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>{data.meta.seo_title || data.title}</title>
+		<meta name="description" content={data.meta.search_description} />
+	</head>
+	<body>
+		<header class="site-header">
+			<a class="logo" href="/">
+				<img src="/logo_black.png" alt="Policrafters logo" />
+			</a>
+			<nav aria-label="Main navigation">
+				<ul>
+					{menu.map((item) => (
+						<li><a href={item.href}>{item.label}</a></li>
+					))}
+				</ul>
+			</nav>
+		</header>
+
+		<section class="hero">
+			{f.hero_video_url ? (
+				<video
+					class="hero-media"
+					autoplay
+					muted
+					loop
+					playsinline
+					poster={f.hero_image_fallback.url}
+				>
+					<source src={f.hero_video_url} type="video/mp4" />
+				</video>
+			) : (
+				<img
+					class="hero-media"
+					src={f.hero_image_fallback.url}
+					alt={f.hero_image_fallback.alt}
+					loading="eager"
+				/>
+			)}
+			<div class="hero-overlay" />
+			<div class="hero-content">
+				<p class="eyebrow">Policrafters</p>
+				<h1>{f.hero_heading}</h1>
+				<p>{f.hero_subheading}</p>
+			</div>
+		</section>
+
+		<main>
+			<section class="container intro">
+				<p>{f.intro_text}</p>
+			</section>
+
+			<section class="container">
+				<h2>{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
+				<div class="grid projects">
+					{f.featured_projects.map((p) => (
+						<article class="card">
+							<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
+							<div class="card-body">
+								<h3>{p.title}</h3>
+								<p>{p.location}</p>
+							</div>
+						</article>
+					))}
+				</div>
+			</section>
+
+			<section class="container brands">
+				<h2>{isEs ? "Marcas" : "Brands"}</h2>
+				<div class="brand-row">
+					{f.featured_brands.map((b) => (
+						<img src={b.logo.url} alt={b.logo.alt} loading="lazy" />
+					))}
+				</div>
+			</section>
+
+			<section class="container testimonials">
+				<h2>{isEs ? "Testimonios" : "Testimonials"}</h2>
+				{f.testimonials.map((t) => (
+					<blockquote>
+						“{t.quote}”
+						<cite>{t.author}</cite>
+					</blockquote>
+				))}
+			</section>
+
+			<section class="cta">
+				<div class="container cta-inner">
+					<h2>{f.cta_heading}</h2>
+					<a class="btn" href={f.cta_button_url}>{f.cta_button_text}</a>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>
+
+<style>
+	:root {
+		--bg: #0f0f10;
+		--text: #111;
+		--muted: #666;
+		--max: 1200px;
+	}
+
+	* { box-sizing: border-box; }
+	body {
+		margin: 0;
+		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		color: var(--text);
+		background: #fff;
+	}
+
+	.site-header {
+		position: fixed;
+		z-index: 20;
+		top: 0;
+		left: 0;
+		width: 100%;
+		padding: 1rem 2rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+	}
+
+	.logo img { height: 34px; width: auto; display: block; }
+
+	nav ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		gap: 1.2rem;
+	}
+	nav a {
+		color: #fff;
+		text-decoration: none;
+		font-weight: 500;
+		letter-spacing: .02em;
+	}
+
+	.hero {
+		position: relative;
+		width: 100%;
+		height: 100vh;
+		min-height: 640px;
+		overflow: hidden;
+		background: #000;
+	}
+	.hero-media {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+	.hero-overlay {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.15));
+	}
+	.hero-content {
+		position: absolute;
+		left: 8%;
+		bottom: 12%;
+		color: #fff;
+		max-width: 760px;
+	}
+	.hero-content .eyebrow {
+		margin: 0 0 .5rem;
+		text-transform: uppercase;
+		letter-spacing: .12em;
+		font-size: .82rem;
+		opacity: .9;
+	}
+	.hero-content h1 {
+		margin: 0 0 .8rem;
+		font-size: clamp(2rem, 4vw, 4rem);
+		line-height: 1.05;
+	}
+	.hero-content p {
+		margin: 0;
+		font-size: clamp(1rem, 1.5vw, 1.3rem);
+		max-width: 65ch;
+	}
+
+	.container {
+		width: min(var(--max), 92%);
+		margin-inline: auto;
+		padding: 4rem 0;
+	}
+
+	.intro p {
+		font-size: 1.2rem;
+		color: #333;
+		max-width: 70ch;
+	}
+
+	.grid.projects {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 1.25rem;
+	}
+	.card {
+		border: 1px solid #ececec;
+		border-radius: 12px;
+		overflow: hidden;
+		background: #fff;
+	}
+	.card img {
+		width: 100%;
+		aspect-ratio: 16/10;
+		object-fit: cover;
+		display: block;
+	}
+	.card-body { padding: 1rem; }
+	.card-body h3 { margin: 0 0 .35rem; }
+	.card-body p { margin: 0; color: var(--muted); }
+
+	.brand-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2rem;
+		align-items: center;
+	}
+	.brand-row img {
+		height: 30px;
+		width: auto;
+		opacity: .9;
+	}
+
+	.testimonials blockquote {
+		margin: 0;
+		padding: 1.25rem;
+		border-left: 3px solid #111;
+		background: #f8f8f8;
+	}
+	.testimonials cite {
+		display: block;
+		margin-top: .7rem;
+		color: var(--muted);
+		font-style: normal;
+	}
+
+	.cta {
+		background: var(--bg);
+		color: #fff;
+	}
+	.cta-inner {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		align-items: center;
+	}
+	.btn {
+		display: inline-block;
+		padding: .8rem 1.2rem;
+		background: #fff;
+		color: #111;
+		text-decoration: none;
+		border-radius: 8px;
+		font-weight: 600;
+	}
+
+	@media (max-width: 900px) {
+		.site-header { padding: .9rem 1rem; }
+		nav ul { gap: .8rem; font-size: .92rem; }
+		.cta-inner { flex-direction: column; align-items: flex-start; }
+	}
+</style>

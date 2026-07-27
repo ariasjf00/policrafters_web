@@ -1,0 +1,55 @@
+{
+  "type": "home_cms.HomePage",
+  "title": "Policrafters",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Policrafters | Diseño y mobiliario",
+    "search_description": "Mobiliario y diseño de interiores premium."
+  },
+  "fields": {
+    "hero_video_url": "/videos/hero.mp4",
+    "hero_image_fallback": {
+      "url": "/images/hero-fallback.svg",
+      "alt": "Interior de lujo Policrafters"
+    },
+    "hero_heading": "Diseño que transforma espacios",
+    "hero_subheading": "Colecciones exclusivas para proyectos residenciales y comerciales.",
+    "intro_text": "Creamos experiencias a través de mobiliario, acabados y soluciones integrales.",
+    "featured_projects": [
+      {
+        "title": "Penthouse Reforma",
+        "slug": "penthouse-reforma",
+        "thumbnail": { "url": "/images/projects/penthouse.svg", "alt": "Proyecto Penthouse" },
+        "location": "CDMX"
+      },
+      {
+        "title": "Casa Bosque",
+        "slug": "casa-bosque",
+        "thumbnail": { "url": "/images/projects/bosque.svg", "alt": "Proyecto Casa Bosque" },
+        "location": "Monterrey"
+      }
+    ],
+    "featured_brands": [
+      {
+        "name": "Falper",
+        "slug": "falper",
+        "logo": { "url": "/images/brands/falper.svg", "alt": "Logo Falper" }
+      },
+      {
+        "name": "Brand X",
+        "slug": "brand-x",
+        "logo": { "url": "/images/brands/brandx.svg", "alt": "Logo Brand X" }
+      }
+    ],
+    "testimonials": [
+      {
+        "author": "Arq. María López",
+        "quote": "Excelente curaduría de productos y acompañamiento en todo el proyecto.",
+        "project_ref": "penthouse-reforma"
+      }
+    ],
+    "cta_heading": "¿Listo para tu próximo proyecto?",
+    "cta_button_text": "Contáctanos",
+    "cta_button_url": "/contacto"
+  }
+}
