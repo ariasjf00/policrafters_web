@@ -1,0 +1,142 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  showHero?: boolean;
+}
+
+const {
+  title = 'Policrafters',
+  description = 'Policrafters',
+  heroTitle = 'Policrafters',
+  heroSubtitle = '',
+  showHero = true,
+} = Astro.props;
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="/">
+        <img src="/logo_black.png" alt="Policrafters logo" />
+      </a>
+      <nav aria-label="Main navigation">
+        <ul>
+          <li><a href="/">Inicio</a></li>
+          <li><a href="/proyectos">Proyectos</a></li>
+          <li><a href="/colecciones">Colecciones</a></li>
+          <li><a href="/marcas">Marcas</a></li>
+          <li><a href="/contacto">Contacto</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    {showHero && (
+      <section class="hero-page">
+        <div class="hero-page__content">
+          <p class="eyebrow">Policrafters</p>
+          <h1>{heroTitle}</h1>
+          {heroSubtitle && <p>{heroSubtitle}</p>}
+        </div>
+      </section>
+    )}
+
+    <main class="page-shell">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --text: #111;
+    --muted: #666;
+    --max: 1100px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: #fff;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: 100%;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #ececec;
+  }
+
+  .logo img { height: 34px; width: auto; display: block; }
+
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1.2rem;
+  }
+
+  nav a {
+    color: #111;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .hero-page {
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #111, #333);
+    color: #fff;
+    padding: 4rem 2rem;
+  }
+
+  .hero-page__content {
+    width: min(var(--max), 92%);
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin: 0 0 0.5rem;
+  }
+
+  .hero-page h1 {
+    margin: 0 0 0.6rem;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+  }
+
+  .hero-page p {
+    margin: 0;
+    font-size: 1rem;
+    max-width: 60ch;
+  }
+
+  .page-shell {
+    width: min(var(--max), 92%);
+    margin: 0 auto;
+    padding: 3rem 0 4rem;
+  }
+</style>

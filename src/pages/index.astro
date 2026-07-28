@@ -1,10 +1,60 @@
 ---
 import home from "../mocks/home.json";
 
-const data = home;
-const f = data.fields;
+const useApi = import.meta.env.PUBLIC_USE_API === "true";
+const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/home/";
+const apiOrigin = apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
+const normalizeAssetUrl = (value) => {
+	if (!value) return "";
+	if (/^https?:\/\//i.test(value)) return value;
+	if (value.startsWith("/")) {
+		return apiOrigin ? `${apiOrigin}${value}` : value;
+	}
+	return value;
+};
+let data = home;
 
-const isEs = data.locale === "es";
+if (useApi) {
+	try {
+		const response = await fetch(apiUrl);
+		if (response.ok) {
+			const payload = await response.json();
+			if (payload && typeof payload === "object") {
+				data = payload;
+			}
+		}
+	} catch (error) {
+		console.warn(`No se pudo cargar la API desde ${apiUrl}. Usando mock local.`, error);
+	}
+}
+
+const resolvedData = data ?? home;
+const resolvedFields = resolvedData.fields ?? home.fields ?? {};
+const resolvedMeta = resolvedData.meta ?? home.meta ?? {};
+const fallbackFields = home.fields ?? {};
+const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
+const featuredBrands = Array.isArray(resolvedFields.featured_brands) ? resolvedFields.featured_brands : [];
+const testimonials = Array.isArray(resolvedFields.testimonials) ? resolvedFields.testimonials : [];
+const heroHeading = resolvedFields.hero_heading || resolvedData.title || fallbackFields.hero_heading || "Home";
+const heroSubheading = resolvedFields.hero_subheading || fallbackFields.hero_subheading || "";
+const introText = (resolvedFields.intro_text || fallbackFields.intro_text || "")
+	.replace(/<[^>]*>/g, "")
+	.replace(/&nbsp;/g, " ")
+	.trim();
+const heroVideoUrl = resolvedFields.hero_video_url || fallbackFields.hero_video_url || "https://www.w3schools.com/html/mov_bbb.mp4";
+const heroImageUrl = resolvedFields.hero_image_fallback?.url || fallbackFields.hero_image_fallback?.url || "/images/hero-fallback.svg";
+const heroImageAlt = resolvedFields.hero_image_fallback?.alt || fallbackFields.hero_image_fallback?.alt || "Policrafters";
+const siteLogoCandidate = resolvedFields.site_logo ?? resolvedFields.logo ?? resolvedFields.header_logo ?? fallbackFields.site_logo ?? fallbackFields.logo ?? fallbackFields.header_logo;
+const siteLogo = typeof siteLogoCandidate === "string"
+	? { url: normalizeAssetUrl(siteLogoCandidate), alt: "Policrafters logo" }
+	: siteLogoCandidate?.url
+		? { url: normalizeAssetUrl(siteLogoCandidate.url), alt: siteLogoCandidate.alt || "Policrafters logo" }
+		: { url: "/logo_black.png", alt: "Policrafters logo" };
+const ctaHeading = resolvedFields.cta_heading || fallbackFields.cta_heading || "";
+const ctaButtonText = resolvedFields.cta_button_text || fallbackFields.cta_button_text || "Contáctanos";
+const ctaButtonUrl = resolvedFields.cta_button_url || fallbackFields.cta_button_url || "/contacto";
+const normalizedLocale = typeof resolvedData.locale === "string" ? resolvedData.locale.toLowerCase() : "";
+const isEs = normalizedLocale.includes("es") || normalizedLocale.includes("español");
 const menu = isEs
 	? [
 			{ label: "Inicio", href: "/" },
@@ -22,17 +72,17 @@ const menu = isEs
 		];
 ---
 
-<html lang={data.locale}>
+<html lang={isEs ? "es" : "en"}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>{data.meta.seo_title || data.title}</title>
-		<meta name="description" content={data.meta.search_description} />
+		<title>{resolvedMeta.seo_title || resolvedData.title || home.title}</title>
+		<meta name="description" content={resolvedMeta.search_description || ""} />
 	</head>
-	<body>
+	<body data-api-url={apiUrl}>
 		<header class="site-header">
 			<a class="logo" href="/">
-				<img src="/logo_black.png" alt="Policrafters logo" />
+				<img id="site-logo" src={siteLogo.url} alt={siteLogo.alt} />
 			</a>
 			<nav aria-label="Main navigation">
 				<ul>
@@ -44,42 +94,42 @@ const menu = isEs
 		</header>
 
 		<section class="hero">
-			{f.hero_video_url ? (
+			{heroVideoUrl ? (
 				<video
 					class="hero-media"
 					autoplay
 					muted
 					loop
 					playsinline
-					poster={f.hero_image_fallback.url}
+					poster={heroImageUrl}
 				>
-					<source src={f.hero_video_url} type="video/mp4" />
+					<source src={heroVideoUrl} type="video/mp4" />
 				</video>
 			) : (
 				<img
 					class="hero-media"
-					src={f.hero_image_fallback.url}
-					alt={f.hero_image_fallback.alt}
+					src={heroImageUrl}
+					alt={heroImageAlt}
 					loading="eager"
 				/>
 			)}
 			<div class="hero-overlay" />
 			<div class="hero-content">
 				<p class="eyebrow">Policrafters</p>
-				<h1>{f.hero_heading}</h1>
-				<p>{f.hero_subheading}</p>
+				<h1 id="hero-heading">{heroHeading}</h1>
+				<p id="hero-subheading">{heroSubheading}</p>
 			</div>
 		</section>
 
 		<main>
 			<section class="container intro">
-				<p>{f.intro_text}</p>
+				<p id="intro-text">{introText}</p>
 			</section>
 
 			<section class="container">
 				<h2>{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
 				<div class="grid projects">
-					{f.featured_projects.map((p) => (
+					{featuredProjects.map((p) => (
 						<article class="card">
 							<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
 							<div class="card-body">
@@ -94,7 +144,7 @@ const menu = isEs
 			<section class="container brands">
 				<h2>{isEs ? "Marcas" : "Brands"}</h2>
 				<div class="brand-row">
-					{f.featured_brands.map((b) => (
+					{featuredBrands.map((b) => (
 						<img src={b.logo.url} alt={b.logo.alt} loading="lazy" />
 					))}
 				</div>
@@ -102,7 +152,7 @@ const menu = isEs
 
 			<section class="container testimonials">
 				<h2>{isEs ? "Testimonios" : "Testimonials"}</h2>
-				{f.testimonials.map((t) => (
+				{testimonials.map((t) => (
 					<blockquote>
 						“{t.quote}”
 						<cite>{t.author}</cite>
@@ -112,11 +162,70 @@ const menu = isEs
 
 			<section class="cta">
 				<div class="container cta-inner">
-					<h2>{f.cta_heading}</h2>
-					<a class="btn" href={f.cta_button_url}>{f.cta_button_text}</a>
+					<h2>{ctaHeading}</h2>
+					<a class="btn" href={ctaButtonUrl}>{ctaButtonText}</a>
 				</div>
 			</section>
 		</main>
+		<script type="module">
+			const body = document.body;
+			const apiUrl = body?.dataset?.apiUrl;
+			const setText = (selector, value) => {
+				const element = document.querySelector(selector);
+				if (element && value != null) {
+					element.textContent = value;
+				}
+			};
+
+			const setAttributeIfPresent = (selector, attribute, value) => {
+				const element = document.querySelector(selector);
+				if (element && value) {
+					element.setAttribute(attribute, value);
+				}
+			};
+
+			const applyApiData = (data) => {
+				const fields = data?.fields ?? {};
+				const meta = data?.meta ?? {};
+				if (data?.title) {
+					document.title = meta.seo_title || data.title;
+				}
+				if (meta.search_description) {
+					document.querySelector('meta[name="description"]')?.setAttribute('content', meta.search_description);
+				}
+				setText('#hero-heading', fields.hero_heading);
+				setText('#hero-subheading', fields.hero_subheading);
+				setText('#intro-text', fields.intro_text);
+				const siteLogoFromApi = fields.site_logo ?? fields.logo ?? fields.header_logo;
+				if (siteLogoFromApi) {
+					const logoUrl = typeof siteLogoFromApi === 'string' ? normalizeAssetUrl(siteLogoFromApi) : normalizeAssetUrl(siteLogoFromApi?.url);
+					const logoAlt = typeof siteLogoFromApi === 'string' ? 'Policrafters logo' : siteLogoFromApi?.alt || 'Policrafters logo';
+					const logoElement = document.querySelector('#site-logo');
+					if (logoElement) {
+						logoElement.setAttribute('src', logoUrl);
+						logoElement.setAttribute('alt', logoAlt);
+					}
+				}
+				setAttributeIfPresent('#hero-image', 'src', fields.hero_image_fallback?.url);
+				setAttributeIfPresent('#hero-image', 'alt', fields.hero_image_fallback?.alt);
+				const heroMedia = document.querySelector('#hero-media');
+				if (heroMedia && fields.hero_video_url) {
+					heroMedia.setAttribute('src', fields.hero_video_url);
+				}
+			};
+
+			if (apiUrl) {
+				fetch(apiUrl, { cache: 'no-store' })
+					.then((response) => {
+						if (!response.ok) throw new Error(`HTTP ${response.status}`);
+						return response.json();
+					})
+					.then(applyApiData)
+					.catch((error) => {
+						console.warn('No se pudo cargar la API de Wagtail:', error);
+					});
+			}
+		</script>
 	</body>
 </html>
 
