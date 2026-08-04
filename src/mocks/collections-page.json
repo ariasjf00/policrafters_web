@@ -1,0 +1,86 @@
+{
+  "type": "collections.CollectionIndexPage",
+  "title": "Collections",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Collections | Policrafters",
+    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños."
+  },
+  "fields": {
+    "hero_title": "Collections",
+    "hero_subtitle": "Selección de propuestas para transformar cada espacio con diseño funcional.",
+    "intro_text": "Innovación tecnológica, investigación estilística, conciencia ecológica, son los componentes de la visión exclusiva de Rimadesio, traducida en una propuesta de decoración y división funcional de las habitaciones: sistemas modulares para la zona de estar, librerías, puertas, vestidores, boiseries y una cada vez más rica colección de accesorios.",
+    "collection_items": [
+      {
+        "type": "PUERTAS",
+        "description": "Batientes, bidireccionales y correderas ocultas para espacios elegantes.",
+        "image": {
+          "url": "/images/projects/Prima_Pivot.jpg",
+          "alt": "Puertas batientes de vidrio"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "VENTANAS",
+        "description": "Paneles de alta transparencia que elevan la luz natural y la amplitud.",
+        "image": {
+          "url": "/images/projects/Clear_Glass_38.jpg",
+          "alt": "Ventanas con cristal claro"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "PERGOLAS",
+        "description": "Estructuras térmicas resistentes para crear ambientes exteriores confortables.",
+        "image": {
+          "url": "/images/projects/Pergola_Thermal.png",
+          "alt": "Pérgola térmica exterior"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "COCINAS",
+        "description": "Soluciones limpias y funcionales con acabados premium para el corazón del hogar.",
+        "image": {
+          "url": "/images/projects/Vienna_Shower_Door.png",
+          "alt": "Cocina contemporánea con cerramientos de vidrio"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "TERRAZAS",
+        "description": "Diseños panorámicos que conectan interior y exterior sin perder estilo.",
+        "image": {
+          "url": "/images/projects/shutterstock_1839412099.jpg",
+          "alt": "Terraza con cerramiento panorámico"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "BAÑOS",
+        "description": "Configuraciones de ducha y división que priorizan comodidad, higiene y diseño.",
+        "image": {
+          "url": "/images/projects/Prima_Shower_D.jpg",
+          "alt": "Baño moderno con puerta de ducha"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      },
+      {
+        "type": "COCINAS",
+        "description": "Composiciones modulares para cocinas abiertas, sobrias y altamente prácticas.",
+        "image": {
+          "url": "/images/projects/The_Box_Shower_Door.png",
+          "alt": "Cocina abierta con paneles contemporáneos"
+        },
+        "cta_text": "Descubre más",
+        "cta_url": "/contacto"
+      }
+    ]
+  }
+}

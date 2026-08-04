@@ -1,15 +1,475 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import collectionsPage from '../mocks/collections-page.json';
+
+const useApi = import.meta.env.PUBLIC_USE_API === 'true';
+const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || 'http://localhost:8000/api/collections/';
+const apiOrigin = apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
+let isRemoteData = false;
+
+const normalizeAssetUrl = (value) => {
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/') && isRemoteData) {
+    return apiOrigin ? `${apiOrigin}${value}` : value;
+  }
+  return value;
+};
+
+let data = collectionsPage;
+
+if (useApi) {
+  try {
+    const response = await fetch(apiUrl);
+    if (response.ok) {
+      const payload = await response.json();
+      if (payload && typeof payload === 'object') {
+        data = payload;
+        isRemoteData = true;
+      }
+    }
+  } catch (error) {
+    console.warn(`No se pudo cargar la API desde ${apiUrl}. Usando mock local.`, error);
+  }
+}
+
+const resolvedData = data ?? collectionsPage;
+const resolvedFields = resolvedData.fields ?? collectionsPage.fields ?? {};
+const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
+const fallbackFields = collectionsPage.fields ?? {};
+
+const pageTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Collections';
+const pageSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
+const introText = resolvedFields.intro_text || fallbackFields.intro_text || '';
+const collectionItems = Array.isArray(resolvedFields.collection_items)
+  ? resolvedFields.collection_items
+  : fallbackFields.collection_items ?? [];
 ---
 
 <PageLayout
-  title="Colecciones | Policrafters"
-  description="Colecciones de mobiliario y diseño"
-  heroTitle="Colecciones"
-  heroSubtitle="Descubre las colecciones que definimos para cada espacio."
+  title={resolvedMeta.seo_title || 'Collections | Policrafters'}
+  description={resolvedMeta.search_description || 'Colecciones destacadas de Policrafters'}
+  heroTitle={pageTitle}
+  heroSubtitle={pageSubtitle}
 >
-  <section>
-    <h2>Colecciones</h2>
-    <p>Aquí irán las colecciones principales del CMS.</p>
+  <section class="collections-section">
+    <h2 id="collections-title">{pageTitle}</h2>
+    <p id="collections-intro" class="collections-copy">{introText}</p>
+
+    <div class="carousel-shell">
+      <div class="carousel-viewport">
+        <div class="carousel-controls" aria-hidden="true">
+          <button id="collections-prev" class="carousel-btn carousel-btn--icon" data-action="prev" aria-label="Ver colección anterior">&lt;</button>
+          <button id="collections-next" class="carousel-btn carousel-btn--icon" data-action="next" aria-label="Ver siguiente colección">&gt;</button>
+        </div>
+
+        <div class="collection-carousel" id="collection-carousel" aria-label="Carrusel de colecciones">
+          {collectionItems.map((item, index) => (
+            <article class="collection-card" data-collection-index={index}>
+              <img src={normalizeAssetUrl(item.image?.url)} alt={item.image?.alt || item.type} loading="lazy" />
+              <div class="collection-card__body">
+                <h3 class="collection-type">{item.type}</h3>
+                <p class="collection-description">{item.description}</p>
+                <a href={item.cta_url || '/contacto'} class="discover-btn">{item.cta_text || 'Descubre más'}</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
   </section>
 </PageLayout>
+
+<script>
+  const carousel = document.getElementById('collection-carousel');
+  const buttons = document.querySelectorAll('.carousel-btn');
+  const titleNode = document.getElementById('collections-title');
+  const introNode = document.getElementById('collections-intro');
+  const prevButton = document.getElementById('collections-prev');
+  const nextButton = document.getElementById('collections-next');
+  const initialCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
+  const baseCount = initialCards.length;
+  let virtualIndex = baseCount;
+  let stepSize = 0;
+  let loopReady = false;
+  let isAnimating = false;
+
+  const esCopy = {
+    title: titleNode?.textContent?.trim() || 'Colecciones',
+    intro: introNode?.textContent?.trim() || '',
+    prevAria: 'Ver colección anterior',
+    nextAria: 'Ver siguiente colección',
+    carouselAria: 'Carrusel de colecciones',
+    items: initialCards.map((card) => ({
+      type: card.querySelector('.collection-type')?.textContent?.trim() || '',
+      description: card.querySelector('.collection-description')?.textContent?.trim() || '',
+      cta: card.querySelector('.discover-btn')?.textContent?.trim() || 'Descubre más'
+    }))
+  };
+
+  const enCopy = {
+    title: 'Collections',
+    intro: 'Technological innovation, style research, and ecological awareness are the pillars of Rimadesio\'s exclusive vision, translated into a design proposal for furnishing and functionally dividing rooms: modular systems for living areas, bookcases, doors, wardrobes, boiseries, and an ever-richer accessories collection.',
+    prevAria: 'View previous collection',
+    nextAria: 'View next collection',
+    carouselAria: 'Collections carousel',
+    items: [
+      {
+        type: 'DOORS',
+        description: 'Swing, bidirectional, and concealed sliding systems for refined spaces.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'WINDOWS',
+        description: 'High-transparency panels that enhance natural light and spatial openness.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'PERGOLAS',
+        description: 'Resilient thermal structures designed for comfortable outdoor living.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'KITCHENS',
+        description: 'Clean, functional solutions with premium finishes for the heart of the home.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'TERRACES',
+        description: 'Panoramic concepts that connect indoor and outdoor environments in style.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'BATHROOMS',
+        description: 'Shower and partition configurations focused on comfort, hygiene, and design.',
+        cta: 'Discover more'
+      },
+      {
+        type: 'KITCHENS',
+        description: 'Modular compositions for open kitchens: sober, contemporary, and practical.',
+        cta: 'Discover more'
+      }
+    ]
+  };
+
+  const appendLang = (href, lang) => {
+    const [path, query = ''] = href.split('?');
+    const params = new URLSearchParams(query);
+    params.set('lang', lang);
+    const queryString = params.toString();
+    return queryString ? `${path}?${queryString}` : path;
+  };
+
+  const getLangFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get('lang');
+    return lang === 'en' || lang === 'es' ? lang : null;
+  };
+
+  const getActiveLang = () => {
+    const inUrl = getLangFromUrl();
+    if (inUrl) return inUrl;
+    const stored = localStorage.getItem('siteLang');
+    if (stored === 'en' || stored === 'es') return stored;
+    return 'es';
+  };
+
+  const applyCollectionsLanguage = (lang) => {
+    const activeLang = lang === 'en' ? 'en' : 'es';
+    const copy = activeLang === 'en' ? enCopy : esCopy;
+
+    if (titleNode) titleNode.textContent = copy.title;
+    if (introNode) introNode.textContent = copy.intro;
+    if (prevButton) prevButton.setAttribute('aria-label', copy.prevAria);
+    if (nextButton) nextButton.setAttribute('aria-label', copy.nextAria);
+    if (carousel) carousel.setAttribute('aria-label', copy.carouselAria);
+
+    const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
+    allCards.forEach((card) => {
+      const cardIndex = Number.parseInt(card.getAttribute('data-collection-index') || '0', 10);
+      const itemCopy = copy.items[cardIndex] || copy.items[copy.items.length - 1];
+      const typeNode = card.querySelector('.collection-type');
+      const descriptionNode = card.querySelector('.collection-description');
+      const ctaNode = card.querySelector('.discover-btn');
+      if (typeNode && itemCopy?.type) typeNode.textContent = itemCopy.type;
+      if (descriptionNode && itemCopy?.description) descriptionNode.textContent = itemCopy.description;
+      if (ctaNode && itemCopy?.cta) {
+        ctaNode.textContent = itemCopy.cta;
+        ctaNode.setAttribute('href', appendLang(ctaNode.getAttribute('href') || '/contacto', activeLang));
+      }
+    });
+  };
+
+  const setupInfiniteCarousel = () => {
+    if (!carousel || !initialCards.length || loopReady) return;
+
+    const prependClones = initialCards.map((card) => card.cloneNode(true));
+    const appendClones = initialCards.map((card) => card.cloneNode(true));
+
+    prependClones.forEach((clone) => {
+      carousel.insertBefore(clone, carousel.firstChild);
+    });
+
+    appendClones.forEach((clone) => {
+      carousel.appendChild(clone);
+    });
+
+    const getCardOffset = (index) => {
+      const cards = carousel.querySelectorAll('.collection-card');
+      const safeIndex = Math.max(0, Math.min(index, cards.length - 1));
+      const target = cards[safeIndex];
+      return target ? target.offsetLeft : 0;
+    };
+
+    const measureStep = () => {
+      const cards = carousel.querySelectorAll('.collection-card');
+      if (cards.length < 2) return;
+      stepSize = cards[1].offsetLeft - cards[0].offsetLeft;
+      if (stepSize <= 0) {
+        stepSize = cards[0].getBoundingClientRect().width;
+      }
+    };
+
+    const jumpToVirtualIndex = (index) => {
+      const left = getCardOffset(index);
+      carousel.scrollTo({ left, behavior: 'auto' });
+    };
+
+    const normalizeVirtualIndex = () => {
+      if (virtualIndex >= baseCount * 2) {
+        virtualIndex -= baseCount;
+        jumpToVirtualIndex(virtualIndex);
+      } else if (virtualIndex < baseCount) {
+        virtualIndex += baseCount;
+        jumpToVirtualIndex(virtualIndex);
+      }
+    };
+
+    const animateToVirtualIndex = (nextIndex) => {
+      if (isAnimating) return;
+      isAnimating = true;
+      virtualIndex = nextIndex;
+      const targetLeft = getCardOffset(virtualIndex);
+      carousel.scrollTo({ left: targetLeft, behavior: 'smooth' });
+
+      window.setTimeout(() => {
+        normalizeVirtualIndex();
+        isAnimating = false;
+      }, 360);
+    };
+
+    requestAnimationFrame(() => {
+      measureStep();
+      jumpToVirtualIndex(virtualIndex);
+    });
+
+    window.addEventListener('resize', () => {
+      requestAnimationFrame(() => {
+        measureStep();
+        jumpToVirtualIndex(virtualIndex);
+      });
+    });
+
+    carousel.addEventListener('scroll', () => {
+      if (isAnimating || !stepSize) return;
+      const estimated = Math.round(carousel.scrollLeft / stepSize);
+      if (!Number.isNaN(estimated)) {
+        virtualIndex = estimated;
+      }
+      normalizeVirtualIndex();
+    });
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+        animateToVirtualIndex(virtualIndex + direction);
+      });
+    });
+
+    loopReady = true;
+  };
+
+  document.querySelectorAll('.lang-link').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const targetLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set('lang', targetLang);
+      window.history.replaceState({}, '', nextUrl);
+      localStorage.setItem('siteLang', targetLang);
+      applyCollectionsLanguage(targetLang);
+    });
+  });
+
+  setupInfiniteCarousel();
+  applyCollectionsLanguage(getActiveLang());
+</script>
+
+<style>
+  .collections-section {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .collections-section h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    letter-spacing: 0.02em;
+  }
+
+  .collections-copy {
+    margin: 0;
+    max-width: 78ch;
+    color: #2f2f2f;
+    line-height: 1.7;
+    font-size: 1.05rem;
+  }
+
+  .carousel-shell {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .carousel-viewport {
+    position: relative;
+  }
+
+  .carousel-controls {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .carousel-btn {
+    border: 1px solid #161616;
+    background: #fff;
+    color: #161616;
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: 0.88rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    pointer-events: auto;
+  }
+
+  .carousel-btn:hover {
+    background: #111;
+    color: #fff;
+  }
+
+  .collection-carousel {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(460px, 48vw);
+    gap: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0;
+    scrollbar-width: none;
+  }
+
+  .collection-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .collection-card {
+    scroll-snap-align: start;
+    border: 0;
+    border-right: 1px solid #ebebeb;
+    border-radius: 0;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: none;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  .collection-card img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    display: block;
+  }
+
+  .collection-card__body {
+    padding: 1.1rem 1.1rem 1.2rem;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.6rem;
+  }
+
+  .collection-card__body h3 {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
+    min-height: 2.4em;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .collection-card__body p {
+    margin: 0;
+    color: #444;
+    line-height: 1.45;
+    min-height: 4.35em;
+  }
+
+  .discover-btn {
+    display: inline-block;
+    text-decoration: none;
+    border: 1px solid #161616;
+    background: #fff;
+    color: #161616;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    justify-self: start;
+    align-self: end;
+  }
+
+  .discover-btn:hover {
+    background: #111;
+    color: #fff;
+  }
+
+  .carousel-btn--icon {
+    min-width: 2.45rem;
+    padding-inline: 0;
+    font-size: 1rem;
+    line-height: 1;
+    backdrop-filter: blur(3px);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  @media (max-width: 980px) {
+    .collection-carousel {
+      grid-auto-columns: minmax(340px, 72vw);
+    }
+  }
+
+  @media (max-width: 680px) {
+    .carousel-controls {
+      padding: 0 0.5rem;
+    }
+
+    .collection-carousel {
+      grid-auto-columns: minmax(280px, 90vw);
+    }
+
+    .collection-card__body p {
+      min-height: 0;
+    }
+  }
+</style>

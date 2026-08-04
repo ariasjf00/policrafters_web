@@ -16,9 +16,38 @@ const {
   heroSubtitle = '',
   showHero = true,
 } = Astro.props;
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
+const navItems = selectedLang === 'en'
+  ? [
+      { key: 'home', label: 'Home', href: '/' },
+      { key: 'projects', label: 'Projects', href: '/proyectos' },
+      { key: 'collections', label: 'Collections', href: '/colecciones' },
+      { key: 'brands', label: 'Brands', href: '/marcas' },
+      { key: 'contact', label: 'Contact', href: '/contacto' },
+    ]
+  : [
+      { key: 'home', label: 'Inicio', href: '/' },
+      { key: 'projects', label: 'Proyectos', href: '/proyectos' },
+      { key: 'collections', label: 'Colecciones', href: '/colecciones' },
+      { key: 'brands', label: 'Marcas', href: '/marcas' },
+      { key: 'contact', label: 'Contacto', href: '/contacto' },
+    ];
+
+const appendLang = (href: string, lang: string) => {
+  const [path, query = ''] = href.split('?');
+  const params = new URLSearchParams(query);
+  params.set('lang', lang);
+  const queryString = params.toString();
+  return queryString ? `${path}?${queryString}` : path;
+};
+
+const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
+const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 ---
 <!doctype html>
-<html lang="es">
+<html lang={selectedLang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,11 +61,14 @@ const {
       </a>
       <nav aria-label="Main navigation">
         <ul>
-          <li><a href="/">Inicio</a></li>
-          <li><a href="/proyectos">Proyectos</a></li>
-          <li><a href="/colecciones">Colecciones</a></li>
-          <li><a href="/marcas">Marcas</a></li>
-          <li><a href="/contacto">Contacto</a></li>
+          {navItems.map((item) => (
+            <li><a href={appendLang(item.href, selectedLang)} data-menu-key={item.key}>{item.label}</a></li>
+          ))}
+          <li class="lang-switch" aria-label={selectedLang === 'es' ? 'Selector de idioma' : 'Language selector'}>
+            <a class:list={["lang-link", selectedLang === 'es' && "is-active"]} href={esHref}>ES</a>
+            <span>/</span>
+            <a class:list={["lang-link", selectedLang === 'en' && "is-active"]} href={enHref}>EN</a>
+          </li>
         </ul>
       </nav>
     </header>
@@ -54,6 +86,86 @@ const {
     <main class="page-shell">
       <slot />
     </main>
+
+    <script>
+      const menuByLang = {
+        es: {
+          home: { label: 'Inicio', href: '/' },
+          projects: { label: 'Proyectos', href: '/proyectos' },
+          collections: { label: 'Colecciones', href: '/colecciones' },
+          brands: { label: 'Marcas', href: '/marcas' },
+          contact: { label: 'Contacto', href: '/contacto' }
+        },
+        en: {
+          home: { label: 'Home', href: '/' },
+          projects: { label: 'Projects', href: '/proyectos' },
+          collections: { label: 'Collections', href: '/colecciones' },
+          brands: { label: 'Brands', href: '/marcas' },
+          contact: { label: 'Contact', href: '/contacto' }
+        }
+      };
+
+      const getLangFromUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        const lang = params.get('lang');
+        return lang === 'en' || lang === 'es' ? lang : null;
+      };
+
+      const appendLang = (href, lang) => {
+        const [path, query = ''] = href.split('?');
+        const params = new URLSearchParams(query);
+        params.set('lang', lang);
+        const queryString = params.toString();
+        return queryString ? `${path}?${queryString}` : path;
+      };
+
+      const applyLanguage = (lang) => {
+        const activeLang = lang === 'en' ? 'en' : 'es';
+        localStorage.setItem('siteLang', activeLang);
+        document.documentElement.lang = activeLang;
+        const copy = menuByLang[activeLang];
+
+        document.querySelectorAll('[data-menu-key]').forEach((link) => {
+          const key = link.getAttribute('data-menu-key');
+          if (!key || !copy[key]) return;
+          link.textContent = copy[key].label;
+          link.setAttribute('href', appendLang(copy[key].href, activeLang));
+        });
+
+        document.querySelectorAll('.lang-link').forEach((link) => {
+          const linkLang = link.textContent?.trim().toLowerCase();
+          link.classList.toggle('is-active', linkLang === activeLang);
+          link.setAttribute('href', appendLang(window.location.pathname + window.location.search, linkLang === 'en' ? 'en' : 'es'));
+        });
+      };
+
+      const resolveActiveLang = () => {
+        const langInUrl = getLangFromUrl();
+        if (langInUrl) return langInUrl;
+        const stored = localStorage.getItem('siteLang');
+        if (stored === 'en' || stored === 'es') return stored;
+        return 'es';
+      };
+
+      document.querySelectorAll('.lang-link').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+          const nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set('lang', target);
+          window.history.replaceState({}, '', nextUrl);
+          applyLanguage(target);
+        });
+      });
+
+      const activeLang = resolveActiveLang();
+      if (!getLangFromUrl()) {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('lang', activeLang);
+        window.history.replaceState({}, '', nextUrl);
+      }
+      applyLanguage(activeLang);
+    </script>
   </body>
 </html>
 
@@ -99,6 +211,30 @@ const {
     color: #111;
     text-decoration: none;
     font-weight: 500;
+  }
+
+  .lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    color: #666;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+  }
+
+  .lang-link {
+    opacity: 0.65;
+    transition: opacity 0.2s ease;
+  }
+
+  .lang-link:hover {
+    opacity: 1;
+  }
+
+  .lang-link.is-active {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   .hero-page {

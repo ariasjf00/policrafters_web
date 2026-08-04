@@ -54,22 +54,54 @@ const ctaHeading = resolvedFields.cta_heading || fallbackFields.cta_heading || "
 const ctaButtonText = resolvedFields.cta_button_text || fallbackFields.cta_button_text || "Contáctanos";
 const ctaButtonUrl = resolvedFields.cta_button_url || fallbackFields.cta_button_url || "/contacto";
 const normalizedLocale = typeof resolvedData.locale === "string" ? resolvedData.locale.toLowerCase() : "";
-const isEs = normalizedLocale.includes("es") || normalizedLocale.includes("español");
+const isEsLocale = normalizedLocale.includes("es") || normalizedLocale.includes("español");
+const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
+const selectedLang = langParam === "en" || langParam === "es"
+	? langParam
+	: isEsLocale
+		? "es"
+		: "en";
+const isEs = selectedLang === "es";
+const appendLang = (href, lang) => {
+	const [path, query = ""] = href.split("?");
+	const params = new URLSearchParams(query);
+	params.set("lang", lang);
+	const queryString = params.toString();
+	return queryString ? `${path}?${queryString}` : path;
+};
 const menu = isEs
 	? [
-			{ label: "Inicio", href: "/" },
-			{ label: "Proyectos", href: "/proyectos" },
-			{ label: "Colecciones", href: "/colecciones" },
-			{ label: "Marcas", href: "/marcas" },
-			{ label: "Contacto", href: "/contacto" }
+			{ key: "home", label: "Inicio", href: appendLang("/", selectedLang) },
+			{ key: "projects", label: "Proyectos", href: appendLang("/proyectos", selectedLang) },
+			{ key: "collections", label: "Colecciones", href: appendLang("/colecciones", selectedLang) },
+			{ key: "brands", label: "Marcas", href: appendLang("/marcas", selectedLang) },
+			{ key: "contact", label: "Contacto", href: appendLang("/contacto", selectedLang) }
 		]
 	: [
-			{ label: "Home", href: "/" },
-			{ label: "Projects", href: "/projects" },
-			{ label: "Collections", href: "/collections" },
-			{ label: "Brands", href: "/brands" },
-			{ label: "Contact", href: "/contact" }
+			{ key: "home", label: "Home", href: appendLang("/", selectedLang) },
+			{ key: "projects", label: "Projects", href: appendLang("/proyectos", selectedLang) },
+			{ key: "collections", label: "Collections", href: appendLang("/colecciones", selectedLang) },
+			{ key: "brands", label: "Brands", href: appendLang("/marcas", selectedLang) },
+			{ key: "contact", label: "Contact", href: appendLang("/contacto", selectedLang) }
 		];
+const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
+const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
+
+const localizedHeroHeading = isEs
+	? heroHeading
+	: 'Design that transforms spaces';
+const localizedHeroSubheading = isEs
+	? heroSubheading
+	: 'Exclusive collections for residential and commercial projects.';
+const localizedIntroText = isEs
+	? introText
+	: 'We create experiences through furniture, finishes, and end-to-end interior solutions.';
+const localizedCtaHeading = isEs
+	? ctaHeading
+	: 'Ready for your next project?';
+const localizedCtaButtonText = isEs
+	? ctaButtonText
+	: 'Contact us';
 ---
 
 <html lang={isEs ? "es" : "en"}>
@@ -87,8 +119,13 @@ const menu = isEs
 			<nav aria-label="Main navigation">
 				<ul>
 					{menu.map((item) => (
-						<li><a href={item.href}>{item.label}</a></li>
+						<li><a href={item.href} data-menu-key={item.key}>{item.label}</a></li>
 					))}
+					<li class="lang-switch" aria-label={isEs ? "Selector de idioma" : "Language selector"}>
+						<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ES</a>
+						<span>/</span>
+						<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
+					</li>
 				</ul>
 			</nav>
 		</header>
@@ -116,18 +153,18 @@ const menu = isEs
 			<div class="hero-overlay" />
 			<div class="hero-content">
 				<p class="eyebrow">Policrafters</p>
-				<h1 id="hero-heading">{heroHeading}</h1>
-				<p id="hero-subheading">{heroSubheading}</p>
+				<h1 id="hero-heading">{localizedHeroHeading}</h1>
+				<p id="hero-subheading">{localizedHeroSubheading}</p>
 			</div>
 		</section>
 
 		<main>
 			<section class="container intro">
-				<p id="intro-text">{introText}</p>
+				<p id="intro-text">{localizedIntroText}</p>
 			</section>
 
 			<section class="container">
-				<h2>{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
+				<h2 id="featured-projects-heading">{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
 				<div class="grid projects">
 					{featuredProjects.map((p) => (
 						<article class="card">
@@ -142,7 +179,7 @@ const menu = isEs
 			</section>
 
 			<section class="container brands">
-				<h2>{isEs ? "Marcas" : "Brands"}</h2>
+				<h2 id="brands-heading">{isEs ? "Marcas" : "Brands"}</h2>
 				<div class="brand-row">
 					{featuredBrands.map((b) => (
 						<img src={b.logo.url} alt={b.logo.alt} loading="lazy" />
@@ -151,7 +188,7 @@ const menu = isEs
 			</section>
 
 			<section class="container testimonials">
-				<h2>{isEs ? "Testimonios" : "Testimonials"}</h2>
+				<h2 id="testimonials-heading">{isEs ? "Testimonios" : "Testimonials"}</h2>
 				{testimonials.map((t) => (
 					<blockquote>
 						“{t.quote}”
@@ -162,14 +199,108 @@ const menu = isEs
 
 			<section class="cta">
 				<div class="container cta-inner">
-					<h2>{ctaHeading}</h2>
-					<a class="btn" href={ctaButtonUrl}>{ctaButtonText}</a>
+					<h2 id="cta-heading">{localizedCtaHeading}</h2>
+					<a id="cta-button" class="btn" href={ctaButtonUrl}>{localizedCtaButtonText}</a>
 				</div>
 			</section>
 		</main>
 		<script type="module">
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
+			const uiByLang = {
+				es: {
+					menu: {
+						home: { label: 'Inicio', href: '/' },
+						projects: { label: 'Proyectos', href: '/proyectos' },
+						collections: { label: 'Colecciones', href: '/colecciones' },
+						brands: { label: 'Marcas', href: '/marcas' },
+						contact: { label: 'Contacto', href: '/contacto' }
+					},
+					sections: {
+						projects: 'Proyectos destacados',
+						brands: 'Marcas',
+						testimonials: 'Testimonios'
+					},
+					content: {
+						heroHeading: 'Diseño que transforma espacios',
+						heroSubheading: 'Colecciones exclusivas para proyectos residenciales y comerciales.',
+						introText: 'Creamos experiencias a través de mobiliario, acabados y soluciones integrales.',
+						ctaHeading: '¿Listo para tu próximo proyecto?',
+						ctaButton: 'Contáctanos'
+					}
+				},
+				en: {
+					menu: {
+						home: { label: 'Home', href: '/' },
+						projects: { label: 'Projects', href: '/proyectos' },
+						collections: { label: 'Collections', href: '/colecciones' },
+						brands: { label: 'Brands', href: '/marcas' },
+						contact: { label: 'Contact', href: '/contacto' }
+					},
+					sections: {
+						projects: 'Featured projects',
+						brands: 'Brands',
+						testimonials: 'Testimonials'
+					},
+					content: {
+						heroHeading: 'Design that transforms spaces',
+						heroSubheading: 'Exclusive collections for residential and commercial projects.',
+						introText: 'We create experiences through furniture, finishes, and end-to-end interior solutions.',
+						ctaHeading: 'Ready for your next project?',
+						ctaButton: 'Contact us'
+					}
+				}
+			};
+
+			const getLangFromUrl = () => {
+				const params = new URLSearchParams(window.location.search);
+				const lang = params.get('lang');
+				return lang === 'en' || lang === 'es' ? lang : null;
+			};
+
+			const getActiveLang = () => {
+				const urlLang = getLangFromUrl();
+				if (urlLang) return urlLang;
+				const storedLang = localStorage.getItem('siteLang');
+				if (storedLang === 'en' || storedLang === 'es') return storedLang;
+				return document.documentElement.lang === 'en' ? 'en' : 'es';
+			};
+
+			const appendLang = (href, lang) => {
+				const [path, query = ''] = href.split('?');
+				const params = new URLSearchParams(query);
+				params.set('lang', lang);
+				const queryString = params.toString();
+				return queryString ? `${path}?${queryString}` : path;
+			};
+
+			const applyLanguage = (lang) => {
+				const activeLang = lang === 'en' ? 'en' : 'es';
+				const copy = uiByLang[activeLang];
+				document.documentElement.lang = activeLang;
+				localStorage.setItem('siteLang', activeLang);
+
+				document.querySelectorAll('[data-menu-key]').forEach((link) => {
+					const key = link.getAttribute('data-menu-key');
+					if (!key || !copy.menu[key]) return;
+					link.textContent = copy.menu[key].label;
+					link.setAttribute('href', appendLang(copy.menu[key].href, activeLang));
+				});
+
+				document.querySelector('#featured-projects-heading')?.replaceChildren(copy.sections.projects);
+				document.querySelector('#brands-heading')?.replaceChildren(copy.sections.brands);
+				document.querySelector('#testimonials-heading')?.replaceChildren(copy.sections.testimonials);
+				document.querySelector('#hero-heading')?.replaceChildren(copy.content.heroHeading);
+				document.querySelector('#hero-subheading')?.replaceChildren(copy.content.heroSubheading);
+				document.querySelector('#intro-text')?.replaceChildren(copy.content.introText);
+				document.querySelector('#cta-heading')?.replaceChildren(copy.content.ctaHeading);
+				document.querySelector('#cta-button')?.replaceChildren(copy.content.ctaButton);
+
+				document.querySelectorAll('.lang-link').forEach((link) => {
+					const linkLang = link.textContent?.trim().toLowerCase();
+					link.classList.toggle('is-active', linkLang === activeLang);
+				});
+			};
 			const setText = (selector, value) => {
 				const element = document.querySelector(selector);
 				if (element && value != null) {
@@ -212,6 +343,7 @@ const menu = isEs
 				if (heroMedia && fields.hero_video_url) {
 					heroMedia.setAttribute('src', fields.hero_video_url);
 				}
+				applyLanguage(getActiveLang());
 			};
 
 			if (apiUrl) {
@@ -225,6 +357,20 @@ const menu = isEs
 						console.warn('No se pudo cargar la API de Wagtail:', error);
 					});
 			}
+
+			const langLinks = document.querySelectorAll('.lang-link');
+			langLinks.forEach((link) => {
+				link.addEventListener('click', (event) => {
+					event.preventDefault();
+					const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+					const url = new URL(window.location.href);
+					url.searchParams.set('lang', target);
+					window.history.replaceState({}, '', url);
+					applyLanguage(target);
+				});
+			});
+
+			applyLanguage(getActiveLang());
 		</script>
 	</body>
 </html>
@@ -272,6 +418,30 @@ const menu = isEs
 		text-decoration: none;
 		font-weight: 500;
 		letter-spacing: .02em;
+	}
+
+	.lang-switch {
+		display: inline-flex;
+		align-items: center;
+		gap: .32rem;
+		color: rgba(255,255,255,.75);
+		font-size: .86rem;
+		letter-spacing: .08em;
+	}
+
+	.lang-link {
+		opacity: .7;
+		transition: opacity .2s ease;
+	}
+
+	.lang-link:hover {
+		opacity: 1;
+	}
+
+	.lang-link.is-active {
+		opacity: 1;
+		text-decoration: underline;
+		text-underline-offset: .18em;
 	}
 
 	.hero {
