@@ -371,6 +371,14 @@ const localizedCtaButtonText = isEs
 			});
 
 			applyLanguage(getActiveLang());
+
+			const siteHeader = document.querySelector('.site-header');
+			const SCROLL_THRESHOLD = 40;
+			const updateHeaderOnScroll = () => {
+				siteHeader?.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+			};
+			updateHeaderOnScroll();
+			window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
 		</script>
 	</body>
 </html>
@@ -402,6 +410,12 @@ const localizedCtaButtonText = isEs
 		justify-content: space-between;
 		align-items: center;
 		background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+		transition: background-color .3s ease, box-shadow .3s ease;
+	}
+
+	.site-header.is-scrolled {
+		background: #fff;
+		box-shadow: 0 1px 0 #ececec;
 	}
 
 	.logo img { height: 34px; width: auto; display: block; }
@@ -418,6 +432,11 @@ const localizedCtaButtonText = isEs
 		text-decoration: none;
 		font-weight: 500;
 		letter-spacing: .02em;
+		transition: color .3s ease;
+	}
+
+	.site-header.is-scrolled nav a {
+		color: #111;
 	}
 
 	.lang-switch {
@@ -427,6 +446,11 @@ const localizedCtaButtonText = isEs
 		color: rgba(255,255,255,.75);
 		font-size: .86rem;
 		letter-spacing: .08em;
+		transition: color .3s ease;
+	}
+
+	.site-header.is-scrolled .lang-switch {
+		color: rgba(17,17,17,.65);
 	}
 
 	.lang-link {
