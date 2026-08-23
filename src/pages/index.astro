@@ -71,19 +71,20 @@ const appendLang = (href, lang) => {
 };
 const menu = isEs
 	? [
-			{ key: "home", label: "Inicio", href: appendLang("/", selectedLang) },
-			{ key: "projects", label: "Proyectos", href: appendLang("/proyectos", selectedLang) },
-			{ key: "collections", label: "Colecciones", href: appendLang("/colecciones", selectedLang) },
-			{ key: "brands", label: "Marcas", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contacto", href: appendLang("/contacto", selectedLang) }
+			{ key: "collections", label: "Colecciones", path: "/colecciones", href: appendLang("/colecciones", selectedLang) },
+			{ key: "renovations", label: "Renovaciones", path: "/renovaciones", href: appendLang("/renovaciones", selectedLang) },
+			{ key: "services", label: "Servicios", path: "/servicios", href: appendLang("/servicios", selectedLang) },
+			{ key: "brands", label: "Marcas", path: "/marcas", href: appendLang("/marcas", selectedLang) },
+			{ key: "contact", label: "Contáctanos", path: "/contacto", href: appendLang("/contacto", selectedLang) }
 		]
 	: [
-			{ key: "home", label: "Home", href: appendLang("/", selectedLang) },
-			{ key: "projects", label: "Projects", href: appendLang("/proyectos", selectedLang) },
-			{ key: "collections", label: "Collections", href: appendLang("/colecciones", selectedLang) },
-			{ key: "brands", label: "Brands", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contact", href: appendLang("/contacto", selectedLang) }
+			{ key: "collections", label: "Collections", path: "/colecciones", href: appendLang("/colecciones", selectedLang) },
+			{ key: "renovations", label: "Renovations", path: "/renovaciones", href: appendLang("/renovaciones", selectedLang) },
+			{ key: "services", label: "Services", path: "/servicios", href: appendLang("/servicios", selectedLang) },
+			{ key: "brands", label: "Brands", path: "/marcas", href: appendLang("/marcas", selectedLang) },
+			{ key: "contact", label: "Contact Us", path: "/contacto", href: appendLang("/contacto", selectedLang) }
 		];
+const currentPath = Astro.url.pathname;
 const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
 const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 
@@ -119,12 +120,28 @@ const localizedCtaButtonText = isEs
 			<nav aria-label="Main navigation">
 				<ul>
 					{menu.map((item) => (
-						<li><a href={item.href} data-menu-key={item.key}>{item.label}</a></li>
+						<li>
+							<a
+								href={item.href}
+								data-menu-key={item.key}
+								class:list={["nav-link", currentPath === item.path && "is-active-page"]}
+							>
+								{item.label}
+							</a>
+						</li>
 					))}
+					<li class="search-item">
+						<button type="button" class="search-icon" aria-label={isEs ? "Buscar" : "Search"}>
+							<svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+								<circle cx="8.5" cy="8.5" r="6.25" stroke="currentColor" stroke-width="1.6" />
+								<line x1="13.2" y1="13.2" x2="18" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+							</svg>
+						</button>
+					</li>
 					<li class="lang-switch" aria-label={isEs ? "Selector de idioma" : "Language selector"}>
-						<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ES</a>
-						<span>/</span>
 						<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
+						<span>/</span>
+						<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ESP</a>
 					</li>
 				</ul>
 			</nav>
@@ -210,11 +227,11 @@ const localizedCtaButtonText = isEs
 			const uiByLang = {
 				es: {
 					menu: {
-						home: { label: 'Inicio', href: '/' },
-						projects: { label: 'Proyectos', href: '/proyectos' },
 						collections: { label: 'Colecciones', href: '/colecciones' },
+						renovations: { label: 'Renovaciones', href: '/renovaciones' },
+						services: { label: 'Servicios', href: '/servicios' },
 						brands: { label: 'Marcas', href: '/marcas' },
-						contact: { label: 'Contacto', href: '/contacto' }
+						contact: { label: 'Contáctanos', href: '/contacto' }
 					},
 					sections: {
 						projects: 'Proyectos destacados',
@@ -231,11 +248,11 @@ const localizedCtaButtonText = isEs
 				},
 				en: {
 					menu: {
-						home: { label: 'Home', href: '/' },
-						projects: { label: 'Projects', href: '/proyectos' },
 						collections: { label: 'Collections', href: '/colecciones' },
+						renovations: { label: 'Renovations', href: '/renovaciones' },
+						services: { label: 'Services', href: '/servicios' },
 						brands: { label: 'Brands', href: '/marcas' },
-						contact: { label: 'Contact', href: '/contacto' }
+						contact: { label: 'Contact Us', href: '/contacto' }
 					},
 					sections: {
 						projects: 'Featured projects',
@@ -297,7 +314,7 @@ const localizedCtaButtonText = isEs
 				document.querySelector('#cta-button')?.replaceChildren(copy.content.ctaButton);
 
 				document.querySelectorAll('.lang-link').forEach((link) => {
-					const linkLang = link.textContent?.trim().toLowerCase();
+					const linkLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
 					link.classList.toggle('is-active', linkLang === activeLang);
 				});
 			};
@@ -409,12 +426,12 @@ const localizedCtaButtonText = isEs
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
-		transition: background-color .3s ease, box-shadow .3s ease;
+		background: #fff;
+		border-bottom: 1px solid #ececec;
+		transition: box-shadow .3s ease;
 	}
 
 	.site-header.is-scrolled {
-		background: #fff;
 		box-shadow: 0 1px 0 #ececec;
 	}
 
@@ -425,36 +442,49 @@ const localizedCtaButtonText = isEs
 		margin: 0;
 		padding: 0;
 		display: flex;
-		gap: 1.2rem;
+		align-items: center;
+		gap: 1.6rem;
 	}
-	nav a {
-		color: #fff;
+	nav a.nav-link {
+		color: #111;
 		text-decoration: none;
 		font-weight: 500;
-		letter-spacing: .02em;
-		transition: color .3s ease;
+		font-size: .82rem;
+		letter-spacing: .06em;
+		text-transform: uppercase;
+		padding: .5rem .9rem;
+		border-radius: 999px;
+		transition: background-color .2s ease;
 	}
 
-	.site-header.is-scrolled nav a {
+	nav a.nav-link.is-active-page {
+		background: #c9a876;
 		color: #111;
+	}
+
+	.search-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: #111;
+		padding: .25rem;
+		cursor: pointer;
 	}
 
 	.lang-switch {
 		display: inline-flex;
 		align-items: center;
-		gap: .32rem;
-		color: rgba(255,255,255,.75);
-		font-size: .86rem;
-		letter-spacing: .08em;
-		transition: color .3s ease;
-	}
-
-	.site-header.is-scrolled .lang-switch {
-		color: rgba(17,17,17,.65);
+		gap: .28rem;
+		color: #666;
+		font-size: .78rem;
+		letter-spacing: .06em;
+		text-transform: uppercase;
 	}
 
 	.lang-link {
-		opacity: .7;
+		opacity: .55;
 		transition: opacity .2s ease;
 	}
 
@@ -464,8 +494,7 @@ const localizedCtaButtonText = isEs
 
 	.lang-link.is-active {
 		opacity: 1;
-		text-decoration: underline;
-		text-underline-offset: .18em;
+		font-weight: 600;
 	}
 
 	.hero {
