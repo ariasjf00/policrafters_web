@@ -1,8 +1,11 @@
 # Kickoff Policrafters — Preguntas para el cliente
 
 **Para:** Fernando Arias
+
 **De:** David Panesso
+
 **Reunión:** dueño de Policrafters + diseñador web
+
 **Objetivo de esta revisión:** acordar cuáles de estas preguntas se hacen en vivo (15 min) y cuáles se resuelven por correo.
 
 **Instrucciones:** marca `[x]` en "Preguntar en vivo" las que consideres críticas. Anota tus comentarios al final de cada bloque.
