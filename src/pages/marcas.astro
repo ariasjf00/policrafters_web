@@ -1,15 +1,35 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const lang = langParam === 'en' ? 'en' : 'es';
+const copy = lang === 'en'
+  ? {
+      title: 'Brands | Policrafters',
+      description: 'Brands we work with',
+      heroTitle: 'Brands',
+      heroSubtitle: 'We present the brands and manufacturers that support our projects.',
+      sectionTitle: 'Brands',
+      sectionBody: 'This page can be powered by Wagtail.'
+    }
+  : {
+      title: 'Marcas | Policrafters',
+      description: 'Marcas con las que trabajamos',
+      heroTitle: 'Marcas',
+      heroSubtitle: 'Presentamos las marcas y fabricantes que acompañan nuestros proyectos.',
+      sectionTitle: 'Marcas',
+      sectionBody: 'Esta página se puede alimentar desde Wagtail.'
+    };
 ---
 
 <PageLayout
-  title="Marcas | Policrafters"
-  description="Marcas con las que trabajamos"
-  heroTitle="Marcas"
-  heroSubtitle="Presentamos las marcas y fabricantes que acompañan nuestros proyectos."
+  title={copy.title}
+  description={copy.description}
+  heroTitle={copy.heroTitle}
+  heroSubtitle={copy.heroSubtitle}
 >
   <section>
-    <h2>Marcas</h2>
-    <p>Esta página se puede alimentar desde Wagtail.</p>
+    <h2>{copy.sectionTitle}</h2>
+    <p>{copy.sectionBody}</p>
   </section>
 </PageLayout>

@@ -1,15 +1,35 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const lang = langParam === 'en' ? 'en' : 'es';
+const copy = lang === 'en'
+  ? {
+      title: 'Projects | Policrafters',
+      description: 'Featured Policrafters projects',
+      heroTitle: 'Projects',
+      heroSubtitle: 'Explore the works and solutions we have developed for residential and commercial clients.',
+      sectionTitle: 'Featured projects',
+      sectionBody: 'Projects served from Wagtail or static content will appear here.'
+    }
+  : {
+      title: 'Proyectos | Policrafters',
+      description: 'Proyectos destacados de Policrafters',
+      heroTitle: 'Proyectos',
+      heroSubtitle: 'Explora las obras y soluciones que hemos desarrollado para clientes residenciales y comerciales.',
+      sectionTitle: 'Proyectos destacados',
+      sectionBody: 'Aquí irán los proyectos cargados desde Wagtail o desde contenido estático.'
+    };
 ---
 
 <PageLayout
-  title="Proyectos | Policrafters"
-  description="Proyectos destacados de Policrafters"
-  heroTitle="Proyectos"
-  heroSubtitle="Explora las obras y soluciones que hemos desarrollado para clientes residenciales y comerciales."
+  title={copy.title}
+  description={copy.description}
+  heroTitle={copy.heroTitle}
+  heroSubtitle={copy.heroSubtitle}
 >
   <section>
-    <h2>Proyectos destacados</h2>
-    <p>Aquí irán los proyectos cargados desde Wagtail o desde contenido estático.</p>
+    <h2>{copy.sectionTitle}</h2>
+    <p>{copy.sectionBody}</p>
   </section>
 </PageLayout>
