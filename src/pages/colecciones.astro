@@ -2,13 +2,19 @@
 import PageLayout from '../layouts/PageLayout.astro';
 import collectionsPage from '../mocks/collections-page.json';
 
+type AnyRecord = Record<string, any>;
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
 const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || 'http://localhost:8000/api/collections/';
+const clientApiUrl = import.meta.env.DEV ? '/wagtail-api/api/collections/' : apiUrl;
 const apiOrigin = apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 let isRemoteData = false;
 
-const normalizeAssetUrl = (value) => {
+const normalizeAssetUrl = (value: unknown): string => {
   if (!value) return '';
+  if (typeof value !== 'string') return '';
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith('/') && isRemoteData) {
     return apiOrigin ? `${apiOrigin}${value}` : value;
@@ -20,7 +26,15 @@ let data = collectionsPage;
 
 if (useApi) {
   try {
-    const response = await fetch(apiUrl);
+    let localizedApiUrl = apiUrl;
+
+    if (apiUrl.startsWith('http')) {
+      const url = new URL(apiUrl);
+      url.searchParams.set('locale', requestedLang);
+      localizedApiUrl = url.toString();
+    }
+
+    const response = await fetch(localizedApiUrl);
     if (response.ok) {
       const payload = await response.json();
       if (payload && typeof payload === 'object') {
@@ -34,16 +48,24 @@ if (useApi) {
 }
 
 const resolvedData = data ?? collectionsPage;
-const resolvedFields = resolvedData.fields ?? collectionsPage.fields ?? {};
+const resolvedFields = (resolvedData.fields ?? collectionsPage.fields ?? {}) as AnyRecord;
 const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
-const fallbackFields = collectionsPage.fields ?? {};
+const fallbackFields = (collectionsPage.fields ?? {}) as AnyRecord;
 
+const normalizeRichText = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const dataSource = data === collectionsPage ? 'mock' : 'api';
 const pageTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Collections';
-const pageSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
-const introText = resolvedFields.intro_text || fallbackFields.intro_text || '';
-const collectionItems = Array.isArray(resolvedFields.collection_items)
-  ? resolvedFields.collection_items
-  : fallbackFields.collection_items ?? [];
+const pageSubtitle = normalizeRichText(resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '');
+const introText = normalizeRichText(resolvedFields.intro_text || fallbackFields.intro_text || '');
+const apiItems = Array.isArray(resolvedFields.items) ? resolvedFields.items : [];
+const fallbackItems = Array.isArray(fallbackFields.collection_items) ? fallbackFields.collection_items : [];
+const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecord[];
 ---
 
 <PageLayout
@@ -52,8 +74,16 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   heroTitle={pageTitle}
   heroSubtitle={pageSubtitle}
 >
-  <section class="collections-section">
-    <h2 id="collections-title">{pageTitle}</h2>
+  <section
+    class="collections-section"
+    data-collections-source={dataSource}
+    data-api-url={apiUrl}
+    data-client-api-url={clientApiUrl}
+    data-api-origin={apiOrigin}
+  >
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+      <h2 id="collections-title" style="margin:0;">{pageTitle}</h2>
+    </div>
     <p id="collections-intro" class="collections-copy">{introText}</p>
 
     <div class="carousel-shell">
@@ -64,7 +94,7 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
         </div>
 
         <div class="collection-carousel" id="collection-carousel" aria-label="Carrusel de colecciones">
-          {collectionItems.map((item, index) => (
+          {collectionItems.map((item: AnyRecord, index: number) => (
             <article class="collection-card" data-collection-index={index}>
               <img src={normalizeAssetUrl(item.image?.url)} alt={item.image?.alt || item.type} loading="lazy" />
               <div class="collection-card__body">
@@ -81,10 +111,18 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
 </PageLayout>
 
 <script>
+  // @ts-nocheck
   const carousel = document.getElementById('collection-carousel');
+  const sourcePanel = document.querySelector('.collections-section');
+  const sourceMode = sourcePanel?.dataset?.collectionsSource || 'mock';
+  const apiUrl = sourcePanel?.dataset?.apiUrl || '';
+  const clientApiUrl = sourcePanel?.dataset?.clientApiUrl || apiUrl;
+  const apiOrigin = sourcePanel?.dataset?.apiOrigin || '';
   const buttons = document.querySelectorAll('.carousel-btn');
   const titleNode = document.getElementById('collections-title');
   const introNode = document.getElementById('collections-intro');
+  const heroTitleNode = document.getElementById('page-hero-title');
+  const heroSubtitleNode = document.getElementById('page-hero-subtitle');
   const prevButton = document.getElementById('collections-prev');
   const nextButton = document.getElementById('collections-next');
   const initialCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
@@ -94,62 +132,20 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   let loopReady = false;
   let isAnimating = false;
 
-  const esCopy = {
-    title: titleNode?.textContent?.trim() || 'Colecciones',
-    intro: introNode?.textContent?.trim() || '',
-    prevAria: 'Ver colección anterior',
-    nextAria: 'Ver siguiente colección',
-    carouselAria: 'Carrusel de colecciones',
-    items: initialCards.map((card) => ({
-      type: card.querySelector('.collection-type')?.textContent?.trim() || '',
-      description: card.querySelector('.collection-description')?.textContent?.trim() || '',
-      cta: card.querySelector('.discover-btn')?.textContent?.trim() || 'Descubre más'
-    }))
-  };
-
-  const enCopy = {
-    title: 'Collections',
-    intro: 'Technological innovation, style research, and ecological awareness are the pillars of Rimadesio\'s exclusive vision, translated into a design proposal for furnishing and functionally dividing rooms: modular systems for living areas, bookcases, doors, wardrobes, boiseries, and an ever-richer accessories collection.',
-    prevAria: 'View previous collection',
-    nextAria: 'View next collection',
-    carouselAria: 'Collections carousel',
-    items: [
-      {
-        type: 'DOORS',
-        description: 'Swing, bidirectional, and concealed sliding systems for refined spaces.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'WINDOWS',
-        description: 'High-transparency panels that enhance natural light and spatial openness.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'PERGOLAS',
-        description: 'Resilient thermal structures designed for comfortable outdoor living.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'KITCHENS',
-        description: 'Clean, functional solutions with premium finishes for the heart of the home.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'TERRACES',
-        description: 'Panoramic concepts that connect indoor and outdoor environments in style.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'BATHROOMS',
-        description: 'Shower and partition configurations focused on comfort, hygiene, and design.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'KITCHENS',
-        description: 'Modular compositions for open kitchens: sober, contemporary, and practical.',
-        cta: 'Discover more'
-      }
-    ]
+  const getUiCopy = (lang) => {
+    const activeLang = lang === 'en' ? 'en' : 'es';
+    if (activeLang === 'en') {
+      return {
+        prevAria: 'View previous collection',
+        nextAria: 'View next collection',
+        carouselAria: 'Collections carousel'
+      };
+    }
+    return {
+      prevAria: 'Ver colección anterior',
+      nextAria: 'Ver siguiente colección',
+      carouselAria: 'Carrusel de colecciones'
+    };
   };
 
   const appendLang = (href, lang) => {
@@ -174,27 +170,129 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     return 'es';
   };
 
+  const localeFromValue = (value) => {
+    const normalized = String(value || '').toLowerCase();
+    if (normalized.startsWith('en')) return 'en';
+    if (normalized.startsWith('es')) return 'es';
+    return null;
+  };
+
+  const getLocaleCandidates = (lang) => {
+    if (lang === 'en') return ['en', 'en-us', 'en-gb'];
+    return ['es', 'es-es'];
+  };
+
+  const normalizeRichText = (value) =>
+    String(value || '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const normalizeAssetUrl = (value) => {
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    if (value.startsWith('/')) {
+      return apiOrigin ? `${apiOrigin}${value}` : value;
+    }
+    return value;
+  };
+
+  const fetchCollectionsPayload = async (lang) => {
+    const endpointBase = clientApiUrl || apiUrl;
+    if (!endpointBase) return null;
+    const requestedLang = lang === 'en' ? 'en' : 'es';
+    const candidates = getLocaleCandidates(requestedLang);
+
+    for (const locale of candidates) {
+      try {
+        const url = new URL(endpointBase, window.location.origin);
+        url.searchParams.set('locale', locale);
+        url.searchParams.set('lang', requestedLang);
+
+        const response = await fetch(url.toString(), { cache: 'no-store' });
+        if (!response.ok) continue;
+
+        const payload = await response.json();
+        if (!payload || typeof payload !== 'object') continue;
+
+        const apiLocaleLang = localeFromValue(payload.locale);
+        if (apiLocaleLang && apiLocaleLang !== requestedLang) {
+          continue;
+        }
+
+        return payload;
+      } catch (error) {
+        console.warn('No se pudo cargar colecciones desde API para locale:', locale, error);
+      }
+    }
+
+    return null;
+  };
+
+  const applyApiPayload = (payload, lang) => {
+    const fields = payload?.fields && typeof payload.fields === 'object' ? payload.fields : {};
+    const nextTitle = fields.hero_title || payload?.title || (lang === 'en' ? 'Collections' : 'Colecciones');
+    const nextSubtitle = normalizeRichText(fields.hero_subtitle || '');
+    const nextIntro = normalizeRichText(fields.intro_text || '');
+
+    if (heroTitleNode) heroTitleNode.textContent = nextTitle;
+    if (heroSubtitleNode && nextSubtitle) heroSubtitleNode.textContent = nextSubtitle;
+    if (titleNode) titleNode.textContent = nextTitle;
+    if (introNode) introNode.textContent = nextIntro;
+
+    const apiItems = Array.isArray(fields.items) ? fields.items : [];
+    if (!apiItems.length) return;
+
+    const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
+    allCards.forEach((card) => {
+      const cardIndex = Number.parseInt(card.getAttribute('data-collection-index') || '0', 10);
+      const item = apiItems[cardIndex % apiItems.length];
+      if (!item) return;
+
+      const img = card.querySelector('img');
+      const typeNode = card.querySelector('.collection-type');
+      const descriptionNode = card.querySelector('.collection-description');
+      const ctaNode = card.querySelector('.discover-btn');
+
+      if (img) {
+        const imageUrl = normalizeAssetUrl(item.image?.url);
+        if (imageUrl) {
+          img.setAttribute('src', imageUrl);
+        } else {
+          img.removeAttribute('src');
+        }
+        img.setAttribute('alt', item.image?.alt || item.type || 'Collection item');
+      }
+
+      if (typeNode) typeNode.textContent = item.type || '';
+      if (descriptionNode) descriptionNode.textContent = item.description || '';
+      if (ctaNode) {
+        ctaNode.textContent = item.cta_text || (lang === 'en' ? 'Discover more' : 'Descubre más');
+        ctaNode.setAttribute('href', appendLang(item.cta_url || '/contacto', lang));
+      }
+    });
+
+    const prevLabel = lang === 'en' ? 'View previous collection' : 'Ver colección anterior';
+    const nextLabel = lang === 'en' ? 'View next collection' : 'Ver siguiente colección';
+    const carouselLabel = lang === 'en' ? 'Collections carousel' : 'Carrusel de colecciones';
+    if (prevButton) prevButton.setAttribute('aria-label', prevLabel);
+    if (nextButton) nextButton.setAttribute('aria-label', nextLabel);
+    if (carousel) carousel.setAttribute('aria-label', carouselLabel);
+  };
+
   const applyCollectionsLanguage = (lang) => {
     const activeLang = lang === 'en' ? 'en' : 'es';
-    const copy = activeLang === 'en' ? enCopy : esCopy;
+    const copy = getUiCopy(activeLang);
 
-    if (titleNode) titleNode.textContent = copy.title;
-    if (introNode) introNode.textContent = copy.intro;
     if (prevButton) prevButton.setAttribute('aria-label', copy.prevAria);
     if (nextButton) nextButton.setAttribute('aria-label', copy.nextAria);
     if (carousel) carousel.setAttribute('aria-label', copy.carouselAria);
 
     const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
     allCards.forEach((card) => {
-      const cardIndex = Number.parseInt(card.getAttribute('data-collection-index') || '0', 10);
-      const itemCopy = copy.items[cardIndex] || copy.items[copy.items.length - 1];
-      const typeNode = card.querySelector('.collection-type');
-      const descriptionNode = card.querySelector('.collection-description');
       const ctaNode = card.querySelector('.discover-btn');
-      if (typeNode && itemCopy?.type) typeNode.textContent = itemCopy.type;
-      if (descriptionNode && itemCopy?.description) descriptionNode.textContent = itemCopy.description;
-      if (ctaNode && itemCopy?.cta) {
-        ctaNode.textContent = itemCopy.cta;
+      if (ctaNode) {
         ctaNode.setAttribute('href', appendLang(ctaNode.getAttribute('href') || '/contacto', activeLang));
       }
     });
@@ -295,14 +393,29 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
       const targetLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('lang', targetLang);
-      window.history.replaceState({}, '', nextUrl);
       localStorage.setItem('siteLang', targetLang);
-      applyCollectionsLanguage(targetLang);
+      window.location.href = nextUrl.toString();
     });
   });
 
-  setupInfiniteCarousel();
-  applyCollectionsLanguage(getActiveLang());
+  const initializeCollectionsLanguage = async () => {
+    const activeLang = getActiveLang();
+
+    if (sourceMode === 'api') {
+      const payload = await fetchCollectionsPayload(activeLang);
+      if (payload) {
+        applyApiPayload(payload, activeLang);
+      } else {
+        applyCollectionsLanguage(activeLang);
+      }
+    } else {
+      applyCollectionsLanguage(activeLang);
+    }
+
+    setupInfiniteCarousel();
+  };
+
+  initializeCollectionsLanguage();
 </script>
 
 <style>
@@ -326,12 +439,18 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   }
 
   .carousel-shell {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
   }
 
   .carousel-viewport {
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .carousel-controls {
@@ -340,7 +459,7 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 0.5rem;
     pointer-events: none;
     z-index: 2;
   }
@@ -365,9 +484,12 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   }
 
   .collection-carousel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(460px, 48vw);
+    grid-auto-columns: minmax(320px, 48%);
     gap: 0;
     overflow-x: auto;
     scroll-snap-type: x mandatory;

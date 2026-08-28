@@ -7,12 +7,12 @@
     "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños."
   },
   "fields": {
-    "hero_title": "Collections",
-    "hero_subtitle": "Selección de propuestas para transformar cada espacio con diseño funcional.",
+    "hero_title": "Collections(mk)",
+    "hero_subtitle": "Selección de propuestas para transformar cada espacio con diseño funcional.(mk)",
     "intro_text": "Innovación tecnológica, investigación estilística, conciencia ecológica, son los componentes de la visión exclusiva de Rimadesio, traducida en una propuesta de decoración y división funcional de las habitaciones: sistemas modulares para la zona de estar, librerías, puertas, vestidores, boiseries y una cada vez más rica colección de accesorios.",
     "collection_items": [
       {
-        "type": "PUERTAS",
+        "type": "PUERTAS(mk)",
         "description": "Batientes, bidireccionales y correderas ocultas para espacios elegantes.",
         "image": {
           "url": "/images/projects/Prima_Pivot.jpg",
@@ -22,7 +22,7 @@
         "cta_url": "/contacto"
       },
       {
-        "type": "VENTANAS",
+        "type": "VENTANAS(mk)",
         "description": "Paneles de alta transparencia que elevan la luz natural y la amplitud.",
         "image": {
           "url": "/images/projects/Clear_Glass_38.jpg",
@@ -32,7 +32,7 @@
         "cta_url": "/contacto"
       },
       {
-        "type": "PERGOLAS",
+        "type": "PERGOLAS(mk)",
         "description": "Estructuras térmicas resistentes para crear ambientes exteriores confortables.",
         "image": {
           "url": "/images/projects/Pergola_Thermal.png",
@@ -42,7 +42,7 @@
         "cta_url": "/contacto"
       },
       {
-        "type": "COCINAS",
+        "type": "COCINAS(mk)",
         "description": "Soluciones limpias y funcionales con acabados premium para el corazón del hogar.",
         "image": {
           "url": "/images/projects/Vienna_Shower_Door.png",
@@ -52,7 +52,7 @@
         "cta_url": "/contacto"
       },
       {
-        "type": "TERRAZAS",
+        "type": "TERRAZAS(mk)",
         "description": "Diseños panorámicos que conectan interior y exterior sin perder estilo.",
         "image": {
           "url": "/images/projects/shutterstock_1839412099.jpg",
@@ -62,7 +62,7 @@
         "cta_url": "/contacto"
       },
       {
-        "type": "BAÑOS",
+        "type": "BAÑOS(mk)",
         "description": "Configuraciones de ducha y división que priorizan comodidad, higiene y diseño.",
         "image": {
           "url": "/images/projects/Prima_Shower_D.jpg",

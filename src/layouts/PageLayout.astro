@@ -77,8 +77,8 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
       <section class="hero-page">
         <div class="hero-page__content">
           <p class="eyebrow">Policrafters</p>
-          <h1>{heroTitle}</h1>
-          {heroSubtitle && <p>{heroSubtitle}</p>}
+          <h1 id="page-hero-title">{heroTitle}</h1>
+          {heroSubtitle && <p id="page-hero-subtitle">{heroSubtitle}</p>}
         </div>
       </section>
     )}
@@ -88,6 +88,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
     </main>
 
     <script>
+      // @ts-nocheck
       const menuByLang = {
         es: {
           home: { label: 'Inicio', href: '/' },
@@ -153,8 +154,8 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
           const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
           const nextUrl = new URL(window.location.href);
           nextUrl.searchParams.set('lang', target);
-          window.history.replaceState({}, '', nextUrl);
-          applyLanguage(target);
+          localStorage.setItem('siteLang', target);
+          window.location.href = nextUrl.toString();
         });
       });
 
@@ -162,7 +163,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
       if (!getLangFromUrl()) {
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set('lang', activeLang);
-        window.history.replaceState({}, '', nextUrl);
+        window.location.href = nextUrl.toString();
       }
       applyLanguage(activeLang);
     </script>

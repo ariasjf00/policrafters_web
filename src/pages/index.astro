@@ -1,11 +1,17 @@
 ---
 import home from "../mocks/home.json";
 
+type AnyRecord = Record<string, any>;
+
 const useApi = import.meta.env.PUBLIC_USE_API === "true";
 const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/home/";
+const clientApiUrl = import.meta.env.DEV ? "/wagtail-api/api/home/" : apiUrl;
 const apiOrigin = apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
-const normalizeAssetUrl = (value) => {
+const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
+const requestedLang = langParam === "en" || langParam === "es" ? langParam : null;
+const normalizeAssetUrl = (value: unknown): string => {
 	if (!value) return "";
+	if (typeof value !== "string") return "";
 	if (/^https?:\/\//i.test(value)) return value;
 	if (value.startsWith("/")) {
 		return apiOrigin ? `${apiOrigin}${value}` : value;
@@ -16,7 +22,13 @@ let data = home;
 
 if (useApi) {
 	try {
-		const response = await fetch(apiUrl);
+		let localizedApiUrl = apiUrl;
+		if (requestedLang && apiUrl.startsWith("http")) {
+			const url = new URL(apiUrl);
+			url.searchParams.set("locale", requestedLang);
+			localizedApiUrl = url.toString();
+		}
+		const response = await fetch(localizedApiUrl);
 		if (response.ok) {
 			const payload = await response.json();
 			if (payload && typeof payload === "object") {
@@ -29,9 +41,9 @@ if (useApi) {
 }
 
 const resolvedData = data ?? home;
-const resolvedFields = resolvedData.fields ?? home.fields ?? {};
+const resolvedFields = (resolvedData.fields ?? home.fields ?? {}) as AnyRecord;
 const resolvedMeta = resolvedData.meta ?? home.meta ?? {};
-const fallbackFields = home.fields ?? {};
+const fallbackFields = (home.fields ?? {}) as AnyRecord;
 const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
 const featuredBrands = Array.isArray(resolvedFields.featured_brands) ? resolvedFields.featured_brands : [];
 const testimonials = Array.isArray(resolvedFields.testimonials) ? resolvedFields.testimonials : [];
@@ -55,14 +67,14 @@ const ctaButtonText = resolvedFields.cta_button_text || fallbackFields.cta_butto
 const ctaButtonUrl = resolvedFields.cta_button_url || fallbackFields.cta_button_url || "/contacto";
 const normalizedLocale = typeof resolvedData.locale === "string" ? resolvedData.locale.toLowerCase() : "";
 const isEsLocale = normalizedLocale.includes("es") || normalizedLocale.includes("español");
-const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
-const selectedLang = langParam === "en" || langParam === "es"
-	? langParam
+const initialApiLocale = isEsLocale ? "es" : "en";
+const selectedLang = requestedLang
+	? requestedLang
 	: isEsLocale
 		? "es"
 		: "en";
 const isEs = selectedLang === "es";
-const appendLang = (href, lang) => {
+const appendLang = (href: string, lang: string): string => {
 	const [path, query = ""] = href.split("?");
 	const params = new URLSearchParams(query);
 	params.set("lang", lang);
@@ -87,21 +99,11 @@ const menu = isEs
 const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
 const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 
-const localizedHeroHeading = isEs
-	? heroHeading
-	: 'Design that transforms spaces';
-const localizedHeroSubheading = isEs
-	? heroSubheading
-	: 'Exclusive collections for residential and commercial projects.';
-const localizedIntroText = isEs
-	? introText
-	: 'We create experiences through furniture, finishes, and end-to-end interior solutions.';
-const localizedCtaHeading = isEs
-	? ctaHeading
-	: 'Ready for your next project?';
-const localizedCtaButtonText = isEs
-	? ctaButtonText
-	: 'Contact us';
+const localizedHeroHeading = heroHeading;
+const localizedHeroSubheading = heroSubheading;
+const localizedIntroText = introText;
+const localizedCtaHeading = ctaHeading;
+const localizedCtaButtonText = ctaButtonText;
 ---
 
 <html lang={isEs ? "es" : "en"}>
@@ -111,7 +113,7 @@ const localizedCtaButtonText = isEs
 		<title>{resolvedMeta.seo_title || resolvedData.title || home.title}</title>
 		<meta name="description" content={resolvedMeta.search_description || ""} />
 	</head>
-	<body data-api-url={apiUrl}>
+	<body data-api-url={clientApiUrl} data-api-origin={apiOrigin}>
 		<header class="site-header">
 			<a class="logo" href="/">
 				<img id="site-logo" src={siteLogo.url} alt={siteLogo.alt} />
@@ -204,9 +206,56 @@ const localizedCtaButtonText = isEs
 				</div>
 			</section>
 		</main>
-		<script type="module">
+		<aside class="debug-panel" id="debug-panel" aria-live="polite">
+			<div class="debug-header">
+				<p class="debug-title">API Debug</p>
+				<button class="debug-toggle" id="debug-toggle" type="button" aria-expanded="true">Ocultar</button>
+			</div>
+			<p><strong>Lang activo:</strong> <span id="debug-active-lang">{selectedLang}</span></p>
+			<p><strong>Locale API:</strong> <span id="debug-api-locale">{initialApiLocale}</span></p>
+			<p><strong>Hero heading:</strong> <span id="debug-hero-heading">{localizedHeroHeading}</span></p>
+			<p><strong>API URL:</strong> <span id="debug-api-url">{apiUrl}</span></p>
+		</aside>
+		<script is:inline type="module">
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
+			const apiOrigin = body?.dataset?.apiOrigin || (apiUrl?.startsWith('http') ? new URL(apiUrl).origin : '');
+			let apiLocale = null;
+			let apiContent = null;
+			const normalizeAssetUrl = (value) => {
+				if (!value) return '';
+				if (/^https?:\/\//i.test(value)) return value;
+				if (value.startsWith('/')) {
+					return apiOrigin ? `${apiOrigin}${value}` : value;
+				}
+				return value;
+			};
+			const sanitizeRichText = (value) => {
+				if (typeof value !== 'string') return value ?? '';
+				return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+			};
+			const updateDebugPanel = ({ activeLang, localeFromApi, heroHeading, resolvedApiUrl }) => {
+				document.querySelector('#debug-active-lang')?.replaceChildren(activeLang || '-');
+				document.querySelector('#debug-api-locale')?.replaceChildren(localeFromApi || '-');
+				document.querySelector('#debug-hero-heading')?.replaceChildren(heroHeading || '-');
+				document.querySelector('#debug-api-url')?.replaceChildren(resolvedApiUrl || '-');
+			};
+			const debugPanel = document.querySelector('#debug-panel');
+			const debugToggle = document.querySelector('#debug-toggle');
+			const DEBUG_PANEL_STORAGE_KEY = 'policrafters-debug-visible';
+			const syncDebugPanelVisibility = () => {
+				if (!debugPanel || !debugToggle) return;
+				const isVisible = localStorage.getItem(DEBUG_PANEL_STORAGE_KEY) !== 'false';
+				debugPanel.classList.toggle('is-hidden', !isVisible);
+				debugToggle.textContent = isVisible ? 'Ocultar' : 'Mostrar';
+				debugToggle.setAttribute('aria-expanded', String(isVisible));
+			};
+			debugToggle?.addEventListener('click', () => {
+				const shouldShow = debugPanel?.classList.contains('is-hidden');
+				localStorage.setItem(DEBUG_PANEL_STORAGE_KEY, String(shouldShow));
+				syncDebugPanelVisibility();
+			});
+			syncDebugPanelVisibility();
 			const uiByLang = {
 				es: {
 					menu: {
@@ -274,9 +323,21 @@ const localizedCtaButtonText = isEs
 				return queryString ? `${path}?${queryString}` : path;
 			};
 
+			const buildApiUrlForLang = (lang) => {
+				if (!apiUrl) return '';
+				try {
+					const url = new URL(apiUrl, window.location.origin);
+					url.searchParams.set('locale', lang === 'es' ? 'es' : 'en');
+					return url.toString();
+				} catch {
+					return apiUrl;
+				}
+			};
+
 			const applyLanguage = (lang) => {
 				const activeLang = lang === 'en' ? 'en' : 'es';
 				const copy = uiByLang[activeLang];
+				const contentSource = apiContent && apiLocale === activeLang ? apiContent : copy.content;
 				document.documentElement.lang = activeLang;
 				localStorage.setItem('siteLang', activeLang);
 
@@ -290,24 +351,22 @@ const localizedCtaButtonText = isEs
 				document.querySelector('#featured-projects-heading')?.replaceChildren(copy.sections.projects);
 				document.querySelector('#brands-heading')?.replaceChildren(copy.sections.brands);
 				document.querySelector('#testimonials-heading')?.replaceChildren(copy.sections.testimonials);
-				document.querySelector('#hero-heading')?.replaceChildren(copy.content.heroHeading);
-				document.querySelector('#hero-subheading')?.replaceChildren(copy.content.heroSubheading);
-				document.querySelector('#intro-text')?.replaceChildren(copy.content.introText);
-				document.querySelector('#cta-heading')?.replaceChildren(copy.content.ctaHeading);
-				document.querySelector('#cta-button')?.replaceChildren(copy.content.ctaButton);
-
+				document.querySelector('#hero-heading')?.replaceChildren(contentSource.heroHeading || '');
+				document.querySelector('#hero-subheading')?.replaceChildren(contentSource.heroSubheading || '');
+				document.querySelector('#intro-text')?.replaceChildren(contentSource.introText || '');
+				document.querySelector('#cta-heading')?.replaceChildren(contentSource.ctaHeading || '');
+				document.querySelector('#cta-button')?.replaceChildren(contentSource.ctaButton || '');
+				updateDebugPanel({
+					activeLang,
+					localeFromApi: apiLocale,
+					heroHeading: contentSource.heroHeading,
+					resolvedApiUrl: buildApiUrlForLang(activeLang)
+				});
 				document.querySelectorAll('.lang-link').forEach((link) => {
 					const linkLang = link.textContent?.trim().toLowerCase();
 					link.classList.toggle('is-active', linkLang === activeLang);
 				});
 			};
-			const setText = (selector, value) => {
-				const element = document.querySelector(selector);
-				if (element && value != null) {
-					element.textContent = value;
-				}
-			};
-
 			const setAttributeIfPresent = (selector, attribute, value) => {
 				const element = document.querySelector(selector);
 				if (element && value) {
@@ -318,15 +377,27 @@ const localizedCtaButtonText = isEs
 			const applyApiData = (data) => {
 				const fields = data?.fields ?? {};
 				const meta = data?.meta ?? {};
+				const normalizedLocale = typeof data?.locale === 'string' ? data.locale.toLowerCase() : '';
+				apiLocale = normalizedLocale.includes('es') || normalizedLocale.includes('español') ? 'es' : 'en';
+				apiContent = {
+					heroHeading: fields.hero_heading || data?.title || '',
+					heroSubheading: fields.hero_subheading || '',
+					introText: sanitizeRichText(fields.intro_text),
+					ctaHeading: fields.cta_heading || '',
+					ctaButton: fields.cta_button_text || ''
+				};
+				updateDebugPanel({
+					activeLang: getActiveLang(),
+					localeFromApi: apiLocale,
+					heroHeading: apiContent.heroHeading,
+					resolvedApiUrl: buildApiUrlForLang(getActiveLang())
+				});
 				if (data?.title) {
 					document.title = meta.seo_title || data.title;
 				}
 				if (meta.search_description) {
 					document.querySelector('meta[name="description"]')?.setAttribute('content', meta.search_description);
 				}
-				setText('#hero-heading', fields.hero_heading);
-				setText('#hero-subheading', fields.hero_subheading);
-				setText('#intro-text', fields.intro_text);
 				const siteLogoFromApi = fields.site_logo ?? fields.logo ?? fields.header_logo;
 				if (siteLogoFromApi) {
 					const logoUrl = typeof siteLogoFromApi === 'string' ? normalizeAssetUrl(siteLogoFromApi) : normalizeAssetUrl(siteLogoFromApi?.url);
@@ -346,17 +417,20 @@ const localizedCtaButtonText = isEs
 				applyLanguage(getActiveLang());
 			};
 
-			if (apiUrl) {
-				fetch(apiUrl, { cache: 'no-store' })
-					.then((response) => {
-						if (!response.ok) throw new Error(`HTTP ${response.status}`);
-						return response.json();
-					})
-					.then(applyApiData)
-					.catch((error) => {
-						console.warn('No se pudo cargar la API de Wagtail:', error);
-					});
-			}
+			const fetchAndApplyApiData = async (lang) => {
+				const localizedApiUrl = buildApiUrlForLang(lang);
+				if (!localizedApiUrl) return;
+				try {
+					const response = await fetch(localizedApiUrl, { cache: 'no-store' });
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const payload = await response.json();
+					applyApiData(payload);
+				} catch (error) {
+					console.warn('No se pudo cargar la API de Wagtail:', error);
+				}
+			};
+
+			fetchAndApplyApiData(getActiveLang());
 
 			const langLinks = document.querySelectorAll('.lang-link');
 			langLinks.forEach((link) => {
@@ -367,10 +441,19 @@ const localizedCtaButtonText = isEs
 					url.searchParams.set('lang', target);
 					window.history.replaceState({}, '', url);
 					applyLanguage(target);
+					fetchAndApplyApiData(target);
 				});
 			});
 
 			applyLanguage(getActiveLang());
+
+			const siteHeader = document.querySelector('.site-header');
+			const SCROLL_THRESHOLD = 40;
+			const updateHeaderOnScroll = () => {
+				siteHeader?.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+			};
+			updateHeaderOnScroll();
+			window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
 		</script>
 	</body>
 </html>
@@ -402,6 +485,12 @@ const localizedCtaButtonText = isEs
 		justify-content: space-between;
 		align-items: center;
 		background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+		transition: background-color .3s ease, box-shadow .3s ease;
+	}
+
+	.site-header.is-scrolled {
+		background: #fff;
+		box-shadow: 0 1px 0 #ececec;
 	}
 
 	.logo img { height: 34px; width: auto; display: block; }
@@ -418,6 +507,11 @@ const localizedCtaButtonText = isEs
 		text-decoration: none;
 		font-weight: 500;
 		letter-spacing: .02em;
+		transition: color .3s ease;
+	}
+
+	.site-header.is-scrolled nav a {
+		color: #111;
 	}
 
 	.lang-switch {
@@ -427,6 +521,11 @@ const localizedCtaButtonText = isEs
 		color: rgba(255,255,255,.75);
 		font-size: .86rem;
 		letter-spacing: .08em;
+		transition: color .3s ease;
+	}
+
+	.site-header.is-scrolled .lang-switch {
+		color: rgba(17,17,17,.65);
 	}
 
 	.lang-link {
@@ -442,6 +541,60 @@ const localizedCtaButtonText = isEs
 		opacity: 1;
 		text-decoration: underline;
 		text-underline-offset: .18em;
+	}
+
+	.debug-panel {
+		position: fixed;
+		right: 12px;
+		bottom: 12px;
+		z-index: 40;
+		max-width: min(420px, calc(100vw - 24px));
+		padding: .8rem .9rem;
+		border-radius: 10px;
+		background: rgba(10, 10, 12, .9);
+		border: 1px solid rgba(255, 255, 255, .2);
+		color: #fff;
+		font: 500 .78rem/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		backdrop-filter: blur(4px);
+	}
+
+	.debug-panel.is-hidden {
+		display: none;
+	}
+
+	.debug-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: .75rem;
+		margin-bottom: .35rem;
+	}
+
+	.debug-toggle {
+		appearance: none;
+		border: 1px solid rgba(255, 255, 255, .25);
+		background: rgba(255, 255, 255, .08);
+		color: #fff;
+		font: inherit;
+		font-size: .68rem;
+		padding: .25rem .5rem;
+		border-radius: 999px;
+		cursor: pointer;
+	}
+
+	.debug-panel p {
+		margin: 0 0 .24rem;
+	}
+
+	.debug-panel p:last-child {
+		margin-bottom: 0;
+	}
+
+	.debug-title {
+		font-weight: 700;
+		letter-spacing: .04em;
+		text-transform: uppercase;
+		color: #8ee9a3;
 	}
 
 	.hero {
