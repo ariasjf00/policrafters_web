@@ -1,0 +1,35 @@
+.link-underline,
+.link-body {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.25s ease;
+}
+
+.link-underline {
+  background-size: 0% 1px;
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+}
+
+.link-body {
+  background-size: 100% 1px;
+}
+
+.link-body:hover,
+.link-body:focus-visible {
+  background-size: 100% 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-underline,
+  .link-body {
+    transition: none;
+  }
+}

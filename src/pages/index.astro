@@ -1,5 +1,9 @@
 ---
 import home from "../mocks/home.json";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { Icon } from 'astro-icon/components';
+import "../styles/links.css";
 
 const useApi = import.meta.env.PUBLIC_USE_API === "true";
 const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/home/";
@@ -33,26 +37,65 @@ const resolvedFields = resolvedData.fields ?? home.fields ?? {};
 const resolvedMeta = resolvedData.meta ?? home.meta ?? {};
 const fallbackFields = home.fields ?? {};
 const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
-const featuredBrands = Array.isArray(resolvedFields.featured_brands) ? resolvedFields.featured_brands : [];
-const testimonials = Array.isArray(resolvedFields.testimonials) ? resolvedFields.testimonials : [];
 const heroHeading = resolvedFields.hero_heading || resolvedData.title || fallbackFields.hero_heading || "Home";
-const heroSubheading = resolvedFields.hero_subheading || fallbackFields.hero_subheading || "";
-const introText = (resolvedFields.intro_text || fallbackFields.intro_text || "")
-	.replace(/<[^>]*>/g, "")
-	.replace(/&nbsp;/g, " ")
-	.trim();
-const heroVideoUrl = resolvedFields.hero_video_url || fallbackFields.hero_video_url || "https://www.w3schools.com/html/mov_bbb.mp4";
-const heroImageUrl = resolvedFields.hero_image_fallback?.url || fallbackFields.hero_image_fallback?.url || "/images/hero-fallback.svg";
-const heroImageAlt = resolvedFields.hero_image_fallback?.alt || fallbackFields.hero_image_fallback?.alt || "Policrafters";
+// Only CMS-provided paths need the API origin; local /public assets are served as-is.
+const heroAsset = (apiValue, localValue) => (useApi && apiValue ? normalizeAssetUrl(apiValue) : localValue);
+const teamMembersRaw = Array.isArray(resolvedFields.team_members) && resolvedFields.team_members.length
+	? resolvedFields.team_members
+	: (fallbackFields.team_members ?? []);
+const teamMembers = teamMembersRaw.map((member) => ({
+	...member,
+	photo: {
+		url: heroAsset(member.photo?.url, member.photo?.url),
+		alt: member.photo?.alt || ""
+	}
+}));
+const valuesSlidesRaw = Array.isArray(resolvedFields.values_slides) && resolvedFields.values_slides.length
+	? resolvedFields.values_slides
+	: (fallbackFields.values_slides ?? []);
+const valuesSlides = valuesSlidesRaw.map((slide) => ({
+	...slide,
+	image: {
+		url: heroAsset(slide.image?.url, slide.image?.url),
+		alt: slide.image?.alt || ""
+	}
+}));
+const catalogsRaw = Array.isArray(resolvedFields.catalogs) && resolvedFields.catalogs.length
+	? resolvedFields.catalogs
+	: (fallbackFields.catalogs ?? []);
+const catalogs = catalogsRaw.map((item) => ({
+	...item,
+	image: {
+		url: heroAsset(item.image?.url, item.image?.url),
+		alt: item.image?.alt || ""
+	}
+}));
+const contactLinks = Array.isArray(resolvedFields.contact_links) && resolvedFields.contact_links.length
+	? resolvedFields.contact_links
+	: (fallbackFields.contact_links ?? []);
+const heroVideoHorizontal = heroAsset(
+	resolvedFields.hero_video_horizontal,
+	fallbackFields.hero_video_horizontal || "/videos/horizontal_video_placeholder.mp4"
+);
+const heroVideoVertical = heroAsset(
+	resolvedFields.hero_video_vertical,
+	fallbackFields.hero_video_vertical || "/videos/vertical_video_placeholder.mp4"
+);
+const heroImageHorizontal = heroAsset(
+	resolvedFields.hero_image_horizontal?.url,
+	fallbackFields.hero_image_horizontal?.url || "/images/pages/horizontal_video_static_image.png"
+);
+const heroImageVertical = heroAsset(
+	resolvedFields.hero_image_vertical?.url,
+	fallbackFields.hero_image_vertical?.url || "/images/pages/vertical_video_static_image.png"
+);
+const heroImageAlt = resolvedFields.hero_image_horizontal?.alt || fallbackFields.hero_image_horizontal?.alt || "Policrafters";
 const siteLogoCandidate = resolvedFields.site_logo ?? resolvedFields.logo ?? resolvedFields.header_logo ?? fallbackFields.site_logo ?? fallbackFields.logo ?? fallbackFields.header_logo;
 const siteLogo = typeof siteLogoCandidate === "string"
 	? { url: normalizeAssetUrl(siteLogoCandidate), alt: "Policrafters logo" }
 	: siteLogoCandidate?.url
 		? { url: normalizeAssetUrl(siteLogoCandidate.url), alt: siteLogoCandidate.alt || "Policrafters logo" }
 		: { url: "/logo_black.png", alt: "Policrafters logo" };
-const ctaHeading = resolvedFields.cta_heading || fallbackFields.cta_heading || "";
-const ctaButtonText = resolvedFields.cta_button_text || fallbackFields.cta_button_text || "Contáctanos";
-const ctaButtonUrl = resolvedFields.cta_button_url || fallbackFields.cta_button_url || "/contacto";
 const normalizedLocale = typeof resolvedData.locale === "string" ? resolvedData.locale.toLowerCase() : "";
 const isEsLocale = normalizedLocale.includes("es") || normalizedLocale.includes("español");
 const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
@@ -62,47 +105,17 @@ const selectedLang = langParam === "en" || langParam === "es"
 		? "es"
 		: "en";
 const isEs = selectedLang === "es";
-const appendLang = (href, lang) => {
-	const [path, query = ""] = href.split("?");
-	const params = new URLSearchParams(query);
-	params.set("lang", lang);
-	const queryString = params.toString();
-	return queryString ? `${path}?${queryString}` : path;
-};
-const menu = isEs
-	? [
-			{ key: "collections", label: "Colecciones", path: "/colecciones", href: appendLang("/colecciones", selectedLang) },
-			{ key: "renovations", label: "Renovaciones", path: "/renovaciones", href: appendLang("/renovaciones", selectedLang) },
-			{ key: "services", label: "Servicios", path: "/servicios", href: appendLang("/servicios", selectedLang) },
-			{ key: "brands", label: "Marcas", path: "/marcas", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contáctanos", path: "/contacto", href: appendLang("/contacto", selectedLang) }
-		]
-	: [
-			{ key: "collections", label: "Collections", path: "/colecciones", href: appendLang("/colecciones", selectedLang) },
-			{ key: "renovations", label: "Renovations", path: "/renovaciones", href: appendLang("/renovaciones", selectedLang) },
-			{ key: "services", label: "Services", path: "/servicios", href: appendLang("/servicios", selectedLang) },
-			{ key: "brands", label: "Brands", path: "/marcas", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contact Us", path: "/contacto", href: appendLang("/contacto", selectedLang) }
-		];
-const currentPath = Astro.url.pathname;
-const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
-const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 
 const localizedHeroHeading = isEs
 	? heroHeading
-	: 'Design that transforms spaces';
-const localizedHeroSubheading = isEs
-	? heroSubheading
-	: 'Exclusive collections for residential and commercial projects.';
-const localizedIntroText = isEs
-	? introText
-	: 'We create experiences through furniture, finishes, and end-to-end interior solutions.';
-const localizedCtaHeading = isEs
-	? ctaHeading
-	: 'Ready for your next project?';
-const localizedCtaButtonText = isEs
-	? ctaButtonText
-	: 'Contact us';
+	: 'Your Premier Interiors & Architectural Partner';
+const localizedHeroEyebrow = isEs
+	? 'DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO'
+	: 'WHERE INNOVATION MEETS DESIGN';
+const localizedHeroCta = isEs
+	? 'CONTÁCTANOS AHORA'
+	: 'CONTACT US NOW';
+const heroCtaUrl = '/contacto';
 ---
 
 <html lang={isEs ? "es" : "en"}>
@@ -111,160 +124,364 @@ const localizedCtaButtonText = isEs
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>{resolvedMeta.seo_title || resolvedData.title || home.title}</title>
 		<meta name="description" content={resolvedMeta.search_description || ""} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
 	</head>
 	<body data-api-url={apiUrl}>
-		<header class="site-header">
-			<a class="logo" href="/">
-				<img id="site-logo" src={siteLogo.url} alt={siteLogo.alt} />
-			</a>
-			<nav aria-label="Main navigation">
-				<ul>
-					{menu.map((item) => (
-						<li>
-							<a
-								href={item.href}
-								data-menu-key={item.key}
-								class:list={["nav-link", currentPath === item.path && "is-active-page"]}
-							>
-								{item.label}
-							</a>
-						</li>
-					))}
-					<li class="search-item">
-						<button type="button" class="search-icon" aria-label={isEs ? "Buscar" : "Search"}>
-							<svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
-								<circle cx="8.5" cy="8.5" r="6.25" stroke="currentColor" stroke-width="1.6" />
-								<line x1="13.2" y1="13.2" x2="18" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-							</svg>
-						</button>
-					</li>
-					<li class="lang-switch" aria-label={isEs ? "Selector de idioma" : "Language selector"}>
-						<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
-						<span>/</span>
-						<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ESP</a>
-					</li>
-				</ul>
-			</nav>
-		</header>
+		<Header lang={selectedLang} logo={siteLogo} position="fixed" scrollShadow />
 
 		<section class="hero">
-			{heroVideoUrl ? (
-				<video
-					class="hero-media"
-					autoplay
-					muted
-					loop
-					playsinline
-					poster={heroImageUrl}
-				>
-					<source src={heroVideoUrl} type="video/mp4" />
-				</video>
-			) : (
-				<img
-					class="hero-media"
-					src={heroImageUrl}
-					alt={heroImageAlt}
-					loading="eager"
-				/>
-			)}
+			<picture class="hero-poster">
+				<source media="(max-width: 900px)" srcset={heroImageVertical} />
+				<img src={heroImageHorizontal} alt={heroImageAlt} loading="eager" fetchpriority="high" />
+			</picture>
+			<video
+				class="hero-video"
+				autoplay
+				muted
+				loop
+				playsinline
+				preload="none"
+				aria-hidden="true"
+				data-src-horizontal={heroVideoHorizontal}
+				data-src-vertical={heroVideoVertical}
+			></video>
 			<div class="hero-overlay" />
 			<div class="hero-content">
-				<p class="eyebrow">Policrafters</p>
+				<p id="hero-eyebrow" class="eyebrow">{localizedHeroEyebrow}</p>
 				<h1 id="hero-heading">{localizedHeroHeading}</h1>
-				<p id="hero-subheading">{localizedHeroSubheading}</p>
+				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl}>{localizedHeroCta}</a>
 			</div>
 		</section>
 
 		<main>
-			<section class="container intro">
-				<p id="intro-text">{localizedIntroText}</p>
+			<section class="projects-section">
+				<p id="projects-eyebrow" class="section-eyebrow">{isEs ? "Nuestros proyectos" : "Our projects"}</p>
+				<h2 id="projects-heading" class="section-heading">{isEs ? "MIRA LO QUE PODEMOS CREAR" : "SEE WHAT WE CAN CREATE"}</h2>
+
+				<div class="projects-carousel-shell">
+					<div class="projects-carousel-viewport">
+						<div class="projects-carousel-controls" aria-hidden="true">
+							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={isEs ? "Ver proyecto anterior" : "View previous project"}>
+								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+							</button>
+							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={isEs ? "Ver siguiente proyecto" : "View next project"}>
+								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+							</button>
+						</div>
+
+						<div class="projects-carousel" id="projects-carousel" aria-label={isEs ? "Carrusel de proyectos" : "Projects carousel"}>
+							{featuredProjects.map((p, index) => (
+								<a href="#" class="projects-card" data-project-index={index}>
+									<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
+									<div class="projects-card__body">
+										<h3 class="projects-card__title">{p.title}</h3>
+										<p class="projects-card__description">{p.description}</p>
+									</div>
+								</a>
+							))}
+						</div>
+					</div>
+
+					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={isEs ? "Selector de proyecto" : "Project selector"}>
+						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={isEs ? "Anterior" : "Previous"}>
+							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+						</button>
+						<div class="projects-dots" id="projects-dots">
+							{featuredProjects.map((_, index) => (
+								<button
+									type="button"
+									class:list={["projects-dot", index === 0 && "is-active"]}
+									data-dot-index={index}
+									aria-label={(isEs ? "Ir al proyecto " : "Go to project ") + (index + 1)}
+								></button>
+							))}
+						</div>
+						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+						</button>
+					</div>
+				</div>
+
+				<a id="projects-cta" href="#" class="projects-cta-btn">{isEs ? "Ver todos los proyectos" : "See all projects"}</a>
 			</section>
 
-			<section class="container">
-				<h2 id="featured-projects-heading">{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
-				<div class="grid projects">
-					{featuredProjects.map((p) => (
-						<article class="card">
-							<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
-							<div class="card-body">
-								<h3>{p.title}</h3>
-								<p>{p.location}</p>
+			<hr class="section-rule" />
+
+			<section class="container about-section">
+				<div class="about-grid">
+					<img
+						class="about-image"
+						src="/images/pages/about_us.png"
+						alt={isEs ? "Equipo de Policrafters" : "The Policrafters team"}
+						loading="lazy"
+					/>
+					<div class="about-copy">
+						<p id="about-eyebrow" class="section-eyebrow">{isEs ? "Nosotros, Marcas" : "About Us, Brands"}</p>
+						<h2 id="about-heading" class="section-heading">{isEs ? "BIENVENIDO A POLICRAFTERS" : "WELCOME TO POLICRAFTERS"}</h2>
+						<p id="about-body-1">{isEs
+							? "En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura."
+							: "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions."}</p>
+						<p id="about-body-2">{isEs
+							? "Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión."
+							: "Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond. Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life."}</p>
+						<p id="about-brands-label" class="about-brands-label">{isEs ? "Nuestras Marcas" : "Our Brands"}</p>
+						<ul class="about-brands-list">
+							<li><a href="https://glasstech-usa.com" target="_blank" rel="noopener" class="link-body">glasstech-usa.com</a></li>
+							<li><a href="https://alutech-usa.com" target="_blank" rel="noopener" class="link-body">alutech-usa.com</a></li>
+						</ul>
+						<a id="about-cta" href="#" class="about-cta-btn">{isEs ? "Saber más" : "Know more"}</a>
+					</div>
+				</div>
+			</section>
+
+			<hr class="section-rule" />
+
+			<section class="container team-section">
+				<p id="team-eyebrow" class="section-eyebrow">{isEs ? "Nuestro Equipo, Experiencia" : "Our Team, Expertise"}</p>
+				<h2 id="team-heading" class="section-heading">{isEs ? "LA GENTE DETRÁS DEL OFICIO" : "THE PEOPLE BEHIND THE CRAFT"}</h2>
+
+				<div class="team-grid">
+					{teamMembers.map((member) => (
+						<div class="team-card">
+							<img
+								class="team-card__photo"
+								src={member.photo.url}
+								alt={member.photo.alt || (isEs ? "Integrante del equipo Policrafters" : "Policrafters team member")}
+								loading="lazy"
+							/>
+							<div class="team-card__meta">
+								<p
+									class="team-card__role"
+									data-role-es={member.role}
+									data-role-en={member.role_en}
+								>
+									{isEs ? member.role : member.role_en}
+								</p>
+								<p class="team-card__name">{member.name}</p>
 							</div>
-						</article>
+							<p
+								class="team-card__bio"
+								data-bio-es={member.bio}
+								data-bio-en={member.bio_en}
+							>
+								{isEs ? member.bio : member.bio_en}
+							</p>
+						</div>
 					))}
 				</div>
 			</section>
 
-			<section class="container brands">
-				<h2 id="brands-heading">{isEs ? "Marcas" : "Brands"}</h2>
-				<div class="brand-row">
-					{featuredBrands.map((b) => (
-						<img src={b.logo.url} alt={b.logo.alt} loading="lazy" />
+			<hr class="section-rule" />
+
+			<section class="values-section">
+				<div class="values-header">
+					<p id="values-eyebrow" class="section-eyebrow">{isEs ? "Nuestros Valores" : "Our Values"}</p>
+					<h2 id="values-heading" class="section-heading">{isEs ? "LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS" : "THE PRINCIPLES BEHIND EVERYTHING WE CREATE"}</h2>
+				</div>
+
+				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={isEs ? "Carrusel de valores" : "Values carousel"}>
+					{valuesSlides.map((slide, index) => (
+						<div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
+							<img
+								class="values-slide__image"
+								src={slide.image.url}
+								alt={slide.image.alt}
+								loading={index === 0 ? "eager" : "lazy"}
+							/>
+							<div class="values-slide__caption">
+								<h3
+									class="values-slide__title"
+									data-vtitle-es={slide.title}
+									data-vtitle-en={slide.title_en}
+								>
+									{isEs ? slide.title : slide.title_en}
+								</h3>
+								<p
+									class="values-slide__description"
+									data-vdesc-es={slide.description}
+									data-vdesc-en={slide.description_en}
+								>
+									{isEs ? slide.description : slide.description_en}
+								</p>
+							</div>
+						</div>
 					))}
+
+					<div class="values-slider-controls" aria-hidden="true">
+						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={isEs ? "Ver valor anterior" : "View previous value"}>
+							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+						</button>
+						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={isEs ? "Ver siguiente valor" : "View next value"}>
+							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+						</button>
+					</div>
+				</div>
+
+				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={isEs ? "Selector de valor" : "Value selector"}>
+					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={isEs ? "Anterior" : "Previous"}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+					</button>
+					<div class="values-dots" id="values-dots">
+						{valuesSlides.map((_, index) => (
+							<button
+								type="button"
+								class:list={["values-dot", index === 0 && "is-active"]}
+								data-dot-index={index}
+								aria-label={(isEs ? "Ir al valor " : "Go to value ") + (index + 1)}
+							></button>
+						))}
+					</div>
+					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+					</button>
 				</div>
 			</section>
 
-			<section class="container testimonials">
-				<h2 id="testimonials-heading">{isEs ? "Testimonios" : "Testimonials"}</h2>
-				{testimonials.map((t) => (
-					<blockquote>
-						“{t.quote}”
-						<cite>{t.author}</cite>
-					</blockquote>
-				))}
-			</section>
+			<hr class="section-rule" />
 
-			<section class="cta">
-				<div class="container cta-inner">
-					<h2 id="cta-heading">{localizedCtaHeading}</h2>
-					<a id="cta-button" class="btn" href={ctaButtonUrl}>{localizedCtaButtonText}</a>
+			<section class="container catalogs-section">
+				<p id="catalogs-eyebrow" class="section-eyebrow">{isEs ? "Nuestros Catálogos" : "Our Catalogs"}</p>
+				<h2 id="catalogs-heading" class="section-heading">{isEs ? "EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES" : "EXPLORE OUR COLLECTIONS AND SOLUTIONS"}</h2>
+
+				<div class="catalogs-track" id="catalogs-track">
+					{catalogs.map((item, index) => (
+						<a class="catalog-card" href={item.file_url || "#"} data-catalog-index={index}>
+							<img class="catalog-card__image" src={item.image.url} alt={item.image.alt} loading="lazy" />
+							<span class="catalog-card__label">
+								<span
+									class="catalog-card__title"
+									data-ctitle-es={item.title}
+									data-ctitle-en={item.title_en}
+								>
+									{isEs ? item.title : item.title_en}
+								</span>
+								<Icon name="mdi:download" class="catalog-card__icon" />
+							</span>
+						</a>
+					))}
+				</div>
+
+				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={isEs ? "Selector de catálogo" : "Catalog selector"}>
+					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={isEs ? "Anterior" : "Previous"}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+					</button>
+					<div class="catalogs-dots" id="catalogs-dots">
+						{Array.from({ length: Math.ceil(catalogs.length / 4) }, (_, index) => (
+							<button
+								type="button"
+								class:list={["catalogs-dot", index === 0 && "is-active"]}
+								data-dot-index={index}
+								aria-label={(isEs ? "Ir a la página " : "Go to page ") + (index + 1)}
+							></button>
+						))}
+					</div>
+					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+					</button>
+				</div>
+
+				<h2 id="contact-heading" class="contact-heading">{isEs ? "¿Te gustaría contactar directamente con Policrafters?" : "Would you like to get direct contact with Policrafters?"}</h2>
+
+				<div class="contact-grid">
+					{contactLinks.map((link) => (
+						<div class="contact-col">
+							<h3
+								class="contact-col__title"
+								data-lntitle-es={link.title}
+								data-lntitle-en={link.title_en}
+							>
+								{isEs ? link.title : link.title_en}
+							</h3>
+							<p
+								class="contact-col__description"
+								data-lndesc-es={link.description}
+								data-lndesc-en={link.description_en}
+							>
+								{isEs ? link.description : link.description_en}
+							</p>
+							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{isEs ? "Saber más" : "Learn more"}</a>
+						</div>
+					))}
 				</div>
 			</section>
 		</main>
+
+		<Footer lang={selectedLang} />
+
 		<script type="module">
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
 			const uiByLang = {
 				es: {
-					menu: {
-						collections: { label: 'Colecciones', href: '/colecciones' },
-						renovations: { label: 'Renovaciones', href: '/renovaciones' },
-						services: { label: 'Servicios', href: '/servicios' },
-						brands: { label: 'Marcas', href: '/marcas' },
-						contact: { label: 'Contáctanos', href: '/contacto' }
-					},
-					sections: {
-						projects: 'Proyectos destacados',
-						brands: 'Marcas',
-						testimonials: 'Testimonios'
-					},
 					content: {
-						heroHeading: 'Diseño que transforma espacios',
-						heroSubheading: 'Colecciones exclusivas para proyectos residenciales y comerciales.',
-						introText: 'Creamos experiencias a través de mobiliario, acabados y soluciones integrales.',
-						ctaHeading: '¿Listo para tu próximo proyecto?',
-						ctaButton: 'Contáctanos'
+						heroEyebrow: 'DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO',
+						heroHeading: 'Tu Socio Experto en Interiores y Arquitectura',
+						heroCta: 'CONTÁCTANOS AHORA',
+						projectsEyebrow: 'Nuestros proyectos',
+						projectsHeading: 'MIRA LO QUE PODEMOS CREAR',
+						projectsCta: 'Ver todos los proyectos',
+						projectsPrevAria: 'Ver proyecto anterior',
+						projectsNextAria: 'Ver siguiente proyecto',
+						projectsCarouselAria: 'Carrusel de proyectos',
+						projectsDotAria: 'Ir al proyecto',
+						aboutEyebrow: 'Nosotros, Marcas',
+						aboutHeading: 'BIENVENIDO A POLICRAFTERS',
+						aboutBody1: 'En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura.',
+						aboutBody2: 'Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión.',
+						aboutBrandsLabel: 'Nuestras Marcas',
+						aboutCta: 'Saber más',
+						teamEyebrow: 'Nuestro Equipo, Experiencia',
+						teamHeading: 'LA GENTE DETRÁS DEL OFICIO',
+						valuesEyebrow: 'Nuestros Valores',
+						valuesHeading: 'LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS',
+						valuesCarouselAria: 'Carrusel de valores',
+						valuesPrevAria: 'Ver valor anterior',
+						valuesNextAria: 'Ver siguiente valor',
+						valuesDotAria: 'Ir al valor',
+						catalogsEyebrow: 'Nuestros Catálogos',
+						catalogsHeading: 'EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES',
+						catalogsPrevAria: 'Anterior',
+						catalogsNextAria: 'Siguiente',
+						catalogsDotAria: 'Ir a la página',
+						contactHeading: '¿Te gustaría contactar directamente con Policrafters?',
+						contactBtn: 'Saber más'
 					}
 				},
 				en: {
-					menu: {
-						collections: { label: 'Collections', href: '/colecciones' },
-						renovations: { label: 'Renovations', href: '/renovaciones' },
-						services: { label: 'Services', href: '/servicios' },
-						brands: { label: 'Brands', href: '/marcas' },
-						contact: { label: 'Contact Us', href: '/contacto' }
-					},
-					sections: {
-						projects: 'Featured projects',
-						brands: 'Brands',
-						testimonials: 'Testimonials'
-					},
 					content: {
-						heroHeading: 'Design that transforms spaces',
-						heroSubheading: 'Exclusive collections for residential and commercial projects.',
-						introText: 'We create experiences through furniture, finishes, and end-to-end interior solutions.',
-						ctaHeading: 'Ready for your next project?',
-						ctaButton: 'Contact us'
+						heroEyebrow: 'WHERE INNOVATION MEETS DESIGN',
+						heroHeading: 'Your Premier Interiors & Architectural Partner',
+						heroCta: 'CONTACT US NOW',
+						projectsEyebrow: 'Our projects',
+						projectsHeading: 'SEE WHAT WE CAN CREATE',
+						projectsCta: 'See all projects',
+						projectsPrevAria: 'View previous project',
+						projectsNextAria: 'View next project',
+						projectsCarouselAria: 'Projects carousel',
+						projectsDotAria: 'Go to project',
+						aboutEyebrow: 'About Us, Brands',
+						aboutHeading: 'WELCOME TO POLICRAFTERS',
+						aboutBody1: "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions.",
+						aboutBody2: "Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond. Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life.",
+						aboutBrandsLabel: 'Our Brands',
+						aboutCta: 'Know more',
+						teamEyebrow: 'Our Team, Expertise',
+						teamHeading: 'THE PEOPLE BEHIND THE CRAFT',
+						valuesEyebrow: 'Our Values',
+						valuesHeading: 'THE PRINCIPLES BEHIND EVERYTHING WE CREATE',
+						valuesCarouselAria: 'Values carousel',
+						valuesPrevAria: 'View previous value',
+						valuesNextAria: 'View next value',
+						valuesDotAria: 'Go to value',
+						catalogsEyebrow: 'Our Catalogs',
+						catalogsHeading: 'EXPLORE OUR COLLECTIONS AND SOLUTIONS',
+						catalogsPrevAria: 'Previous',
+						catalogsNextAria: 'Next',
+						catalogsDotAria: 'Go to page',
+						contactHeading: 'Would you like to get direct contact with Policrafters?',
+						contactBtn: 'Learn more'
 					}
 				}
 			};
@@ -283,39 +500,75 @@ const localizedCtaButtonText = isEs
 				return document.documentElement.lang === 'en' ? 'en' : 'es';
 			};
 
-			const appendLang = (href, lang) => {
-				const [path, query = ''] = href.split('?');
-				const params = new URLSearchParams(query);
-				params.set('lang', lang);
-				const queryString = params.toString();
-				return queryString ? `${path}?${queryString}` : path;
-			};
 
-			const applyLanguage = (lang) => {
+			// Subscriber only. Header.astro owns lang state and is the sole dispatcher
+			// of `sitelangchange` — never dispatch it from here (feedback loop).
+			const applyHomeLanguage = (lang) => {
 				const activeLang = lang === 'en' ? 'en' : 'es';
 				const copy = uiByLang[activeLang];
-				document.documentElement.lang = activeLang;
-				localStorage.setItem('siteLang', activeLang);
 
-				document.querySelectorAll('[data-menu-key]').forEach((link) => {
-					const key = link.getAttribute('data-menu-key');
-					if (!key || !copy.menu[key]) return;
-					link.textContent = copy.menu[key].label;
-					link.setAttribute('href', appendLang(copy.menu[key].href, activeLang));
-				});
-
-				document.querySelector('#featured-projects-heading')?.replaceChildren(copy.sections.projects);
-				document.querySelector('#brands-heading')?.replaceChildren(copy.sections.brands);
-				document.querySelector('#testimonials-heading')?.replaceChildren(copy.sections.testimonials);
+				document.querySelector('#hero-eyebrow')?.replaceChildren(copy.content.heroEyebrow);
 				document.querySelector('#hero-heading')?.replaceChildren(copy.content.heroHeading);
-				document.querySelector('#hero-subheading')?.replaceChildren(copy.content.heroSubheading);
-				document.querySelector('#intro-text')?.replaceChildren(copy.content.introText);
-				document.querySelector('#cta-heading')?.replaceChildren(copy.content.ctaHeading);
-				document.querySelector('#cta-button')?.replaceChildren(copy.content.ctaButton);
-
-				document.querySelectorAll('.lang-link').forEach((link) => {
-					const linkLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-					link.classList.toggle('is-active', linkLang === activeLang);
+				document.querySelector('#hero-cta')?.replaceChildren(copy.content.heroCta);
+				document.querySelector('#projects-eyebrow')?.replaceChildren(copy.content.projectsEyebrow);
+				document.querySelector('#projects-heading')?.replaceChildren(copy.content.projectsHeading);
+				document.querySelector('#projects-cta')?.replaceChildren(copy.content.projectsCta);
+				document.querySelector('#projects-prev')?.setAttribute('aria-label', copy.content.projectsPrevAria);
+				document.querySelector('#projects-next')?.setAttribute('aria-label', copy.content.projectsNextAria);
+				document.querySelector('#projects-carousel')?.setAttribute('aria-label', copy.content.projectsCarouselAria);
+				document.querySelectorAll('.projects-dot').forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.setAttribute('aria-label', `${copy.content.projectsDotAria} ${dotIndex + 1}`);
+				});
+				document.querySelector('#about-eyebrow')?.replaceChildren(copy.content.aboutEyebrow);
+				document.querySelector('#about-heading')?.replaceChildren(copy.content.aboutHeading);
+				document.querySelector('#about-body-1')?.replaceChildren(copy.content.aboutBody1);
+				document.querySelector('#about-body-2')?.replaceChildren(copy.content.aboutBody2);
+				document.querySelector('#about-brands-label')?.replaceChildren(copy.content.aboutBrandsLabel);
+				document.querySelector('#about-cta')?.replaceChildren(copy.content.aboutCta);
+				document.querySelector('#team-eyebrow')?.replaceChildren(copy.content.teamEyebrow);
+				document.querySelector('#team-heading')?.replaceChildren(copy.content.teamHeading);
+				document.querySelectorAll('[data-role-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'roleEn' : 'roleEs'] || '');
+				});
+				document.querySelectorAll('[data-bio-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'bioEn' : 'bioEs'] || '');
+				});
+				document.querySelector('#values-eyebrow')?.replaceChildren(copy.content.valuesEyebrow);
+				document.querySelector('#values-heading')?.replaceChildren(copy.content.valuesHeading);
+				document.querySelectorAll('[data-vtitle-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'vtitleEn' : 'vtitleEs'] || '');
+				});
+				document.querySelectorAll('[data-vdesc-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'vdescEn' : 'vdescEs'] || '');
+				});
+				document.querySelector('#values-prev')?.setAttribute('aria-label', copy.content.valuesPrevAria);
+				document.querySelector('#values-next')?.setAttribute('aria-label', copy.content.valuesNextAria);
+				document.querySelector('#values-slider')?.setAttribute('aria-label', copy.content.valuesCarouselAria);
+				document.querySelectorAll('.values-dot').forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.setAttribute('aria-label', `${copy.content.valuesDotAria} ${dotIndex + 1}`);
+				});
+				document.querySelector('#catalogs-eyebrow')?.replaceChildren(copy.content.catalogsEyebrow);
+				document.querySelector('#catalogs-heading')?.replaceChildren(copy.content.catalogsHeading);
+				document.querySelector('#contact-heading')?.replaceChildren(copy.content.contactHeading);
+				document.querySelectorAll('[data-ctitle-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'ctitleEn' : 'ctitleEs'] || '');
+				});
+				document.querySelectorAll('[data-lntitle-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'lntitleEn' : 'lntitleEs'] || '');
+				});
+				document.querySelectorAll('[data-lndesc-es]').forEach((el) => {
+					el.replaceChildren(el.dataset[activeLang === 'en' ? 'lndescEn' : 'lndescEs'] || '');
+				});
+				document.querySelectorAll('[data-lnbtn]').forEach((el) => {
+					el.replaceChildren(copy.content.contactBtn);
+				});
+				document.querySelector('#catalogs-prev')?.setAttribute('aria-label', copy.content.catalogsPrevAria);
+				document.querySelector('#catalogs-next')?.setAttribute('aria-label', copy.content.catalogsNextAria);
+				document.querySelectorAll('.catalogs-dot').forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.setAttribute('aria-label', `${copy.content.catalogsDotAria} ${dotIndex + 1}`);
 				});
 			};
 			const setText = (selector, value) => {
@@ -342,8 +595,6 @@ const localizedCtaButtonText = isEs
 					document.querySelector('meta[name="description"]')?.setAttribute('content', meta.search_description);
 				}
 				setText('#hero-heading', fields.hero_heading);
-				setText('#hero-subheading', fields.hero_subheading);
-				setText('#intro-text', fields.intro_text);
 				const siteLogoFromApi = fields.site_logo ?? fields.logo ?? fields.header_logo;
 				if (siteLogoFromApi) {
 					const logoUrl = typeof siteLogoFromApi === 'string' ? normalizeAssetUrl(siteLogoFromApi) : normalizeAssetUrl(siteLogoFromApi?.url);
@@ -360,7 +611,7 @@ const localizedCtaButtonText = isEs
 				if (heroMedia && fields.hero_video_url) {
 					heroMedia.setAttribute('src', fields.hero_video_url);
 				}
-				applyLanguage(getActiveLang());
+				applyHomeLanguage(getActiveLang());
 			};
 
 			if (apiUrl) {
@@ -375,27 +626,308 @@ const localizedCtaButtonText = isEs
 					});
 			}
 
-			const langLinks = document.querySelectorAll('.lang-link');
-			langLinks.forEach((link) => {
-				link.addEventListener('click', (event) => {
-					event.preventDefault();
-					const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-					const url = new URL(window.location.href);
-					url.searchParams.set('lang', target);
-					window.history.replaceState({}, '', url);
-					applyLanguage(target);
-				});
-			});
+			// Self-boot, then subscribe: component scripts run before this page script,
+			// so Header's boot dispatch would otherwise be missed (see Footer.astro).
+			applyHomeLanguage(getActiveLang());
+			document.addEventListener('sitelangchange', (event) => applyHomeLanguage(event.detail));
 
-			applyLanguage(getActiveLang());
+			const heroVideo = document.querySelector('.hero-video');
+			if (heroVideo) {
+				const isVertical = window.matchMedia('(max-width: 900px)');
+				const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-			const siteHeader = document.querySelector('.site-header');
-			const SCROLL_THRESHOLD = 40;
-			const updateHeaderOnScroll = () => {
-				siteHeader?.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+				const loadHeroVideo = () => {
+					// Reduced-motion users keep the static poster.
+					if (prefersReducedMotion.matches) return;
+					const src = isVertical.matches
+						? heroVideo.dataset.srcVertical
+						: heroVideo.dataset.srcHorizontal;
+					if (!src || heroVideo.getAttribute('src') === src) return;
+					heroVideo.muted = true;
+					heroVideo.setAttribute('src', src);
+					heroVideo.load();
+					const played = heroVideo.play();
+					// Autoplay can be blocked; the poster simply stays.
+					if (played && typeof played.catch === 'function') played.catch(() => {});
+				};
+
+				// Only reveal the video once frames are actually rendering.
+				heroVideo.addEventListener('playing', () => heroVideo.classList.add('is-ready'));
+				heroVideo.addEventListener('error', () => heroVideo.classList.remove('is-ready'));
+
+				const swapOrientation = () => {
+					heroVideo.classList.remove('is-ready');
+					loadHeroVideo();
+				};
+
+				if (typeof isVertical.addEventListener === 'function') {
+					isVertical.addEventListener('change', swapOrientation);
+					prefersReducedMotion.addEventListener('change', swapOrientation);
+				}
+
+				loadHeroVideo();
+			}
+
+			const projectsCarousel = document.getElementById('projects-carousel');
+			const projectsButtons = document.querySelectorAll('#projects-prev, #projects-next, .projects-indicator-arrow');
+			const projectsDotsContainer = document.getElementById('projects-dots');
+			const projectsCards = projectsCarousel ? Array.from(projectsCarousel.querySelectorAll('.projects-card')) : [];
+			const projectsCount = projectsCards.length;
+			let projectsCurrentIndex = 0;
+			let projectsStepSize = 0;
+			let projectsPageCount = projectsCount;
+			let projectsScrollRaf = null;
+
+			const getCardOffset = (index) => {
+				const safeIndex = Math.max(0, Math.min(index, projectsCards.length - 1));
+				const target = projectsCards[safeIndex];
+				return target ? target.offsetLeft : 0;
 			};
-			updateHeaderOnScroll();
-			window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+
+			// Astro's scoped styles only match elements carrying its data-astro-cid-*
+			// attribute, which is baked in at build time. Buttons created here at runtime
+			// need that same attribute copied over or the scoped .projects-dot rules
+			// (shape, fill, active state) silently fail to apply to them.
+			const astroScopeAttrs = projectsDotsContainer
+				? Array.from(projectsDotsContainer.attributes).filter((attr) => attr.name.startsWith('data-astro-cid-'))
+				: [];
+
+			const renderProjectsDots = (pageCount) => {
+				if (!projectsDotsContainer) return;
+				projectsDotsContainer.innerHTML = '';
+				for (let i = 0; i < pageCount; i += 1) {
+					const dot = document.createElement('button');
+					dot.type = 'button';
+					dot.className = 'projects-dot';
+					dot.setAttribute('data-dot-index', String(i));
+					astroScopeAttrs.forEach((attr) => dot.setAttribute(attr.name, attr.value));
+					projectsDotsContainer.appendChild(dot);
+				}
+			};
+
+			const measureProjectsStep = () => {
+				if (!projectsCarousel || projectsCards.length < 2) return;
+				projectsStepSize = projectsCards[1].offsetLeft - projectsCards[0].offsetLeft;
+				if (projectsStepSize <= 0) {
+					projectsStepSize = projectsCards[0].getBoundingClientRect().width;
+				}
+				// A carousel that shows more than one card per step has fewer distinct
+				// scroll stops than cards: the last (visibleCount - 1) cards share their
+				// stop with an earlier one, so the dot count must follow visible count.
+				const visibleCount = Math.max(1, Math.round(projectsCarousel.clientWidth / projectsStepSize));
+				const nextPageCount = Math.max(1, projectsCount - visibleCount + 1);
+				if (nextPageCount !== projectsPageCount) {
+					projectsPageCount = nextPageCount;
+					renderProjectsDots(projectsPageCount);
+					projectsCurrentIndex = Math.min(projectsCurrentIndex, projectsPageCount - 1);
+					applyHomeLanguage(getActiveLang());
+				}
+			};
+
+			const updateProjectsIndicator = () => {
+				if (!projectsPageCount) return;
+				document.querySelectorAll('.projects-dot').forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === projectsCurrentIndex);
+				});
+				projectsButtons.forEach((button) => {
+					const action = button.getAttribute('data-action');
+					if (action === 'prev') button.disabled = projectsCurrentIndex === 0;
+					if (action === 'next') button.disabled = projectsCurrentIndex === projectsPageCount - 1;
+				});
+			};
+
+			const scrollProjectsToIndex = (index) => {
+				if (!projectsCarousel) return;
+				const clamped = Math.max(0, Math.min(index, projectsPageCount - 1));
+				const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+				const left = clamped === projectsPageCount - 1 ? maxScroll : getCardOffset(clamped);
+				projectsCarousel.scrollTo({ left, behavior: 'smooth' });
+				projectsCurrentIndex = clamped;
+				updateProjectsIndicator();
+			};
+
+			const handleProjectsScroll = () => {
+				if (projectsScrollRaf) return;
+				projectsScrollRaf = requestAnimationFrame(() => {
+					projectsScrollRaf = null;
+					if (!projectsStepSize || !projectsCarousel) return;
+					const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+					const atEnd = maxScroll - projectsCarousel.scrollLeft < 2;
+					projectsCurrentIndex = atEnd
+						? projectsPageCount - 1
+						: Math.min(Math.round(projectsCarousel.scrollLeft / projectsStepSize), projectsPageCount - 1);
+					updateProjectsIndicator();
+				});
+			};
+
+			const setupProjectsCarousel = () => {
+				if (!projectsCarousel || !projectsCount) return;
+
+				requestAnimationFrame(() => {
+					measureProjectsStep();
+					updateProjectsIndicator();
+				});
+
+				window.addEventListener('resize', () => {
+					requestAnimationFrame(measureProjectsStep);
+				});
+
+				projectsCarousel.addEventListener('scroll', handleProjectsScroll, { passive: true });
+
+				projectsButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						scrollProjectsToIndex(projectsCurrentIndex + direction);
+					});
+				});
+
+				projectsDotsContainer?.addEventListener('click', (event) => {
+					const dot = event.target.closest('.projects-dot');
+					if (!dot) return;
+					const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					scrollProjectsToIndex(targetIndex);
+				});
+			};
+
+			setupProjectsCarousel();
+
+			const valuesSlider = document.getElementById('values-slider');
+			const valuesSlides = valuesSlider ? Array.from(valuesSlider.querySelectorAll('.values-slide')) : [];
+			const valuesDots = document.querySelectorAll('.values-dot');
+			const valuesButtons = document.querySelectorAll('#values-prev, #values-next, .values-indicator-arrow');
+			const valuesCount = valuesSlides.length;
+			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			let valuesCurrentIndex = 0;
+			let valuesIntervalId = null;
+
+			const goToValuesSlide = (index) => {
+				valuesCurrentIndex = (index + valuesCount) % valuesCount;
+				valuesSlides.forEach((slide, i) => {
+					const isActive = i === valuesCurrentIndex;
+					slide.classList.toggle('is-active', isActive);
+					slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+				});
+				valuesDots.forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === valuesCurrentIndex);
+				});
+			};
+
+			const stopValuesAutoplay = () => {
+				if (valuesIntervalId) {
+					clearInterval(valuesIntervalId);
+					valuesIntervalId = null;
+				}
+			};
+
+			const startValuesAutoplay = () => {
+				if (prefersReducedMotion || !valuesCount) return;
+				stopValuesAutoplay();
+				valuesIntervalId = setInterval(() => {
+					goToValuesSlide(valuesCurrentIndex + 1);
+				}, 4000);
+			};
+
+			const setupValuesSlider = () => {
+				if (!valuesSlider || !valuesCount) return;
+
+				valuesButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						goToValuesSlide(valuesCurrentIndex + direction);
+						startValuesAutoplay();
+					});
+				});
+
+				valuesDots.forEach((dot) => {
+					dot.addEventListener('click', () => {
+						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+						goToValuesSlide(targetIndex);
+						startValuesAutoplay();
+					});
+				});
+
+				valuesSlider.addEventListener('mouseenter', stopValuesAutoplay);
+				valuesSlider.addEventListener('mouseleave', startValuesAutoplay);
+
+				document.addEventListener('visibilitychange', () => {
+					if (document.hidden) {
+						stopValuesAutoplay();
+					} else {
+						startValuesAutoplay();
+					}
+				});
+
+				startValuesAutoplay();
+			};
+
+			setupValuesSlider();
+
+			const catalogsTrack = document.getElementById('catalogs-track');
+			const catalogsButtons = document.querySelectorAll('#catalogs-prev, #catalogs-next');
+			const catalogsDots = document.querySelectorAll('.catalogs-dot');
+			const catalogsPageCount = catalogsDots.length;
+			let catalogsCurrentPage = 0;
+			let catalogsScrollRaf = null;
+
+			const updateCatalogsIndicator = () => {
+				catalogsDots.forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === catalogsCurrentPage);
+				});
+				catalogsButtons.forEach((button) => {
+					const action = button.getAttribute('data-action');
+					if (action === 'prev') button.disabled = catalogsCurrentPage === 0;
+					if (action === 'next') button.disabled = catalogsCurrentPage === catalogsPageCount - 1;
+				});
+			};
+
+			const scrollCatalogsToPage = (page) => {
+				if (!catalogsTrack) return;
+				const clamped = Math.max(0, Math.min(page, catalogsPageCount - 1));
+				catalogsCurrentPage = clamped;
+				catalogsTrack.scrollTo({ left: clamped * catalogsTrack.clientWidth, behavior: 'smooth' });
+				updateCatalogsIndicator();
+			};
+
+			const handleCatalogsScroll = () => {
+				if (catalogsScrollRaf) return;
+				catalogsScrollRaf = requestAnimationFrame(() => {
+					catalogsScrollRaf = null;
+					if (!catalogsTrack) return;
+					const maxScroll = catalogsTrack.scrollWidth - catalogsTrack.clientWidth;
+					const atEnd = maxScroll - catalogsTrack.scrollLeft < 2;
+					catalogsCurrentPage = atEnd
+						? catalogsPageCount - 1
+						: Math.min(Math.round(catalogsTrack.scrollLeft / catalogsTrack.clientWidth), catalogsPageCount - 1);
+					updateCatalogsIndicator();
+				});
+			};
+
+			const setupCatalogsSlider = () => {
+				if (!catalogsTrack || !catalogsPageCount) return;
+
+				requestAnimationFrame(updateCatalogsIndicator);
+
+				catalogsTrack.addEventListener('scroll', handleCatalogsScroll, { passive: true });
+
+				catalogsButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						scrollCatalogsToPage(catalogsCurrentPage + direction);
+					});
+				});
+
+				catalogsDots.forEach((dot) => {
+					dot.addEventListener('click', () => {
+						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+						scrollCatalogsToPage(targetIndex);
+					});
+				});
+			};
+
+			setupCatalogsSlider();
 		</script>
 	</body>
 </html>
@@ -411,90 +943,9 @@ const localizedCtaButtonText = isEs
 	* { box-sizing: border-box; }
 	body {
 		margin: 0;
-		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 		color: var(--text);
 		background: #fff;
-	}
-
-	.site-header {
-		position: fixed;
-		z-index: 20;
-		top: 0;
-		left: 0;
-		width: 100%;
-		padding: 1rem 2rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: #fff;
-		border-bottom: 1px solid #ececec;
-		transition: box-shadow .3s ease;
-	}
-
-	.site-header.is-scrolled {
-		box-shadow: 0 1px 0 #ececec;
-	}
-
-	.logo img { height: 34px; width: auto; display: block; }
-
-	nav ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		align-items: center;
-		gap: 1.6rem;
-	}
-	nav a.nav-link {
-		color: #111;
-		text-decoration: none;
-		font-weight: 500;
-		font-size: .82rem;
-		letter-spacing: .06em;
-		text-transform: uppercase;
-		padding: .5rem .9rem;
-		border-radius: 999px;
-		transition: background-color .2s ease;
-	}
-
-	nav a.nav-link.is-active-page {
-		background: #c9a876;
-		color: #111;
-	}
-
-	.search-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: none;
-		color: #111;
-		padding: .25rem;
-		cursor: pointer;
-	}
-
-	.lang-switch {
-		display: inline-flex;
-		align-items: center;
-		gap: .28rem;
-		color: #666;
-		font-size: .78rem;
-		letter-spacing: .06em;
-		text-transform: uppercase;
-	}
-
-	.lang-link {
-		opacity: .55;
-		transition: opacity .2s ease;
-	}
-
-	.lang-link:hover {
-		opacity: 1;
-	}
-
-	.lang-link.is-active {
-		opacity: 1;
-		font-weight: 600;
 	}
 
 	.hero {
@@ -505,11 +956,32 @@ const localizedCtaButtonText = isEs
 		overflow: hidden;
 		background: #000;
 	}
-	.hero-media {
+	/* The poster sits underneath and stays visible until the video is actually
+	   playing, so a slow load or blocked autoplay leaves a static image. */
+	.hero-poster,
+	.hero-video {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	.hero-poster img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		display: block;
+	}
+
+	.hero-video {
+		object-fit: cover;
+		opacity: 0;
+		transition: opacity .6s ease;
+	}
+
+	.hero-video.is-ready {
+		opacity: 1;
 	}
 	.hero-overlay {
 		position: absolute;
@@ -518,27 +990,52 @@ const localizedCtaButtonText = isEs
 	}
 	.hero-content {
 		position: absolute;
-		left: 8%;
-		bottom: 12%;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
 		color: #fff;
-		max-width: 760px;
+		padding: 0 1.5rem;
 	}
 	.hero-content .eyebrow {
-		margin: 0 0 .5rem;
+		margin: 0 0 1.25rem;
 		text-transform: uppercase;
-		letter-spacing: .12em;
-		font-size: .82rem;
+		letter-spacing: .18em;
+		font-size: clamp(.7rem, 1vw, .85rem);
+		font-weight: 600;
 		opacity: .9;
 	}
 	.hero-content h1 {
-		margin: 0 0 .8rem;
-		font-size: clamp(2rem, 4vw, 4rem);
-		line-height: 1.05;
+		margin: 0 0 2.5rem;
+		max-width: 21ch;
+		font-size: clamp(2rem, 4.5vw, 3.5rem);
+		font-weight: 700;
+		line-height: 1.1;
 	}
-	.hero-content p {
-		margin: 0;
-		font-size: clamp(1rem, 1.5vw, 1.3rem);
-		max-width: 65ch;
+	.hero-cta-btn {
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border: 1px solid rgba(255, 255, 255, .85);
+		border-radius: 999px;
+		background: transparent;
+		color: #fff;
+		text-decoration: none;
+		text-transform: uppercase;
+		letter-spacing: .12em;
+		font-size: clamp(.7rem, .9vw, .8rem);
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+	.hero-cta-btn:hover,
+	.hero-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+	.hero-cta-btn:focus-visible {
+		outline: 2px solid #fff;
+		outline-offset: 3px;
 	}
 
 	.container {
@@ -547,81 +1044,713 @@ const localizedCtaButtonText = isEs
 		padding: 4rem 0;
 	}
 
-	.intro p {
-		font-size: 1.2rem;
-		color: #333;
-		max-width: 70ch;
+	.projects-section {
+		width: min(var(--max), 92%);
+		margin-inline: auto;
+		padding: 4rem 0;
+		text-align: center;
 	}
 
-	.grid.projects {
+	.section-eyebrow {
+		margin: 0 0 .4rem;
+		font-style: italic;
+		font-size: .95rem;
+		color: #555;
+	}
+
+	.section-heading {
+		margin: 0 0 2.5rem;
+		font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+		font-weight: 700;
+		letter-spacing: .04em;
+		text-transform: uppercase;
+		color: #B6AE99;
+	}
+
+	.projects-carousel-shell {
+		width: 100vw;
+		margin-left: calc(50% - 50vw);
+	}
+
+	.projects-carousel-viewport {
+		position: relative;
+	}
+
+	.projects-carousel-controls {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 1rem;
+		pointer-events: none;
+		z-index: 2;
+	}
+
+	.projects-arrow-btn {
+		border: none;
+		background: none;
+		padding: .5rem;
+		cursor: pointer;
+		pointer-events: auto;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+		transition: opacity .2s ease;
+	}
+
+	.projects-arrow-btn:hover {
+		opacity: .75;
+	}
+
+	.projects-arrow-btn:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.projects-carousel {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 1.25rem;
+		grid-auto-flow: column;
+		grid-auto-columns: 50vw;
+		gap: 0;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
 	}
-	.card {
-		border: 1px solid #ececec;
-		border-radius: 12px;
-		overflow: hidden;
-		background: #fff;
+
+	.projects-carousel::-webkit-scrollbar {
+		display: none;
 	}
-	.card img {
+
+	.projects-card {
+		scroll-snap-align: start;
+		border-right: 1px solid #ececec;
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.projects-card img {
 		width: 100%;
 		aspect-ratio: 16/10;
 		object-fit: cover;
 		display: block;
 	}
-	.card-body { padding: 1rem; }
-	.card-body h3 { margin: 0 0 .35rem; }
-	.card-body p { margin: 0; color: var(--muted); }
 
-	.brand-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 2rem;
-		align-items: center;
-	}
-	.brand-row img {
-		height: 30px;
-		width: auto;
-		opacity: .9;
+	.projects-card__body {
+		padding: 1.25rem 2rem 0;
+		text-align: center;
 	}
 
-	.testimonials blockquote {
-		margin: 0;
-		padding: 1.25rem;
-		border-left: 3px solid #111;
-		background: #f8f8f8;
+	.projects-card__title {
+		margin: 0 0 .5rem;
+		font-size: 1.05rem;
+		font-weight: 700;
 	}
-	.testimonials cite {
-		display: block;
-		margin-top: .7rem;
+
+	.projects-card__description {
+		margin: 0 auto;
+		max-width: 42ch;
+		font-size: .9rem;
+		line-height: 1.5;
 		color: var(--muted);
-		font-style: normal;
 	}
 
-	.cta {
-		background: var(--bg);
-		color: #fff;
+	.projects-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 2.5rem;
 	}
-	.cta-inner {
+
+	.projects-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.projects-indicator-arrow:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.projects-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.projects-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.projects-dot.is-active {
+		background: #2f3437;
+	}
+
+	.projects-cta-btn {
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border: 1px solid #2f3437;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
+		text-decoration: none;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		font-size: .82rem;
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.projects-cta-btn:hover,
+	.projects-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+
+	.projects-cta-btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
+	}
+
+	.section-rule {
+		width: min(var(--max), 92%);
+		margin: 0 auto;
+		border: none;
+		border-top: 1px solid #2f3437;
+	}
+
+	.about-section {
+		padding: 4rem 0;
+	}
+
+	.about-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+		gap: 3rem;
+		align-items: stretch;
+		--page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
+	}
+
+	.about-image {
+		width: calc(100% + var(--page-gutter));
+		margin-left: calc(-1 * var(--page-gutter));
+		height: 100%;
+		min-height: 320px;
+		object-fit: contain;
+		display: block;
+	}
+
+	.about-copy {
+		display: flex;
+		flex-direction: column;
+		text-align: left;
+	}
+
+	.about-copy .section-eyebrow,
+	.about-copy .section-heading {
+		text-align: left;
+	}
+
+	.about-copy p {
+		margin: 0 0 1.25rem;
+		line-height: 1.6;
+		color: #333;
+	}
+
+	.about-brands-label {
+		margin: .5rem 0 .75rem;
+		font-weight: 700;
+	}
+
+	.about-brands-list {
+		margin: 0 0 2rem;
+		padding-left: 1.25rem;
+		list-style: disc;
+	}
+
+	.about-brands-list li {
+		margin-bottom: .4rem;
+	}
+
+	.about-brands-list a {
+		color: #2f3437;
+	}
+
+	.about-cta-btn {
+		align-self: flex-end;
+		margin-top: auto;
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
+		text-decoration: none;
+		font-size: .95rem;
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.about-cta-btn:hover,
+	.about-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+		box-shadow: inset 0 0 0 1px #2f3437;
+	}
+
+	.about-cta-btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
+	}
+
+	.team-section {
+		text-align: center;
+	}
+
+	.team-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.team-card {
+		text-align: left;
+	}
+
+	.team-card__photo {
+		width: 100%;
+		aspect-ratio: 4 / 5;
+		object-fit: cover;
+		display: block;
+		border-style: solid;
+		border-color: #2f3437;
+	}
+
+	.team-card__meta {
+		margin-top: 1rem;
+		border-left-style: solid;
+		border-left-color: #b6ae99;
+		padding-left: 7px;
+	}
+
+	.team-card__role {
+		margin: 0 0 .25rem;
+		font-style: italic;
+		font-size: .78rem;
+		color: #777;
+	}
+
+	.team-card__name {
+		margin: 0 0 .5rem;
+		text-transform: uppercase;
+		font-weight: 700;
+		font-size: 1.05rem;
+		color: #111;
+	}
+
+	.team-card__bio {
+		margin: 0;
+		font-size: .82rem;
+		line-height: 1.55;
+		color: #666;
+	}
+
+	.values-section {
+		padding: 4rem 0;
+		text-align: center;
+	}
+
+	.values-header {
+		width: min(var(--max), 92%);
+		margin-inline: auto;
+	}
+
+	.values-slider {
+		position: relative;
+		width: 100%;
+		margin-top: 2.5rem;
+		aspect-ratio: 16 / 7;
+		overflow: hidden;
+	}
+
+	.values-slide {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		z-index: 1;
+		pointer-events: none;
+		transition: opacity .8s ease;
+	}
+
+	.values-slide.is-active {
+		opacity: 1;
+		z-index: 2;
+		pointer-events: auto;
+	}
+
+	.values-slide::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: linear-gradient(to top left, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 55%);
+	}
+
+	.values-slide__image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.values-slide__caption {
+		position: absolute;
+		right: 6%;
+		bottom: 12%;
+		z-index: 2;
+		max-width: 42ch;
+		text-align: left;
+		border-left-style: solid;
+		border-left-color: #b6ae99;
+		padding-left: 12px;
+	}
+
+	.values-slide__title {
+		margin: 0 0 .5rem;
+		text-transform: uppercase;
+		font-weight: 700;
+		font-size: 2.5rem;
+		color: #fff;
+		text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+	}
+
+	.values-slide__description {
+		margin: 0;
+		font-size: .9rem;
+		line-height: 1.55;
+		color: #fff;
+		text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+	}
+
+	.values-slider-controls {
+		position: absolute;
+		inset: 0;
 		display: flex;
 		justify-content: space-between;
-		gap: 1rem;
+		align-items: center;
+		padding: 0 1rem;
+		pointer-events: none;
+		z-index: 3;
+	}
+
+	.values-arrow-btn {
+		border: none;
+		background: none;
+		padding: .5rem;
+		cursor: pointer;
+		pointer-events: auto;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+		transition: opacity .2s ease;
+	}
+
+	.values-arrow-btn:hover {
+		opacity: .75;
+	}
+
+	.values-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 0;
+	}
+
+	.values-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.values-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.values-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.values-dot.is-active {
+		background: #2f3437;
+	}
+
+	.catalogs-section {
+		text-align: center;
+	}
+
+	.catalogs-track {
+		--catalogs-gap: 1.5rem;
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: calc((100% - (3 * var(--catalogs-gap))) / 4);
+		gap: var(--catalogs-gap);
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+	}
+
+	.catalogs-track::-webkit-scrollbar {
+		display: none;
+	}
+
+	.catalog-card {
+		scroll-snap-align: start;
+		display: block;
+		text-decoration: none;
+		color: inherit;
+		transition: opacity .2s ease;
+	}
+
+	.catalog-card:hover {
+		opacity: .85;
+	}
+
+	.catalog-card__image {
+		width: 100%;
+		aspect-ratio: 3 / 4;
+		object-fit: cover;
+		display: block;
+	}
+
+	.catalog-card__label {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .4rem;
+		margin-top: .9rem;
+	}
+
+	.catalog-card__title {
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		font-size: .8rem;
+		color: var(--text);
+	}
+
+	.catalog-card__icon {
+		width: 1rem;
+		height: 1rem;
+		color: var(--text);
+	}
+
+	.catalogs-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 2.5rem;
+	}
+
+	.catalogs-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.catalogs-indicator-arrow:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.catalogs-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.catalogs-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.catalogs-dot.is-active {
+		background: #2f3437;
+	}
+
+	.contact-heading {
+		margin: 3.5rem 0 2.5rem;
+		font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+		font-weight: 700;
+		text-transform: none;
+		color: #B6AE99;
+	}
+
+	.contact-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 2rem;
+	}
+
+	.contact-col {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 	}
-	.btn {
+
+	.contact-col__title {
+		margin: 0 0 .6rem;
+		padding-bottom: .6rem;
+		width: 100%;
+		border-bottom: 1px solid #2f3437;
+		font-size: 1.05rem;
+		font-weight: 400;
+		color: var(--text);
+	}
+
+	.contact-col__description {
+		margin: 1rem 0 1.5rem;
+		font-size: .82rem;
+		line-height: 1.55;
+		color: var(--muted);
+	}
+
+	.contact-col__btn {
 		display: inline-block;
-		padding: .8rem 1.2rem;
-		background: #fff;
-		color: #111;
+		margin-top: auto;
+		padding: .6rem 1.5rem;
+		border: 1px solid #2f3437;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
 		text-decoration: none;
-		border-radius: 8px;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		font-size: .72rem;
 		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.contact-col__btn:hover,
+	.contact-col__btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+
+	.contact-col__btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
 	}
 
 	@media (max-width: 900px) {
-		.site-header { padding: .9rem 1rem; }
-		nav ul { gap: .8rem; font-size: .92rem; }
-		.cta-inner { flex-direction: column; align-items: flex-start; }
+		.hero-content h1 { margin-bottom: 1.75rem; }
+
+		.projects-carousel {
+			grid-auto-columns: 88vw;
+		}
+
+		.projects-card__body {
+			padding: 1rem 1.25rem 0;
+		}
+
+		.about-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.about-image {
+			width: 100%;
+			margin-left: 0;
+			height: auto;
+			min-height: 0;
+		}
+
+		.about-cta-btn {
+			align-self: flex-start;
+		}
+
+		.team-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.values-slider {
+			aspect-ratio: 4 / 3;
+		}
+
+		.values-slide__caption {
+			left: 6%;
+			right: 6%;
+			max-width: none;
+		}
+
+		.values-slide__title {
+			font-size: 1.9rem;
+		}
+
+		.catalogs-track {
+			grid-auto-columns: calc((100% - var(--catalogs-gap)) / 2);
+		}
+
+		.contact-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+	}
+
+	@media (max-width: 560px) {
+		.team-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.values-slide__title {
+			font-size: 1.5rem;
+		}
+
+		.values-slide__description {
+			font-size: .8rem;
+		}
+
+		.values-slide__caption {
+			bottom: 8%;
+		}
+
+		.catalogs-track {
+			grid-auto-columns: 100%;
+		}
+
+		.contact-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

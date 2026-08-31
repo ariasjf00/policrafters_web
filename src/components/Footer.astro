@@ -1,0 +1,451 @@
+---
+import { Icon } from 'astro-icon/components';
+import '../styles/links.css';
+
+interface Props {
+  lang?: 'es' | 'en';
+}
+
+const { lang = 'en' } = Astro.props;
+const currentYear = new Date().getFullYear();
+
+const footerCopy = {
+  es: {
+    blurb1: 'Ya sea que busques renovar tu hogar o renovar tu espacio comercial, nos comprometemos a ofrecer soluciones a la medida que combinan diseño innovador con una calidad inigualable.',
+    blurb2: 'Entendemos que cada cliente tiene necesidades únicas.',
+    links: [
+      'Noticias',
+      'Por qué Policrafters',
+      'Catálogos',
+      'Términos y condiciones',
+      'Garantía',
+      'Conviértete en socio franquiciado',
+      'Opciones de financiamiento',
+      'Área de socios (Iniciar sesión)',
+      'Red social'
+    ],
+    phoneLabel: 'TELÉFONO',
+    residentialLabel: 'SOLUCIONES RESIDENCIALES',
+    residentialLinks: [
+      'Espejos decorativos',
+      'Ventanas y puertas resistentes a impactos',
+      'Cocinas y espacios exteriores',
+      'Ver más servicios'
+    ],
+    emailLabel: 'CORREO ELECTRÓNICO',
+    commercialLabel: 'SOLUCIONES COMERCIALES',
+    commercialLinks: [
+      'Particiones de oficina',
+      'Barandales y guardias comerciales',
+      'Techos y toldos ligeros',
+      'Ver más servicios'
+    ],
+    addressLabel: 'DIRECCIÓN',
+    socialLabel: 'VISITA NUESTRAS REDES SOCIALES',
+    copyrightText: 'Policrafters - Todos los derechos reservados. Copyright®'
+  },
+  en: {
+    blurb1: "Whether you're looking to renovate your home or revamp your commercial space, we're committed to delivering bespoke solutions that merge innovative design with unparalleled quality.",
+    blurb2: 'We understand that every client has unique needs.',
+    links: [
+      'News',
+      'Why Policrafters',
+      'Catalogs',
+      'Terms & Conditions',
+      'Warranty',
+      'Become a Franchise Partner',
+      'Financing Options',
+      'Partners Area (Login)',
+      'Social Network'
+    ],
+    phoneLabel: 'PHONE',
+    residentialLabel: 'RESIDENTIAL SOLUTIONS',
+    residentialLinks: [
+      'Decorative Mirrors',
+      'Impact Windows and Doors',
+      'Outdoor Kitchens & living',
+      'See more services'
+    ],
+    emailLabel: 'EMAIL',
+    commercialLabel: 'COMMERCIAL SOLUTIONS',
+    commercialLinks: [
+      'Office Partitions',
+      'Commercial Guards and Railings',
+      'Lightweight Roofs and Awnings',
+      'See more services'
+    ],
+    addressLabel: 'ADDRESS',
+    socialLabel: 'VISIT OUR SOCIAL MEDIA',
+    copyrightText: 'Policrafters - All rights reserved. Copyright®'
+  }
+};
+
+const t = footerCopy[lang] ?? footerCopy.en;
+
+const socialLinks = [
+  { name: 'facebook', icon: 'simple-icons:facebook', label: 'Policrafters on Facebook' },
+  { name: 'instagram', icon: 'simple-icons:instagram', label: 'Policrafters on Instagram' },
+  { name: 'linkedin', icon: 'simple-icons:linkedin', label: 'Policrafters on LinkedIn' },
+  { name: 'youtube', icon: 'simple-icons:youtube', label: 'Policrafters on YouTube' },
+  { name: 'pinterest', icon: 'simple-icons:pinterest', label: 'Policrafters on Pinterest' }
+];
+---
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col footer-col--brand">
+      <img class="footer-logo" src="/logo_grey.png" alt="Policrafters logo" />
+      <p id="footer-blurb-1" class="footer-blurb">{t.blurb1}</p>
+      <p id="footer-blurb-2" class="footer-blurb">{t.blurb2}</p>
+    </div>
+
+    <div class="footer-col">
+      <ul class="footer-links">
+        {t.links.map((label, index) => (
+          <li><a href="#" class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-contact-block">
+        <Icon name="mdi:phone-in-talk" class="footer-contact-icon" />
+        <div>
+          <span id="footer-phone-label" class="footer-contact-label">{t.phoneLabel}</span>
+          <span class="footer-contact-value">+1 (813) 812-0650</span>
+        </div>
+      </div>
+      <span id="footer-residential-label" class="footer-section-label">{t.residentialLabel}</span>
+      <ul class="footer-sublinks">
+        {t.residentialLinks.map((label, index) => (
+          <li><a href="#" class="link-underline" data-footer-key={`residential-link-${index}`}>{label}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-contact-block">
+        <Icon name="mdi:email" class="footer-contact-icon" />
+        <div>
+          <span id="footer-email-label" class="footer-contact-label">{t.emailLabel}</span>
+          <span class="footer-contact-value">info@policrafters.com</span>
+        </div>
+      </div>
+      <span id="footer-commercial-label" class="footer-section-label">{t.commercialLabel}</span>
+      <ul class="footer-sublinks">
+        {t.commercialLinks.map((label, index) => (
+          <li><a href="#" class="link-underline" data-footer-key={`commercial-link-${index}`}>{label}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-contact-block">
+        <Icon name="mdi:map-marker" class="footer-contact-icon" />
+        <div>
+          <span id="footer-address-label" class="footer-contact-label">{t.addressLabel}</span>
+          <span class="footer-contact-value">7735 NW 75th<br />Ave. Medley, FL. 33166</span>
+        </div>
+      </div>
+      <span id="footer-social-label" class="footer-section-label">{t.socialLabel}</span>
+      <div class="footer-social-row">
+        {socialLinks.map((social) => (
+          <a
+            href="#"
+            class="footer-social-icon"
+            aria-label={social.label}
+            target="_blank"
+            rel="noopener"
+          >
+            <Icon name={social.icon} />
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p class="footer-copyright">
+      <span id="footer-copyright-text">{t.copyrightText}</span> <span data-footer-year>{currentYear}</span>
+    </p>
+  </div>
+</footer>
+
+<script>
+  const footerCopy = {
+    es: {
+      blurb1: 'Ya sea que busques renovar tu hogar o renovar tu espacio comercial, nos comprometemos a ofrecer soluciones a la medida que combinan diseño innovador con una calidad inigualable.',
+      blurb2: 'Entendemos que cada cliente tiene necesidades únicas.',
+      links: [
+        'Noticias',
+        'Por qué Policrafters',
+        'Catálogos',
+        'Términos y condiciones',
+        'Garantía',
+        'Conviértete en socio franquiciado',
+        'Opciones de financiamiento',
+        'Área de socios (Iniciar sesión)',
+        'Red social'
+      ],
+      phoneLabel: 'TELÉFONO',
+      residentialLabel: 'SOLUCIONES RESIDENCIALES',
+      residentialLinks: [
+        'Espejos decorativos',
+        'Ventanas y puertas resistentes a impactos',
+        'Cocinas y espacios exteriores',
+        'Ver más servicios'
+      ],
+      emailLabel: 'CORREO ELECTRÓNICO',
+      commercialLabel: 'SOLUCIONES COMERCIALES',
+      commercialLinks: [
+        'Particiones de oficina',
+        'Barandales y guardias comerciales',
+        'Techos y toldos ligeros',
+        'Ver más servicios'
+      ],
+      addressLabel: 'DIRECCIÓN',
+      socialLabel: 'VISITA NUESTRAS REDES SOCIALES',
+      copyrightText: 'Policrafters - Todos los derechos reservados. Copyright®'
+    },
+    en: {
+      blurb1: "Whether you're looking to renovate your home or revamp your commercial space, we're committed to delivering bespoke solutions that merge innovative design with unparalleled quality.",
+      blurb2: 'We understand that every client has unique needs.',
+      links: [
+        'News',
+        'Why Policrafters',
+        'Catalogs',
+        'Terms & Conditions',
+        'Warranty',
+        'Become a Franchise Partner',
+        'Financing Options',
+        'Partners Area (Login)',
+        'Social Network'
+      ],
+      phoneLabel: 'PHONE',
+      residentialLabel: 'RESIDENTIAL SOLUTIONS',
+      residentialLinks: [
+        'Decorative Mirrors',
+        'Impact Windows and Doors',
+        'Outdoor Kitchens & living',
+        'See more services'
+      ],
+      emailLabel: 'EMAIL',
+      commercialLabel: 'COMMERCIAL SOLUTIONS',
+      commercialLinks: [
+        'Office Partitions',
+        'Commercial Guards and Railings',
+        'Lightweight Roofs and Awnings',
+        'See more services'
+      ],
+      addressLabel: 'ADDRESS',
+      socialLabel: 'VISIT OUR SOCIAL MEDIA',
+      copyrightText: 'Policrafters - All rights reserved. Copyright®'
+    }
+  };
+
+  const getLangFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get('lang');
+    return lang === 'en' || lang === 'es' ? lang : null;
+  };
+
+  const resolveActiveLang = () => {
+    const langInUrl = getLangFromUrl();
+    if (langInUrl) return langInUrl;
+    const stored = localStorage.getItem('siteLang');
+    if (stored === 'en' || stored === 'es') return stored;
+    return document.documentElement.lang === 'es' ? 'es' : 'en';
+  };
+
+  const applyFooterLanguage = (lang) => {
+    const activeLang = lang === 'en' ? 'en' : 'es';
+    const copy = footerCopy[activeLang];
+
+    document.querySelector('#footer-blurb-1')?.replaceChildren(copy.blurb1);
+    document.querySelector('#footer-blurb-2')?.replaceChildren(copy.blurb2);
+    document.querySelector('#footer-phone-label')?.replaceChildren(copy.phoneLabel);
+    document.querySelector('#footer-residential-label')?.replaceChildren(copy.residentialLabel);
+    document.querySelector('#footer-email-label')?.replaceChildren(copy.emailLabel);
+    document.querySelector('#footer-commercial-label')?.replaceChildren(copy.commercialLabel);
+    document.querySelector('#footer-address-label')?.replaceChildren(copy.addressLabel);
+    document.querySelector('#footer-social-label')?.replaceChildren(copy.socialLabel);
+    document.querySelector('#footer-copyright-text')?.replaceChildren(copy.copyrightText);
+
+    copy.links.forEach((label, index) => {
+      document.querySelector(`[data-footer-key="link-${index}"]`)?.replaceChildren(label);
+    });
+    copy.residentialLinks.forEach((label, index) => {
+      document.querySelector(`[data-footer-key="residential-link-${index}"]`)?.replaceChildren(label);
+    });
+    copy.commercialLinks.forEach((label, index) => {
+      document.querySelector(`[data-footer-key="commercial-link-${index}"]`)?.replaceChildren(label);
+    });
+  };
+
+  applyFooterLanguage(resolveActiveLang());
+  document.addEventListener('sitelangchange', (event) => {
+    applyFooterLanguage(event.detail);
+  });
+
+  const yearEl = document.querySelector('[data-footer-year]');
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+</script>
+
+<style>
+  .site-footer {
+    background: #2f3437;
+    color: #b6ae99;
+    padding: 4rem 2rem 0;
+    font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  .site-footer a {
+    color: #b6ae99;
+    text-decoration: none;
+  }
+
+  .site-footer a:focus-visible {
+    outline: 2px solid #b6ae99;
+    outline-offset: 2px;
+  }
+
+  .footer-grid {
+    width: min(1200px, 92%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+    gap: 2.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .footer-logo {
+    height: 38px;
+    width: auto;
+    display: block;
+    margin-bottom: 1.25rem;
+  }
+
+  .footer-blurb {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin: 0 0 1rem;
+    opacity: 0.9;
+  }
+
+  .footer-links,
+  .footer-sublinks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .footer-links a {
+    font-size: 0.95rem;
+  }
+
+  .footer-sublinks {
+    margin-top: 0.75rem;
+  }
+
+  .footer-sublinks a {
+    font-size: 0.85rem;
+  }
+
+  .footer-contact-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .footer-contact-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+  }
+
+  .footer-contact-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+  }
+
+  .footer-contact-value {
+    display: block;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .footer-section-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    opacity: 0.6;
+  }
+
+  .footer-social-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+  }
+
+  .footer-social-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #b6ae99;
+    border-radius: 50%;
+  }
+
+  .footer-social-icon:hover {
+    background: #b6ae99;
+    color: #2f3437;
+    opacity: 1;
+  }
+
+  .footer-social-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(182, 174, 153, 0.25);
+    padding: 1.25rem 2rem;
+    text-align: center;
+  }
+
+  .footer-copyright {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+
+  @media (max-width: 900px) {
+    .footer-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-col--brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-col--brand {
+      grid-column: auto;
+    }
+  }
+</style>

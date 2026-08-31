@@ -1,84 +1,115 @@
 {
   "type": "collections.CollectionIndexPage",
   "title": "Collections",
-  "locale": "es",
+  "locale": "en",
   "meta": {
     "seo_title": "Collections | Policrafters",
-    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños."
+    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños.",
+    "search_description_en": "Featured Policrafters collections for doors, windows, pergolas, kitchens, terraces, and bathrooms."
   },
   "fields": {
-    "hero_title": "Collections",
+    "hero_title": "Colecciones",
+    "hero_title_en": "Collections",
     "hero_subtitle": "Selección de propuestas para transformar cada espacio con diseño funcional.",
+    "hero_subtitle_en": "A curated selection of proposals to transform every space with functional design.",
     "intro_text": "Innovación tecnológica, investigación estilística, conciencia ecológica, son los componentes de la visión exclusiva de Rimadesio, traducida en una propuesta de decoración y división funcional de las habitaciones: sistemas modulares para la zona de estar, librerías, puertas, vestidores, boiseries y una cada vez más rica colección de accesorios.",
+    "intro_text_en": "Technological innovation, style research, and ecological awareness are the pillars of Rimadesio's exclusive vision, translated into a design proposal for furnishing and functionally dividing rooms: modular systems for living areas, bookcases, doors, wardrobes, boiseries, and an ever-richer accessories collection.",
+    "prev_aria": "Ver colección anterior",
+    "prev_aria_en": "View previous collection",
+    "next_aria": "Ver siguiente colección",
+    "next_aria_en": "View next collection",
+    "carousel_aria": "Carrusel de colecciones",
+    "carousel_aria_en": "Collections carousel",
     "collection_items": [
       {
         "type": "PUERTAS",
+        "type_en": "DOORS",
         "description": "Batientes, bidireccionales y correderas ocultas para espacios elegantes.",
+        "description_en": "Swing, bidirectional, and concealed sliding systems for refined spaces.",
         "image": {
           "url": "/images/projects/Prima_Pivot.jpg",
           "alt": "Puertas batientes de vidrio"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "VENTANAS",
+        "type_en": "WINDOWS",
         "description": "Paneles de alta transparencia que elevan la luz natural y la amplitud.",
+        "description_en": "High-transparency panels that enhance natural light and spatial openness.",
         "image": {
           "url": "/images/projects/Clear_Glass_38.jpg",
           "alt": "Ventanas con cristal claro"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "PERGOLAS",
+        "type_en": "PERGOLAS",
         "description": "Estructuras térmicas resistentes para crear ambientes exteriores confortables.",
+        "description_en": "Resilient thermal structures designed for comfortable outdoor living.",
         "image": {
           "url": "/images/projects/Pergola_Thermal.png",
           "alt": "Pérgola térmica exterior"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "COCINAS",
+        "type_en": "KITCHENS",
         "description": "Soluciones limpias y funcionales con acabados premium para el corazón del hogar.",
+        "description_en": "Clean, functional solutions with premium finishes for the heart of the home.",
         "image": {
           "url": "/images/projects/Vienna_Shower_Door.png",
           "alt": "Cocina contemporánea con cerramientos de vidrio"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "TERRAZAS",
+        "type_en": "TERRACES",
         "description": "Diseños panorámicos que conectan interior y exterior sin perder estilo.",
+        "description_en": "Panoramic concepts that connect indoor and outdoor environments in style.",
         "image": {
           "url": "/images/projects/shutterstock_1839412099.jpg",
           "alt": "Terraza con cerramiento panorámico"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "BAÑOS",
+        "type_en": "BATHROOMS",
         "description": "Configuraciones de ducha y división que priorizan comodidad, higiene y diseño.",
+        "description_en": "Shower and partition configurations focused on comfort, hygiene, and design.",
         "image": {
           "url": "/images/projects/Prima_Shower_D.jpg",
           "alt": "Baño moderno con puerta de ducha"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       },
       {
         "type": "COCINAS",
+        "type_en": "KITCHENS",
         "description": "Composiciones modulares para cocinas abiertas, sobrias y altamente prácticas.",
+        "description_en": "Modular compositions for open kitchens: sober, contemporary, and practical.",
         "image": {
           "url": "/images/projects/The_Box_Shower_Door.png",
           "alt": "Cocina abierta con paneles contemporáneos"
         },
         "cta_text": "Descubre más",
+        "cta_text_en": "Discover more",
         "cta_url": "/contacto"
       }
     ]

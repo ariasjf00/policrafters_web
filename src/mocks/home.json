@@ -1,55 +1,166 @@
 {
   "type": "home_cms.HomePage",
   "title": "Policrafters",
-  "locale": "es",
+  "locale": "en",
   "meta": {
     "seo_title": "Policrafters | Diseño y mobiliario",
     "search_description": "Mobiliario y diseño de interiores premium."
   },
   "fields": {
-    "hero_video_url": "/videos/hero.mp4",
-    "hero_image_fallback": {
-      "url": "/images/hero-fallback.svg",
+    "hero_video_horizontal": "/videos/horizontal_video_placeholder.mp4",
+    "hero_video_vertical": "/videos/vertical_video_placeholder.mp4",
+    "hero_image_horizontal": {
+      "url": "/images/pages/horizontal_video_static_image.png",
       "alt": "Interior de lujo Policrafters"
     },
-    "hero_heading": "Diseño que transforma espacios",
-    "hero_subheading": "Colecciones exclusivas para proyectos residenciales y comerciales.",
-    "intro_text": "Creamos experiencias a través de mobiliario, acabados y soluciones integrales.",
+    "hero_image_vertical": {
+      "url": "/images/pages/vertical_video_static_image.png",
+      "alt": "Interior de lujo Policrafters"
+    },
+    "hero_heading": "Tu Socio Experto en Interiores y Arquitectura",
     "featured_projects": [
       {
         "title": "Easy Slide",
         "slug": "easy-slide",
         "thumbnail": { "url": "/images/projects/Easy_Slide.png", "alt": "Easy Slide" },
-        "location": "CDMX"
+        "description": "Sistema de puertas corredizas de bajo perfil que maximiza la luz natural sin sacrificar espacio en planta."
       },
       {
         "title": "Pergola Thermal",
         "slug": "pergola-thermal",
         "thumbnail": { "url": "/images/projects/Pergola_Thermal.png", "alt": "Pergola Thermal" },
-        "location": "Monterrey"
-      }
-    ],
-    "featured_brands": [
-      {
-        "name": "Falper",
-        "slug": "falper",
-        "logo": { "url": "/images/brands/falper.svg", "alt": "Logo Falper" }
+        "description": "Estructura térmica resistente pensada para espacios exteriores confortables durante todo el año."
       },
       {
-        "name": "Brand X",
-        "slug": "brand-x",
-        "logo": { "url": "/images/brands/brandx.svg", "alt": "Logo Brand X" }
-      }
-    ],
-    "testimonials": [
+        "title": "Vienna Shower Door",
+        "slug": "vienna-shower-door",
+        "thumbnail": { "url": "/images/projects/Vienna_Shower_Door.png", "alt": "Vienna Shower Door" },
+        "description": "Mampara de cristal templado con herrajes minimalistas que aportan elegancia al baño moderno."
+      },
       {
-        "author": "Arq. María López",
-        "quote": "Excelente curaduría de productos y acompañamiento en todo el proyecto.",
-        "project_ref": "penthouse-reforma"
+        "title": "Prima Pivot",
+        "slug": "prima-pivot",
+        "thumbnail": { "url": "/images/projects/Prima_Pivot.jpg", "alt": "Prima Pivot" },
+        "description": "Puerta pivotante de diseño limpio, ideal para accesos de gran formato con apertura suave."
+      },
+      {
+        "title": "Cardiff",
+        "slug": "cardiff",
+        "thumbnail": { "url": "/images/projects/Cardiff.jpg", "alt": "Cardiff" },
+        "description": "Solución de cerramiento en vidrio y acero que combina durabilidad con una estética sobria."
       }
     ],
-    "cta_heading": "¿Listo para tu próximo proyecto?",
-    "cta_button_text": "Contáctanos",
-    "cta_button_url": "/contacto"
+    "team_members": [
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "role_en": "Position",
+        "photo": { "url": "/images/pages/office_portrait_1.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "role_en": "Position",
+        "photo": { "url": "/images/pages/office_portrait_2.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "role_en": "Position",
+        "photo": { "url": "/images/pages/office_portrait_3.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "role_en": "Position",
+        "photo": { "url": "/images/pages/office_portrait_4.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ],
+    "values_slides": [
+      {
+        "title": "Calidad",
+        "title_en": "Quality",
+        "image": { "url": "/images/pages/values_1.webp", "alt": "Calidad Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Durabilidad",
+        "title_en": "Durability",
+        "image": { "url": "/images/pages/values_2.webp", "alt": "Durabilidad Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Experiencia",
+        "title_en": "Expertise",
+        "image": { "url": "/images/pages/values_3.webp", "alt": "Experiencia Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Innovación",
+        "title_en": "Innovation",
+        "image": { "url": "/images/pages/values_4.webp", "alt": "Innovación Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ],
+    "catalogs": [
+      { "title": "Catálogo 1", "title_en": "Catalog 1", "image": { "url": "/images/pages/1_pergola.png", "alt": "Catálogo Policrafters 1" }, "file_url": "#" },
+      { "title": "Catálogo 2", "title_en": "Catalog 2", "image": { "url": "/images/pages/2_pergola.png", "alt": "Catálogo Policrafters 2" }, "file_url": "#" },
+      { "title": "Catálogo 3", "title_en": "Catalog 3", "image": { "url": "/images/pages/3_pergola.png", "alt": "Catálogo Policrafters 3" }, "file_url": "#" },
+      { "title": "Catálogo 4", "title_en": "Catalog 4", "image": { "url": "/images/pages/4_pergola.png", "alt": "Catálogo Policrafters 4" }, "file_url": "#" },
+      { "title": "Catálogo 5", "title_en": "Catalog 5", "image": { "url": "/images/pages/5_pergola.png", "alt": "Catálogo Policrafters 5" }, "file_url": "#" },
+      { "title": "Catálogo 6", "title_en": "Catalog 6", "image": { "url": "/images/pages/6_pergola.png", "alt": "Catálogo Policrafters 6" }, "file_url": "#" },
+      { "title": "Catálogo 7", "title_en": "Catalog 7", "image": { "url": "/images/pages/7_pergola.png", "alt": "Catálogo Policrafters 7" }, "file_url": "#" },
+      { "title": "Catálogo 8", "title_en": "Catalog 8", "image": { "url": "/images/pages/8_pergola.png", "alt": "Catálogo Policrafters 8" }, "file_url": "#" },
+      { "title": "Catálogo 9", "title_en": "Catalog 9", "image": { "url": "/images/pages/9_pergola.png", "alt": "Catálogo Policrafters 9" }, "file_url": "#" },
+      { "title": "Catálogo 10", "title_en": "Catalog 10", "image": { "url": "/images/pages/10_pergola.png", "alt": "Catálogo Policrafters 10" }, "file_url": "#" },
+      { "title": "Catálogo 11", "title_en": "Catalog 11", "image": { "url": "/images/pages/11_pergola.png", "alt": "Catálogo Policrafters 11" }, "file_url": "#" },
+      { "title": "Catálogo 12", "title_en": "Catalog 12", "image": { "url": "/images/pages/12_pergola.png", "alt": "Catálogo Policrafters 12" }, "file_url": "#" },
+      { "title": "Catálogo 13", "title_en": "Catalog 13", "image": { "url": "/images/pages/13_pergola.png", "alt": "Catálogo Policrafters 13" }, "file_url": "#" },
+      { "title": "Catálogo 14", "title_en": "Catalog 14", "image": { "url": "/images/pages/14_pergola.png", "alt": "Catálogo Policrafters 14" }, "file_url": "#" },
+      { "title": "Catálogo 15", "title_en": "Catalog 15", "image": { "url": "/images/pages/15_pergola.png", "alt": "Catálogo Policrafters 15" }, "file_url": "#" },
+      { "title": "Catálogo 16", "title_en": "Catalog 16", "image": { "url": "/images/pages/16_pergola.png", "alt": "Catálogo Policrafters 16" }, "file_url": "#" }
+    ],
+    "contact_links": [
+      {
+        "title": "Servicio de Diseño de Interiores",
+        "title_en": "Interior Design Service",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Falper Contract",
+        "title_en": "Falper Contract",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Distribuidores",
+        "title_en": "Retailers",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Contáctanos",
+        "title_en": "Contact Us",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      }
+    ]
   }
 }

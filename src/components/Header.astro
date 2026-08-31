@@ -1,0 +1,491 @@
+---
+// Single source of truth for the site header/top nav.
+// IMPORTANT: do not import ../styles/global.css here — it is `@import "tailwindcss"`,
+// and index.astro deliberately does not load Tailwind. Importing it would inject
+// preflight (margin/padding/border resets) into the homepage's hand-written CSS.
+
+interface Props {
+	lang?: 'es' | 'en';
+	logo?: { url: string; alt: string };
+	position?: 'sticky' | 'fixed';
+	scrollShadow?: boolean;
+	currentPath?: string;
+}
+
+const {
+	lang = 'es',
+	logo = { url: '/logo_black.png', alt: 'Policrafters logo' },
+	position = 'sticky',
+	scrollShadow = false,
+	currentPath = Astro.url.pathname,
+} = Astro.props;
+
+const isEs = lang === 'es';
+
+// The one menu table. Its client-side twin lives in this file's <script>; keeping both
+// here is what prevents the 4-way drift this component exists to fix.
+const navItems = isEs
+	? [
+			{ key: 'collections', label: 'Colecciones', href: '/colecciones' },
+			{ key: 'renovations', label: 'Renovaciones', href: '/renovaciones' },
+			{ key: 'services', label: 'Servicios', href: '/servicios' },
+			{ key: 'brands', label: 'Marcas', href: '/marcas' },
+			{ key: 'contact', label: 'Contáctanos', href: '/contacto' },
+		]
+	: [
+			{ key: 'collections', label: 'Collections', href: '/colecciones' },
+			{ key: 'renovations', label: 'Renovations', href: '/renovaciones' },
+			{ key: 'services', label: 'Services', href: '/servicios' },
+			{ key: 'brands', label: 'Brands', href: '/marcas' },
+			{ key: 'contact', label: 'Contact Us', href: '/contacto' },
+		];
+
+// English is the default, so it is never stamped into a URL; Spanish always is.
+const appendLang = (href: string, value: string) => {
+	const [path, query = ''] = href.split('?');
+	const params = new URLSearchParams(query);
+	if (value === 'es') params.set('lang', 'es');
+	else params.delete('lang');
+	const queryString = params.toString();
+	return queryString ? `${path}?${queryString}` : path;
+};
+
+// Tolerate a trailing slash so /colecciones/ keeps its active-page highlight.
+const normalizedPath = currentPath.replace(/\/+$/, '') || '/';
+const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
+const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
+---
+
+<header
+	class:list={['site-header', position === 'fixed' && 'is-fixed']}
+	data-scroll-shadow={scrollShadow ? '' : undefined}
+>
+	<a class="logo" href="/">
+		<img id="site-logo" src={logo.url} alt={logo.alt} />
+	</a>
+	<button
+		type="button"
+		class="nav-toggle"
+		aria-expanded="false"
+		aria-controls="primary-nav"
+		aria-label={isEs ? 'Abrir menú' : 'Open menu'}
+	>
+		<span class="nav-toggle-bar"></span>
+		<span class="nav-toggle-bar"></span>
+		<span class="nav-toggle-bar"></span>
+	</button>
+	<div class="nav-backdrop"></div>
+	<nav id="primary-nav" aria-label="Main navigation">
+		<ul>
+			{navItems.map((item) => (
+				<li>
+					<a
+						href={appendLang(item.href, lang)}
+						data-menu-key={item.key}
+						class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
+					>
+						{item.label}
+					</a>
+				</li>
+			))}
+			<li class="search-item">
+				<button type="button" class="search-icon" aria-label={isEs ? 'Buscar' : 'Search'}>
+					<svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+						<circle cx="8.5" cy="8.5" r="6.25" stroke="currentColor" stroke-width="1.6" />
+						<line x1="13.2" y1="13.2" x2="18" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+					</svg>
+				</button>
+			</li>
+			<li class="lang-switch" aria-label={isEs ? 'Selector de idioma' : 'Language selector'}>
+				<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
+				<span>/</span>
+				<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ESP</a>
+			</li>
+		</ul>
+	</nav>
+</header>
+
+<script>
+	// This component owns the site's language state.
+	// INVARIANT: only this file dispatches `sitelangchange`. Subscribers (Footer,
+	// index, colecciones) self-boot then listen — they must never re-dispatch, or
+	// Header's boot -> subscriber -> re-dispatch becomes a feedback loop.
+	const MENU_BY_LANG = {
+		es: {
+			collections: { label: 'Colecciones', href: '/colecciones' },
+			renovations: { label: 'Renovaciones', href: '/renovaciones' },
+			services: { label: 'Servicios', href: '/servicios' },
+			brands: { label: 'Marcas', href: '/marcas' },
+			contact: { label: 'Contáctanos', href: '/contacto' }
+		},
+		en: {
+			collections: { label: 'Collections', href: '/colecciones' },
+			renovations: { label: 'Renovations', href: '/renovaciones' },
+			services: { label: 'Services', href: '/servicios' },
+			brands: { label: 'Brands', href: '/marcas' },
+			contact: { label: 'Contact Us', href: '/contacto' }
+		}
+	};
+
+	const header = document.querySelector('.site-header');
+
+	const getLangFromUrl = () => {
+		const params = new URLSearchParams(window.location.search);
+		const lang = params.get('lang');
+		return lang === 'en' || lang === 'es' ? lang : null;
+	};
+
+	// Mirrors the frontmatter helper: English stays out of the URL, Spanish is stamped in.
+	const appendLang = (href, lang) => {
+		const [path, query = ''] = href.split('?');
+		const params = new URLSearchParams(query);
+		if (lang === 'es') params.set('lang', 'es');
+		else params.delete('lang');
+		const queryString = params.toString();
+		return queryString ? `${path}?${queryString}` : path;
+	};
+
+	// url -> localStorage -> server-rendered <html lang> -> 'en'.
+	// The <html lang> tier lets each page keep its own server-side default
+	// (index derives it from the CMS locale) without a per-page resolver.
+	const resolveActiveLang = () => {
+		const langInUrl = getLangFromUrl();
+		if (langInUrl) return langInUrl;
+		const stored = localStorage.getItem('siteLang');
+		if (stored === 'en' || stored === 'es') return stored;
+		return document.documentElement.lang === 'es' ? 'es' : 'en';
+	};
+
+	const applyHeaderLanguage = (lang) => {
+		const activeLang = lang === 'en' ? 'en' : 'es';
+		const copy = MENU_BY_LANG[activeLang];
+		localStorage.setItem('siteLang', activeLang);
+		document.documentElement.lang = activeLang;
+
+		if (header) {
+			header.querySelectorAll('[data-menu-key]').forEach((link) => {
+				const key = link.getAttribute('data-menu-key');
+				if (!key || !copy[key]) return;
+				link.textContent = copy[key].label;
+				link.setAttribute('href', appendLang(copy[key].href, activeLang));
+			});
+
+			header.querySelectorAll('.lang-link').forEach((link) => {
+				const linkLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+				link.classList.toggle('is-active', linkLang === activeLang);
+				// Keep the href truthful so middle-click / copy-link yield the right language.
+				link.setAttribute('href', appendLang(window.location.pathname + window.location.search, linkLang));
+			});
+
+			const toggle = header.querySelector('.nav-toggle');
+			toggle?.setAttribute('aria-label', activeLang === 'es' ? 'Abrir menú' : 'Open menu');
+			const search = header.querySelector('.search-icon');
+			search?.setAttribute('aria-label', activeLang === 'es' ? 'Buscar' : 'Search');
+			const langSwitch = header.querySelector('.lang-switch');
+			langSwitch?.setAttribute('aria-label', activeLang === 'es' ? 'Selector de idioma' : 'Language selector');
+		}
+
+		document.dispatchEvent(new CustomEvent('sitelangchange', { detail: activeLang }));
+	};
+
+	const navToggle = header?.querySelector('.nav-toggle');
+	const primaryNav = header?.querySelector('nav[aria-label="Main navigation"]');
+	const navBackdrop = header?.querySelector('.nav-backdrop');
+	const mobileNavQuery = window.matchMedia('(max-width: 900px)');
+
+	const closeMenu = () => {
+		if (!navToggle || !primaryNav || !navBackdrop) return;
+		navToggle.setAttribute('aria-expanded', 'false');
+		primaryNav.classList.remove('is-open');
+		navBackdrop.classList.remove('is-open');
+		document.body.style.overflow = '';
+	};
+
+	const openMenu = () => {
+		if (!navToggle || !primaryNav || !navBackdrop) return;
+		navToggle.setAttribute('aria-expanded', 'true');
+		primaryNav.classList.add('is-open');
+		navBackdrop.classList.add('is-open');
+		document.body.style.overflow = 'hidden';
+	};
+
+	if (navToggle && primaryNav && navBackdrop) {
+		navToggle.addEventListener('click', () => {
+			const isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+			if (isOpen) {
+				closeMenu();
+			} else {
+				openMenu();
+			}
+		});
+
+		navBackdrop.addEventListener('click', closeMenu);
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') closeMenu();
+		});
+
+		mobileNavQuery.addEventListener('change', (event) => {
+			if (!event.matches) closeMenu();
+		});
+	}
+
+	header?.querySelectorAll('.lang-link').forEach((link) => {
+		link.addEventListener('click', (event) => {
+			event.preventDefault();
+			const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+			syncLangInUrl(target);
+			applyHeaderLanguage(target);
+			closeMenu();
+		});
+	});
+
+	if (header?.hasAttribute('data-scroll-shadow')) {
+		const SCROLL_THRESHOLD = 40;
+		const updateHeaderOnScroll = () => {
+			header.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+		};
+		updateHeaderOnScroll();
+		window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+	}
+
+	// English is the default, so keep it out of the URL: only Spanish is stamped in.
+	// A redundant ?lang=en is stripped so shared links stay canonical.
+	const syncLangInUrl = (lang) => {
+		const nextUrl = new URL(window.location.href);
+		const current = nextUrl.searchParams.get('lang');
+		if (lang === 'en') {
+			if (current === null) return;
+			nextUrl.searchParams.delete('lang');
+		} else {
+			if (current === 'es') return;
+			nextUrl.searchParams.set('lang', 'es');
+		}
+		window.history.replaceState({}, '', nextUrl);
+	};
+
+	const activeLang = resolveActiveLang();
+	syncLangInUrl(activeLang);
+	applyHeaderLanguage(activeLang);
+</script>
+
+<style>
+	/* Astro scopes `*` to this component's own elements, so this does not leak out.
+	   It is required because index.astro has no Tailwind preflight to fall back on. */
+	* { box-sizing: border-box; }
+
+	.site-header {
+		position: sticky;
+		top: 0;
+		z-index: 20;
+		width: 100%;
+		padding: 1rem 2rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: #fff;
+		border-bottom: 1px solid #ececec;
+	}
+
+	/* Home page: overlays the 100vh hero, so it must be out of flow. */
+	.site-header.is-fixed {
+		position: fixed;
+		left: 0;
+		transition: box-shadow .3s ease;
+	}
+
+	.site-header.is-scrolled {
+		box-shadow: 0 1px 0 #ececec;
+	}
+
+	.logo img { height: 34px; width: auto; display: block; }
+
+	nav ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		align-items: center;
+		gap: 1.6rem;
+	}
+
+	nav a.nav-link {
+		position: relative;
+		color: #2f3437;
+		text-decoration: none;
+		font-weight: 500;
+		font-size: 0.82rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		padding: 0.5rem 0.9rem;
+		border-radius: 999px;
+		transition: background-color 0.2s ease;
+	}
+
+	nav a.nav-link::after {
+		content: "";
+		position: absolute;
+		left: 0.9rem;
+		right: 0.9rem;
+		bottom: 0.35rem;
+		height: 1px;
+		background: currentColor;
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform 0.25s ease;
+	}
+
+	nav a.nav-link:hover::after,
+	nav a.nav-link:focus-visible::after,
+	nav a.nav-link.is-active-page::after {
+		transform: scaleX(1);
+	}
+
+	nav a.nav-link.is-active-page {
+		background: #c9a876;
+		color: #2f3437;
+	}
+
+	.nav-toggle {
+		display: none;
+		flex-direction: column;
+		justify-content: center;
+		gap: 5px;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+		z-index: 2;
+	}
+
+	.nav-toggle-bar {
+		display: block;
+		width: 100%;
+		height: 2px;
+		background: #2f3437;
+		border-radius: 2px;
+		transition: transform 0.3s ease, opacity 0.3s ease;
+	}
+
+	.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) {
+		transform: translateY(7px) rotate(45deg);
+	}
+
+	.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) {
+		opacity: 0;
+	}
+
+	.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) {
+		transform: translateY(-7px) rotate(-45deg);
+	}
+
+	.nav-backdrop {
+		display: none;
+	}
+
+	.search-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: #111;
+		padding: 0.25rem;
+		cursor: pointer;
+	}
+
+	.lang-switch {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.28rem;
+		color: #808080;
+		font-size: 0.78rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.lang-link {
+		color: #808080;
+		text-decoration: none;
+		opacity: 0.55;
+		transition: opacity 0.2s ease;
+	}
+
+	.lang-link:hover {
+		opacity: 1;
+		text-decoration: underline;
+	}
+
+	.lang-link.is-active {
+		opacity: 1;
+		font-weight: 600;
+		text-decoration: underline;
+	}
+
+	@media (max-width: 900px) {
+		.site-header {
+			padding: .9rem 1rem;
+		}
+
+		.nav-toggle {
+			display: flex;
+		}
+
+		.nav-backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.4);
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.35s ease;
+			z-index: 0;
+		}
+
+		.nav-backdrop.is-open {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		nav[aria-label="Main navigation"] {
+			position: fixed;
+			top: 0;
+			right: 0;
+			height: 100vh;
+			width: 75vw;
+			max-width: 75vw;
+			background: #fff;
+			box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+			transform: translateX(100%);
+			transition: transform 0.35s ease;
+			z-index: 1;
+			overflow-y: auto;
+			padding: 5rem 2rem 2rem;
+		}
+
+		nav[aria-label="Main navigation"].is-open {
+			transform: translateX(0);
+		}
+
+		nav ul {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.5rem;
+			font-size: .92rem;
+		}
+
+		nav a.nav-link {
+			display: block;
+			width: 100%;
+			padding: 0.9rem 0.5rem;
+			font-size: 1rem;
+		}
+
+		.lang-switch,
+		.search-item {
+			margin-top: 1rem;
+		}
+	}
+</style>

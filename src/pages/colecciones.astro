@@ -38,9 +38,33 @@ const resolvedFields = resolvedData.fields ?? collectionsPage.fields ?? {};
 const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
 const fallbackFields = collectionsPage.fields ?? {};
 
-const pageTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Collections';
-const pageSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
-const introText = resolvedFields.intro_text || fallbackFields.intro_text || '';
+// Mirrors index.astro: ?lang= wins, otherwise the payload's locale decides.
+const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
+const isEsLocale = normalizedLocale.includes('es');
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es'
+  ? langParam
+  : (isEsLocale ? 'es' : 'en');
+const isEs = selectedLang === 'es';
+// Base keys hold Spanish, `_en` keys hold English (same convention as home.json).
+const pick = (es, en) => (isEs ? es : (en ?? es));
+
+const esTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Colecciones';
+const enTitle = resolvedFields.hero_title_en || fallbackFields.hero_title_en || esTitle;
+const esSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
+const enSubtitle = resolvedFields.hero_subtitle_en || fallbackFields.hero_subtitle_en || esSubtitle;
+const esIntro = resolvedFields.intro_text || fallbackFields.intro_text || '';
+const enIntro = resolvedFields.intro_text_en || fallbackFields.intro_text_en || esIntro;
+const esPrevAria = resolvedFields.prev_aria || fallbackFields.prev_aria || 'Ver colección anterior';
+const enPrevAria = resolvedFields.prev_aria_en || fallbackFields.prev_aria_en || esPrevAria;
+const esNextAria = resolvedFields.next_aria || fallbackFields.next_aria || 'Ver siguiente colección';
+const enNextAria = resolvedFields.next_aria_en || fallbackFields.next_aria_en || esNextAria;
+const esCarouselAria = resolvedFields.carousel_aria || fallbackFields.carousel_aria || 'Carrusel de colecciones';
+const enCarouselAria = resolvedFields.carousel_aria_en || fallbackFields.carousel_aria_en || esCarouselAria;
+
+const pageTitle = pick(esTitle, enTitle);
+const pageSubtitle = pick(esSubtitle, enSubtitle);
+const introText = pick(esIntro, enIntro);
 const collectionItems = Array.isArray(resolvedFields.collection_items)
   ? resolvedFields.collection_items
   : fallbackFields.collection_items ?? [];
@@ -48,29 +72,66 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
 
 <PageLayout
   title={resolvedMeta.seo_title || 'Collections | Policrafters'}
-  description={resolvedMeta.search_description || 'Colecciones destacadas de Policrafters'}
+  description={pick(resolvedMeta.search_description, resolvedMeta.search_description_en) || 'Featured Policrafters collections'}
   heroTitle={pageTitle}
   heroSubtitle={pageSubtitle}
+  heroTitleEs={esTitle}
+  heroTitleEn={enTitle}
+  heroSubtitleEs={esSubtitle}
+  heroSubtitleEn={enSubtitle}
 >
   <section class="collections-section">
-    <h2 id="collections-title">{pageTitle}</h2>
-    <p id="collections-intro" class="collections-copy">{introText}</p>
+    <h2 id="collections-title" data-copy-es={esTitle} data-copy-en={enTitle}>{pageTitle}</h2>
+    <p id="collections-intro" class="collections-copy" data-copy-es={esIntro} data-copy-en={enIntro}>{introText}</p>
 
     <div class="carousel-shell">
       <div class="carousel-viewport">
         <div class="carousel-controls" aria-hidden="true">
-          <button id="collections-prev" class="carousel-btn carousel-btn--icon" data-action="prev" aria-label="Ver colección anterior">&lt;</button>
-          <button id="collections-next" class="carousel-btn carousel-btn--icon" data-action="next" aria-label="Ver siguiente colección">&gt;</button>
+          <button
+            id="collections-prev"
+            class="carousel-btn carousel-btn--icon"
+            data-action="prev"
+            data-aria-es={esPrevAria}
+            data-aria-en={enPrevAria}
+            aria-label={pick(esPrevAria, enPrevAria)}
+          >&lt;</button>
+          <button
+            id="collections-next"
+            class="carousel-btn carousel-btn--icon"
+            data-action="next"
+            data-aria-es={esNextAria}
+            data-aria-en={enNextAria}
+            aria-label={pick(esNextAria, enNextAria)}
+          >&gt;</button>
         </div>
 
-        <div class="collection-carousel" id="collection-carousel" aria-label="Carrusel de colecciones">
+        <div
+          class="collection-carousel"
+          id="collection-carousel"
+          data-aria-es={esCarouselAria}
+          data-aria-en={enCarouselAria}
+          aria-label={pick(esCarouselAria, enCarouselAria)}
+        >
           {collectionItems.map((item, index) => (
             <article class="collection-card" data-collection-index={index}>
               <img src={normalizeAssetUrl(item.image?.url)} alt={item.image?.alt || item.type} loading="lazy" />
               <div class="collection-card__body">
-                <h3 class="collection-type">{item.type}</h3>
-                <p class="collection-description">{item.description}</p>
-                <a href={item.cta_url || '/contacto'} class="discover-btn">{item.cta_text || 'Descubre más'}</a>
+                <h3
+                  class="collection-type"
+                  data-copy-es={item.type}
+                  data-copy-en={item.type_en || item.type}
+                >{pick(item.type, item.type_en)}</h3>
+                <p
+                  class="collection-description"
+                  data-copy-es={item.description}
+                  data-copy-en={item.description_en || item.description}
+                >{pick(item.description, item.description_en)}</p>
+                <a
+                  href={item.cta_url || '/contacto'}
+                  class="discover-btn"
+                  data-copy-es={item.cta_text || 'Descubre más'}
+                  data-copy-en={item.cta_text_en || item.cta_text || 'Discover more'}
+                >{pick(item.cta_text || 'Descubre más', item.cta_text_en || 'Discover more')}</a>
               </div>
             </article>
           ))}
@@ -83,10 +144,6 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
 <script>
   const carousel = document.getElementById('collection-carousel');
   const buttons = document.querySelectorAll('.carousel-btn');
-  const titleNode = document.getElementById('collections-title');
-  const introNode = document.getElementById('collections-intro');
-  const prevButton = document.getElementById('collections-prev');
-  const nextButton = document.getElementById('collections-next');
   const initialCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
   const baseCount = initialCards.length;
   let virtualIndex = baseCount;
@@ -94,68 +151,11 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   let loopReady = false;
   let isAnimating = false;
 
-  const esCopy = {
-    title: titleNode?.textContent?.trim() || 'Colecciones',
-    intro: introNode?.textContent?.trim() || '',
-    prevAria: 'Ver colección anterior',
-    nextAria: 'Ver siguiente colección',
-    carouselAria: 'Carrusel de colecciones',
-    items: initialCards.map((card) => ({
-      type: card.querySelector('.collection-type')?.textContent?.trim() || '',
-      description: card.querySelector('.collection-description')?.textContent?.trim() || '',
-      cta: card.querySelector('.discover-btn')?.textContent?.trim() || 'Descubre más'
-    }))
-  };
-
-  const enCopy = {
-    title: 'Collections',
-    intro: 'Technological innovation, style research, and ecological awareness are the pillars of Rimadesio\'s exclusive vision, translated into a design proposal for furnishing and functionally dividing rooms: modular systems for living areas, bookcases, doors, wardrobes, boiseries, and an ever-richer accessories collection.',
-    prevAria: 'View previous collection',
-    nextAria: 'View next collection',
-    carouselAria: 'Collections carousel',
-    items: [
-      {
-        type: 'DOORS',
-        description: 'Swing, bidirectional, and concealed sliding systems for refined spaces.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'WINDOWS',
-        description: 'High-transparency panels that enhance natural light and spatial openness.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'PERGOLAS',
-        description: 'Resilient thermal structures designed for comfortable outdoor living.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'KITCHENS',
-        description: 'Clean, functional solutions with premium finishes for the heart of the home.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'TERRACES',
-        description: 'Panoramic concepts that connect indoor and outdoor environments in style.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'BATHROOMS',
-        description: 'Shower and partition configurations focused on comfort, hygiene, and design.',
-        cta: 'Discover more'
-      },
-      {
-        type: 'KITCHENS',
-        description: 'Modular compositions for open kitchens: sober, contemporary, and practical.',
-        cta: 'Discover more'
-      }
-    ]
-  };
-
   const appendLang = (href, lang) => {
     const [path, query = ''] = href.split('?');
     const params = new URLSearchParams(query);
-    params.set('lang', lang);
+    if (lang === 'es') params.set('lang', 'es');
+    else params.delete('lang');
     const queryString = params.toString();
     return queryString ? `${path}?${queryString}` : path;
   };
@@ -171,32 +171,27 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     if (inUrl) return inUrl;
     const stored = localStorage.getItem('siteLang');
     if (stored === 'en' || stored === 'es') return stored;
-    return 'es';
+    return document.documentElement.lang === 'es' ? 'es' : 'en';
   };
 
+  // All copy ships in the markup as data-copy-es/-en and data-aria-es/-en, so both
+  // languages are present server-side and cloned carousel cards carry their own copy.
   const applyCollectionsLanguage = (lang) => {
     const activeLang = lang === 'en' ? 'en' : 'es';
-    const copy = activeLang === 'en' ? enCopy : esCopy;
+    const key = activeLang === 'en' ? 'en' : 'es';
 
-    if (titleNode) titleNode.textContent = copy.title;
-    if (introNode) introNode.textContent = copy.intro;
-    if (prevButton) prevButton.setAttribute('aria-label', copy.prevAria);
-    if (nextButton) nextButton.setAttribute('aria-label', copy.nextAria);
-    if (carousel) carousel.setAttribute('aria-label', copy.carouselAria);
+    document.querySelectorAll('[data-copy-es]').forEach((el) => {
+      const value = el.getAttribute('data-copy-' + key);
+      if (value !== null) el.textContent = value;
+    });
 
-    const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
-    allCards.forEach((card) => {
-      const cardIndex = Number.parseInt(card.getAttribute('data-collection-index') || '0', 10);
-      const itemCopy = copy.items[cardIndex] || copy.items[copy.items.length - 1];
-      const typeNode = card.querySelector('.collection-type');
-      const descriptionNode = card.querySelector('.collection-description');
-      const ctaNode = card.querySelector('.discover-btn');
-      if (typeNode && itemCopy?.type) typeNode.textContent = itemCopy.type;
-      if (descriptionNode && itemCopy?.description) descriptionNode.textContent = itemCopy.description;
-      if (ctaNode && itemCopy?.cta) {
-        ctaNode.textContent = itemCopy.cta;
-        ctaNode.setAttribute('href', appendLang(ctaNode.getAttribute('href') || '/contacto', activeLang));
-      }
+    document.querySelectorAll('[data-aria-es]').forEach((el) => {
+      const value = el.getAttribute('data-aria-' + key);
+      if (value !== null) el.setAttribute('aria-label', value);
+    });
+
+    document.querySelectorAll('.discover-btn').forEach((cta) => {
+      cta.setAttribute('href', appendLang(cta.getAttribute('href') || '/contacto', activeLang));
     });
   };
 
@@ -289,20 +284,13 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     loopReady = true;
   };
 
-  document.querySelectorAll('.lang-link').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      const targetLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-      const nextUrl = new URL(window.location.href);
-      nextUrl.searchParams.set('lang', targetLang);
-      window.history.replaceState({}, '', nextUrl);
-      localStorage.setItem('siteLang', targetLang);
-      applyCollectionsLanguage(targetLang);
-    });
-  });
-
   setupInfiniteCarousel();
+
+  // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+  // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+  // before this page script runs (see Footer.astro for the same pattern).
   applyCollectionsLanguage(getActiveLang());
+  document.addEventListener('sitelangchange', (event) => applyCollectionsLanguage(event.detail));
 </script>
 
 <style>
