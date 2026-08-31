@@ -7,6 +7,45 @@
     "search_description": "Mobiliario y diseño de interiores premium."
   },
   "fields": {
+    "copy": {
+      "hero_eyebrow": { "es": "DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO", "en": "WHERE INNOVATION MEETS DESIGN" },
+      "hero_heading": { "es": "Tu Socio Experto en Interiores y Arquitectura", "en": "Your Premier Interiors & Architectural Partner" },
+      "hero_cta": { "es": "CONTÁCTANOS AHORA", "en": "CONTACT US NOW" },
+      "projects_eyebrow": { "es": "Nuestros proyectos", "en": "Our projects" },
+      "projects_heading": { "es": "MIRA LO QUE PODEMOS CREAR", "en": "SEE WHAT WE CAN CREATE" },
+      "projects_cta": { "es": "Ver todos los proyectos", "en": "See all projects" },
+      "projects_prev_aria": { "es": "Ver proyecto anterior", "en": "View previous project" },
+      "projects_next_aria": { "es": "Ver siguiente proyecto", "en": "View next project" },
+      "projects_carousel_aria": { "es": "Carrusel de proyectos", "en": "Projects carousel" },
+      "projects_dot_aria": { "es": "Ir al proyecto", "en": "Go to project" },
+      "about_eyebrow": { "es": "Nosotros, Marcas", "en": "About Us, Brands" },
+      "about_heading": { "es": "BIENVENIDO A POLICRAFTERS", "en": "WELCOME TO POLICRAFTERS" },
+      "about_body_1": {
+        "es": "En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura.",
+        "en": "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions."
+      },
+      "about_body_2": {
+        "es": "Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión.",
+        "en": "Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond. Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life."
+      },
+      "about_brands_label": { "es": "Nuestras Marcas", "en": "Our Brands" },
+      "about_cta": { "es": "Saber más", "en": "Know more" },
+      "team_eyebrow": { "es": "Nuestro Equipo, Experiencia", "en": "Our Team, Expertise" },
+      "team_heading": { "es": "LA GENTE DETRÁS DEL OFICIO", "en": "THE PEOPLE BEHIND THE CRAFT" },
+      "values_eyebrow": { "es": "Nuestros Valores", "en": "Our Values" },
+      "values_heading": { "es": "LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS", "en": "THE PRINCIPLES BEHIND EVERYTHING WE CREATE" },
+      "values_prev_aria": { "es": "Ver valor anterior", "en": "View previous value" },
+      "values_next_aria": { "es": "Ver siguiente valor", "en": "View next value" },
+      "values_carousel_aria": { "es": "Carrusel de valores", "en": "Values carousel" },
+      "values_dot_aria": { "es": "Ir al valor", "en": "Go to value" },
+      "catalogs_eyebrow": { "es": "Nuestros Catálogos", "en": "Our Catalogs" },
+      "catalogs_heading": { "es": "EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES", "en": "EXPLORE OUR COLLECTIONS AND SOLUTIONS" },
+      "catalogs_prev_aria": { "es": "Anterior", "en": "Previous" },
+      "catalogs_next_aria": { "es": "Siguiente", "en": "Next" },
+      "catalogs_dot_aria": { "es": "Ir a la página", "en": "Go to page" },
+      "contact_heading": { "es": "¿Te gustaría contactar directamente con Policrafters?", "en": "Would you like to get direct contact with Policrafters?" },
+      "contact_cta": { "es": "Saber más", "en": "Learn more" }
+    },
     "hero_video_horizontal": "/videos/horizontal_video_placeholder.mp4",
     "hero_video_vertical": "/videos/vertical_video_placeholder.mp4",
     "hero_image_horizontal": {

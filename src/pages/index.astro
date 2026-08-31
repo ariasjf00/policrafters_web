@@ -6,8 +6,8 @@ import { Icon } from 'astro-icon/components';
 import "../styles/links.css";
 
 const useApi = import.meta.env.PUBLIC_USE_API === "true";
-const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/home/";
-const apiOrigin = apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
+const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+const apiOrigin = apiUrl && apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
 const normalizeAssetUrl = (value) => {
 	if (!value) return "";
 	if (/^https?:\/\//i.test(value)) return value;
@@ -18,7 +18,7 @@ const normalizeAssetUrl = (value) => {
 };
 let data = home;
 
-if (useApi) {
+if (useApi && apiUrl) {
 	try {
 		const response = await fetch(apiUrl);
 		if (response.ok) {
@@ -106,15 +106,44 @@ const selectedLang = langParam === "en" || langParam === "es"
 		: "en";
 const isEs = selectedLang === "es";
 
-const localizedHeroHeading = isEs
-	? heroHeading
-	: 'Your Premier Interiors & Architectural Partner';
-const localizedHeroEyebrow = isEs
-	? 'DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO'
-	: 'WHERE INNOVATION MEETS DESIGN';
-const localizedHeroCta = isEs
-	? 'CONTÁCTANOS AHORA'
-	: 'CONTACT US NOW';
+const copyByKey = resolvedFields.copy ?? {};
+const getCopyText = (key, fallback = "") => {
+	const value = copyByKey[key];
+	if (!value || typeof value !== "object") return fallback;
+	return value[selectedLang] ?? value.es ?? value.en ?? fallback;
+};
+const localizedHeroHeading = getCopyText("hero_heading", heroHeading || "Home");
+const localizedHeroEyebrow = getCopyText("hero_eyebrow", "");
+const localizedHeroCta = getCopyText("hero_cta", "");
+const localizedProjectsEyebrow = getCopyText("projects_eyebrow", "");
+const localizedProjectsHeading = getCopyText("projects_heading", "");
+const localizedProjectsCta = getCopyText("projects_cta", "");
+const localizedAboutEyebrow = getCopyText("about_eyebrow", "");
+const localizedAboutHeading = getCopyText("about_heading", "");
+const localizedAboutCta = getCopyText("about_cta", "");
+const localizedTeamEyebrow = getCopyText("team_eyebrow", "");
+const localizedTeamHeading = getCopyText("team_heading", "");
+const localizedValuesEyebrow = getCopyText("values_eyebrow", "");
+const localizedValuesHeading = getCopyText("values_heading", "");
+const localizedCatalogsEyebrow = getCopyText("catalogs_eyebrow", "");
+const localizedCatalogsHeading = getCopyText("catalogs_heading", "");
+const localizedContactHeading = getCopyText("contact_heading", "");
+const localizedContactCta = getCopyText("contact_cta", "");
+const localizedAboutBody1 = getCopyText("about_body_1", "");
+const localizedAboutBody2 = getCopyText("about_body_2", "");
+const localizedAboutBrandsLabel = getCopyText("about_brands_label", "");
+const localizedAboutAlt = isEs ? 'Equipo de Policrafters' : 'The Policrafters team';
+const localizedProjectsPrevAria = getCopyText("projects_prev_aria", "");
+const localizedProjectsNextAria = getCopyText("projects_next_aria", "");
+const localizedProjectsCarouselAria = getCopyText("projects_carousel_aria", "");
+const localizedProjectsDotAria = getCopyText("projects_dot_aria", "");
+const localizedValuesPrevAria = getCopyText("values_prev_aria", "");
+const localizedValuesNextAria = getCopyText("values_next_aria", "");
+const localizedValuesCarouselAria = getCopyText("values_carousel_aria", "");
+const localizedValuesDotAria = getCopyText("values_dot_aria", "");
+const localizedCatalogsPrevAria = getCopyText("catalogs_prev_aria", "");
+const localizedCatalogsNextAria = getCopyText("catalogs_next_aria", "");
+const localizedCatalogsDotAria = getCopyText("catalogs_dot_aria", "");
 const heroCtaUrl = '/contacto';
 ---
 
@@ -149,29 +178,29 @@ const heroCtaUrl = '/contacto';
 			></video>
 			<div class="hero-overlay" />
 			<div class="hero-content">
-				<p id="hero-eyebrow" class="eyebrow">{localizedHeroEyebrow}</p>
-				<h1 id="hero-heading">{localizedHeroHeading}</h1>
-				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl}>{localizedHeroCta}</a>
+				<p id="hero-eyebrow" class="eyebrow" data-i18n data-es={resolvedFields.copy?.hero_eyebrow?.es || localizedHeroEyebrow} data-en={resolvedFields.copy?.hero_eyebrow?.en || localizedHeroEyebrow}>{localizedHeroEyebrow}</p>
+				<h1 id="hero-heading" data-i18n data-es={resolvedFields.copy?.hero_heading?.es || localizedHeroHeading} data-en={resolvedFields.copy?.hero_heading?.en || localizedHeroHeading}>{localizedHeroHeading}</h1>
+				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl} data-i18n data-es={resolvedFields.copy?.hero_cta?.es || localizedHeroCta} data-en={resolvedFields.copy?.hero_cta?.en || localizedHeroCta}>{localizedHeroCta}</a>
 			</div>
 		</section>
 
 		<main>
 			<section class="projects-section">
-				<p id="projects-eyebrow" class="section-eyebrow">{isEs ? "Nuestros proyectos" : "Our projects"}</p>
-				<h2 id="projects-heading" class="section-heading">{isEs ? "MIRA LO QUE PODEMOS CREAR" : "SEE WHAT WE CAN CREATE"}</h2>
+				<p id="projects-eyebrow" class="section-eyebrow">{localizedProjectsEyebrow}</p>
+				<h2 id="projects-heading" class="section-heading">{localizedProjectsHeading}</h2>
 
 				<div class="projects-carousel-shell">
 					<div class="projects-carousel-viewport">
 						<div class="projects-carousel-controls" aria-hidden="true">
-							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={isEs ? "Ver proyecto anterior" : "View previous project"}>
+							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
 								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
 							</button>
-							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={isEs ? "Ver siguiente proyecto" : "View next project"}>
+							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={localizedProjectsNextAria}>
 								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
 							</button>
 						</div>
 
-						<div class="projects-carousel" id="projects-carousel" aria-label={isEs ? "Carrusel de proyectos" : "Projects carousel"}>
+						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria}>
 							{featuredProjects.map((p, index) => (
 								<a href="#" class="projects-card" data-project-index={index}>
 									<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
@@ -184,8 +213,8 @@ const heroCtaUrl = '/contacto';
 						</div>
 					</div>
 
-					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={isEs ? "Selector de proyecto" : "Project selector"}>
-						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={isEs ? "Anterior" : "Previous"}>
+					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={localizedProjectsCarouselAria}>
+						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
 							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 						</button>
 						<div class="projects-dots" id="projects-dots">
@@ -194,17 +223,17 @@ const heroCtaUrl = '/contacto';
 									type="button"
 									class:list={["projects-dot", index === 0 && "is-active"]}
 									data-dot-index={index}
-									aria-label={(isEs ? "Ir al proyecto " : "Go to project ") + (index + 1)}
+									aria-label={localizedProjectsDotAria + ' ' + (index + 1)}
 								></button>
 							))}
 						</div>
-						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={localizedProjectsNextAria}>
 							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 						</button>
 					</div>
 				</div>
 
-				<a id="projects-cta" href="#" class="projects-cta-btn">{isEs ? "Ver todos los proyectos" : "See all projects"}</a>
+				<a id="projects-cta" href="#" class="projects-cta-btn">{localizedProjectsCta}</a>
 			</section>
 
 			<hr class="section-rule" />
@@ -214,24 +243,20 @@ const heroCtaUrl = '/contacto';
 					<img
 						class="about-image"
 						src="/images/pages/about_us.png"
-						alt={isEs ? "Equipo de Policrafters" : "The Policrafters team"}
+						alt={localizedAboutAlt}
 						loading="lazy"
 					/>
 					<div class="about-copy">
-						<p id="about-eyebrow" class="section-eyebrow">{isEs ? "Nosotros, Marcas" : "About Us, Brands"}</p>
-						<h2 id="about-heading" class="section-heading">{isEs ? "BIENVENIDO A POLICRAFTERS" : "WELCOME TO POLICRAFTERS"}</h2>
-						<p id="about-body-1">{isEs
-							? "En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura."
-							: "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions."}</p>
-						<p id="about-body-2">{isEs
-							? "Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión."
-							: "Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond. Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life."}</p>
-						<p id="about-brands-label" class="about-brands-label">{isEs ? "Nuestras Marcas" : "Our Brands"}</p>
+						<p id="about-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.about_eyebrow?.es || localizedAboutEyebrow} data-en={resolvedFields.copy?.about_eyebrow?.en || localizedAboutEyebrow}>{localizedAboutEyebrow}</p>
+						<h2 id="about-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.about_heading?.es || localizedAboutHeading} data-en={resolvedFields.copy?.about_heading?.en || localizedAboutHeading}>{localizedAboutHeading}</h2>
+						<p id="about-body-1" data-i18n data-es={localizedAboutBody1} data-en={localizedAboutBody1}>{localizedAboutBody1}</p>
+						<p id="about-body-2" data-i18n data-es={localizedAboutBody2} data-en={localizedAboutBody2}>{localizedAboutBody2}</p>
+						<p id="about-brands-label" class="about-brands-label" data-i18n data-es={localizedAboutBrandsLabel} data-en={localizedAboutBrandsLabel}>{localizedAboutBrandsLabel}</p>
 						<ul class="about-brands-list">
 							<li><a href="https://glasstech-usa.com" target="_blank" rel="noopener" class="link-body">glasstech-usa.com</a></li>
 							<li><a href="https://alutech-usa.com" target="_blank" rel="noopener" class="link-body">alutech-usa.com</a></li>
 						</ul>
-						<a id="about-cta" href="#" class="about-cta-btn">{isEs ? "Saber más" : "Know more"}</a>
+						<a id="about-cta" href="#" class="about-cta-btn" data-i18n data-es={resolvedFields.copy?.about_cta?.es || localizedAboutCta} data-en={resolvedFields.copy?.about_cta?.en || localizedAboutCta}>{localizedAboutCta}</a>
 					</div>
 				</div>
 			</section>
@@ -239,8 +264,8 @@ const heroCtaUrl = '/contacto';
 			<hr class="section-rule" />
 
 			<section class="container team-section">
-				<p id="team-eyebrow" class="section-eyebrow">{isEs ? "Nuestro Equipo, Experiencia" : "Our Team, Expertise"}</p>
-				<h2 id="team-heading" class="section-heading">{isEs ? "LA GENTE DETRÁS DEL OFICIO" : "THE PEOPLE BEHIND THE CRAFT"}</h2>
+				<p id="team-eyebrow" class="section-eyebrow">{localizedTeamEyebrow}</p>
+				<h2 id="team-heading" class="section-heading">{localizedTeamHeading}</h2>
 
 				<div class="team-grid">
 					{teamMembers.map((member) => (
@@ -254,8 +279,9 @@ const heroCtaUrl = '/contacto';
 							<div class="team-card__meta">
 								<p
 									class="team-card__role"
-									data-role-es={member.role}
-									data-role-en={member.role_en}
+									data-i18n
+									data-es={member.role}
+									data-en={member.role_en}
 								>
 									{isEs ? member.role : member.role_en}
 								</p>
@@ -263,8 +289,9 @@ const heroCtaUrl = '/contacto';
 							</div>
 							<p
 								class="team-card__bio"
-								data-bio-es={member.bio}
-								data-bio-en={member.bio_en}
+								data-i18n
+								data-es={member.bio}
+								data-en={member.bio_en}
 							>
 								{isEs ? member.bio : member.bio_en}
 							</p>
@@ -277,11 +304,11 @@ const heroCtaUrl = '/contacto';
 
 			<section class="values-section">
 				<div class="values-header">
-					<p id="values-eyebrow" class="section-eyebrow">{isEs ? "Nuestros Valores" : "Our Values"}</p>
-					<h2 id="values-heading" class="section-heading">{isEs ? "LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS" : "THE PRINCIPLES BEHIND EVERYTHING WE CREATE"}</h2>
+					<p id="values-eyebrow" class="section-eyebrow">{localizedValuesEyebrow}</p>
+					<h2 id="values-heading" class="section-heading">{localizedValuesHeading}</h2>
 				</div>
 
-				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={isEs ? "Carrusel de valores" : "Values carousel"}>
+				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={localizedValuesCarouselAria}>
 					{valuesSlides.map((slide, index) => (
 						<div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
 							<img
@@ -293,15 +320,17 @@ const heroCtaUrl = '/contacto';
 							<div class="values-slide__caption">
 								<h3
 									class="values-slide__title"
-									data-vtitle-es={slide.title}
-									data-vtitle-en={slide.title_en}
+									data-i18n
+									data-es={slide.title}
+									data-en={slide.title_en}
 								>
 									{isEs ? slide.title : slide.title_en}
 								</h3>
 								<p
 									class="values-slide__description"
-									data-vdesc-es={slide.description}
-									data-vdesc-en={slide.description_en}
+									data-i18n
+									data-es={slide.description}
+									data-en={slide.description_en}
 								>
 									{isEs ? slide.description : slide.description_en}
 								</p>
@@ -310,17 +339,17 @@ const heroCtaUrl = '/contacto';
 					))}
 
 					<div class="values-slider-controls" aria-hidden="true">
-						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={isEs ? "Ver valor anterior" : "View previous value"}>
+						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={localizedValuesPrevAria}>
 							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
 						</button>
-						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={isEs ? "Ver siguiente valor" : "View next value"}>
+						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={localizedValuesNextAria}>
 							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
 						</button>
 					</div>
 				</div>
 
-				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={isEs ? "Selector de valor" : "Value selector"}>
-					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={isEs ? "Anterior" : "Previous"}>
+				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={localizedValuesCarouselAria}>
+					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={localizedValuesPrevAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 					</button>
 					<div class="values-dots" id="values-dots">
@@ -329,11 +358,11 @@ const heroCtaUrl = '/contacto';
 								type="button"
 								class:list={["values-dot", index === 0 && "is-active"]}
 								data-dot-index={index}
-								aria-label={(isEs ? "Ir al valor " : "Go to value ") + (index + 1)}
+								aria-label={localizedValuesDotAria + ' ' + (index + 1)}
 							></button>
 						))}
 					</div>
-					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={localizedValuesNextAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 					</button>
 				</div>
@@ -342,8 +371,8 @@ const heroCtaUrl = '/contacto';
 			<hr class="section-rule" />
 
 			<section class="container catalogs-section">
-				<p id="catalogs-eyebrow" class="section-eyebrow">{isEs ? "Nuestros Catálogos" : "Our Catalogs"}</p>
-				<h2 id="catalogs-heading" class="section-heading">{isEs ? "EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES" : "EXPLORE OUR COLLECTIONS AND SOLUTIONS"}</h2>
+				<p id="catalogs-eyebrow" class="section-eyebrow">{localizedCatalogsEyebrow}</p>
+				<h2 id="catalogs-heading" class="section-heading">{localizedCatalogsHeading}</h2>
 
 				<div class="catalogs-track" id="catalogs-track">
 					{catalogs.map((item, index) => (
@@ -352,8 +381,9 @@ const heroCtaUrl = '/contacto';
 							<span class="catalog-card__label">
 								<span
 									class="catalog-card__title"
-									data-ctitle-es={item.title}
-									data-ctitle-en={item.title_en}
+									data-i18n
+									data-es={item.title}
+									data-en={item.title_en}
 								>
 									{isEs ? item.title : item.title_en}
 								</span>
@@ -363,8 +393,8 @@ const heroCtaUrl = '/contacto';
 					))}
 				</div>
 
-				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={isEs ? "Selector de catálogo" : "Catalog selector"}>
-					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={isEs ? "Anterior" : "Previous"}>
+				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={localizedCatalogsEyebrow}>
+					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={localizedCatalogsPrevAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 					</button>
 					<div class="catalogs-dots" id="catalogs-dots">
@@ -373,35 +403,37 @@ const heroCtaUrl = '/contacto';
 								type="button"
 								class:list={["catalogs-dot", index === 0 && "is-active"]}
 								data-dot-index={index}
-								aria-label={(isEs ? "Ir a la página " : "Go to page ") + (index + 1)}
+								aria-label={localizedCatalogsDotAria + ' ' + (index + 1)}
 							></button>
 						))}
 					</div>
-					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={isEs ? "Siguiente" : "Next"}>
+					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={localizedCatalogsNextAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 					</button>
 				</div>
 
-				<h2 id="contact-heading" class="contact-heading">{isEs ? "¿Te gustaría contactar directamente con Policrafters?" : "Would you like to get direct contact with Policrafters?"}</h2>
+				<h2 id="contact-heading" class="contact-heading">{localizedContactHeading}</h2>
 
 				<div class="contact-grid">
 					{contactLinks.map((link) => (
 						<div class="contact-col">
 							<h3
 								class="contact-col__title"
-								data-lntitle-es={link.title}
-								data-lntitle-en={link.title_en}
+								data-i18n
+								data-es={link.title}
+								data-en={link.title_en}
 							>
 								{isEs ? link.title : link.title_en}
 							</h3>
 							<p
 								class="contact-col__description"
-								data-lndesc-es={link.description}
-								data-lndesc-en={link.description_en}
+								data-i18n
+								data-es={link.description}
+								data-en={link.description_en}
 							>
 								{isEs ? link.description : link.description_en}
 							</p>
-							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{isEs ? "Saber más" : "Learn more"}</a>
+							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{localizedContactCta}</a>
 						</div>
 					))}
 				</div>
@@ -413,78 +445,8 @@ const heroCtaUrl = '/contacto';
 		<script type="module">
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
-			const uiByLang = {
-				es: {
-					content: {
-						heroEyebrow: 'DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO',
-						heroHeading: 'Tu Socio Experto en Interiores y Arquitectura',
-						heroCta: 'CONTÁCTANOS AHORA',
-						projectsEyebrow: 'Nuestros proyectos',
-						projectsHeading: 'MIRA LO QUE PODEMOS CREAR',
-						projectsCta: 'Ver todos los proyectos',
-						projectsPrevAria: 'Ver proyecto anterior',
-						projectsNextAria: 'Ver siguiente proyecto',
-						projectsCarouselAria: 'Carrusel de proyectos',
-						projectsDotAria: 'Ir al proyecto',
-						aboutEyebrow: 'Nosotros, Marcas',
-						aboutHeading: 'BIENVENIDO A POLICRAFTERS',
-						aboutBody1: 'En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura.',
-						aboutBody2: 'Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión.',
-						aboutBrandsLabel: 'Nuestras Marcas',
-						aboutCta: 'Saber más',
-						teamEyebrow: 'Nuestro Equipo, Experiencia',
-						teamHeading: 'LA GENTE DETRÁS DEL OFICIO',
-						valuesEyebrow: 'Nuestros Valores',
-						valuesHeading: 'LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS',
-						valuesCarouselAria: 'Carrusel de valores',
-						valuesPrevAria: 'Ver valor anterior',
-						valuesNextAria: 'Ver siguiente valor',
-						valuesDotAria: 'Ir al valor',
-						catalogsEyebrow: 'Nuestros Catálogos',
-						catalogsHeading: 'EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES',
-						catalogsPrevAria: 'Anterior',
-						catalogsNextAria: 'Siguiente',
-						catalogsDotAria: 'Ir a la página',
-						contactHeading: '¿Te gustaría contactar directamente con Policrafters?',
-						contactBtn: 'Saber más'
-					}
-				},
-				en: {
-					content: {
-						heroEyebrow: 'WHERE INNOVATION MEETS DESIGN',
-						heroHeading: 'Your Premier Interiors & Architectural Partner',
-						heroCta: 'CONTACT US NOW',
-						projectsEyebrow: 'Our projects',
-						projectsHeading: 'SEE WHAT WE CAN CREATE',
-						projectsCta: 'See all projects',
-						projectsPrevAria: 'View previous project',
-						projectsNextAria: 'View next project',
-						projectsCarouselAria: 'Projects carousel',
-						projectsDotAria: 'Go to project',
-						aboutEyebrow: 'About Us, Brands',
-						aboutHeading: 'WELCOME TO POLICRAFTERS',
-						aboutBody1: "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions.",
-						aboutBody2: "Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond. Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life.",
-						aboutBrandsLabel: 'Our Brands',
-						aboutCta: 'Know more',
-						teamEyebrow: 'Our Team, Expertise',
-						teamHeading: 'THE PEOPLE BEHIND THE CRAFT',
-						valuesEyebrow: 'Our Values',
-						valuesHeading: 'THE PRINCIPLES BEHIND EVERYTHING WE CREATE',
-						valuesCarouselAria: 'Values carousel',
-						valuesPrevAria: 'View previous value',
-						valuesNextAria: 'View next value',
-						valuesDotAria: 'Go to value',
-						catalogsEyebrow: 'Our Catalogs',
-						catalogsHeading: 'EXPLORE OUR COLLECTIONS AND SOLUTIONS',
-						catalogsPrevAria: 'Previous',
-						catalogsNextAria: 'Next',
-						catalogsDotAria: 'Go to page',
-						contactHeading: 'Would you like to get direct contact with Policrafters?',
-						contactBtn: 'Learn more'
-					}
-				}
-			};
+			const shouldUseCms = import.meta.env.PUBLIC_USE_API === 'true' && Boolean(apiUrl);
+			const uiByLang = null;
 
 			const getLangFromUrl = () => {
 				const params = new URLSearchParams(window.location.search);
@@ -505,70 +467,17 @@ const heroCtaUrl = '/contacto';
 			// of `sitelangchange` — never dispatch it from here (feedback loop).
 			const applyHomeLanguage = (lang) => {
 				const activeLang = lang === 'en' ? 'en' : 'es';
-				const copy = uiByLang[activeLang];
-
-				document.querySelector('#hero-eyebrow')?.replaceChildren(copy.content.heroEyebrow);
-				document.querySelector('#hero-heading')?.replaceChildren(copy.content.heroHeading);
-				document.querySelector('#hero-cta')?.replaceChildren(copy.content.heroCta);
-				document.querySelector('#projects-eyebrow')?.replaceChildren(copy.content.projectsEyebrow);
-				document.querySelector('#projects-heading')?.replaceChildren(copy.content.projectsHeading);
-				document.querySelector('#projects-cta')?.replaceChildren(copy.content.projectsCta);
-				document.querySelector('#projects-prev')?.setAttribute('aria-label', copy.content.projectsPrevAria);
-				document.querySelector('#projects-next')?.setAttribute('aria-label', copy.content.projectsNextAria);
-				document.querySelector('#projects-carousel')?.setAttribute('aria-label', copy.content.projectsCarouselAria);
-				document.querySelectorAll('.projects-dot').forEach((dot) => {
-					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-					dot.setAttribute('aria-label', `${copy.content.projectsDotAria} ${dotIndex + 1}`);
+				document.querySelectorAll('[data-i18n]').forEach((el) => {
+					const value = el.dataset[activeLang];
+					if (value !== undefined) {
+						el.textContent = value;
+					}
 				});
-				document.querySelector('#about-eyebrow')?.replaceChildren(copy.content.aboutEyebrow);
-				document.querySelector('#about-heading')?.replaceChildren(copy.content.aboutHeading);
-				document.querySelector('#about-body-1')?.replaceChildren(copy.content.aboutBody1);
-				document.querySelector('#about-body-2')?.replaceChildren(copy.content.aboutBody2);
-				document.querySelector('#about-brands-label')?.replaceChildren(copy.content.aboutBrandsLabel);
-				document.querySelector('#about-cta')?.replaceChildren(copy.content.aboutCta);
-				document.querySelector('#team-eyebrow')?.replaceChildren(copy.content.teamEyebrow);
-				document.querySelector('#team-heading')?.replaceChildren(copy.content.teamHeading);
-				document.querySelectorAll('[data-role-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'roleEn' : 'roleEs'] || '');
-				});
-				document.querySelectorAll('[data-bio-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'bioEn' : 'bioEs'] || '');
-				});
-				document.querySelector('#values-eyebrow')?.replaceChildren(copy.content.valuesEyebrow);
-				document.querySelector('#values-heading')?.replaceChildren(copy.content.valuesHeading);
-				document.querySelectorAll('[data-vtitle-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'vtitleEn' : 'vtitleEs'] || '');
-				});
-				document.querySelectorAll('[data-vdesc-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'vdescEn' : 'vdescEs'] || '');
-				});
-				document.querySelector('#values-prev')?.setAttribute('aria-label', copy.content.valuesPrevAria);
-				document.querySelector('#values-next')?.setAttribute('aria-label', copy.content.valuesNextAria);
-				document.querySelector('#values-slider')?.setAttribute('aria-label', copy.content.valuesCarouselAria);
-				document.querySelectorAll('.values-dot').forEach((dot) => {
-					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-					dot.setAttribute('aria-label', `${copy.content.valuesDotAria} ${dotIndex + 1}`);
-				});
-				document.querySelector('#catalogs-eyebrow')?.replaceChildren(copy.content.catalogsEyebrow);
-				document.querySelector('#catalogs-heading')?.replaceChildren(copy.content.catalogsHeading);
-				document.querySelector('#contact-heading')?.replaceChildren(copy.content.contactHeading);
-				document.querySelectorAll('[data-ctitle-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'ctitleEn' : 'ctitleEs'] || '');
-				});
-				document.querySelectorAll('[data-lntitle-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'lntitleEn' : 'lntitleEs'] || '');
-				});
-				document.querySelectorAll('[data-lndesc-es]').forEach((el) => {
-					el.replaceChildren(el.dataset[activeLang === 'en' ? 'lndescEn' : 'lndescEs'] || '');
-				});
-				document.querySelectorAll('[data-lnbtn]').forEach((el) => {
-					el.replaceChildren(copy.content.contactBtn);
-				});
-				document.querySelector('#catalogs-prev')?.setAttribute('aria-label', copy.content.catalogsPrevAria);
-				document.querySelector('#catalogs-next')?.setAttribute('aria-label', copy.content.catalogsNextAria);
-				document.querySelectorAll('.catalogs-dot').forEach((dot) => {
-					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-					dot.setAttribute('aria-label', `${copy.content.catalogsDotAria} ${dotIndex + 1}`);
+				document.querySelectorAll('[data-aria-i18n]').forEach((el) => {
+					const value = el.dataset[activeLang === 'en' ? 'ariaEn' : 'ariaEs'];
+					if (value !== undefined) {
+						el.setAttribute('aria-label', value);
+					}
 				});
 			};
 			const setText = (selector, value) => {
@@ -614,7 +523,7 @@ const heroCtaUrl = '/contacto';
 				applyHomeLanguage(getActiveLang());
 			};
 
-			if (apiUrl) {
+			if (shouldUseCms) {
 				fetch(apiUrl, { cache: 'no-store' })
 					.then((response) => {
 						if (!response.ok) throw new Error(`HTTP ${response.status}`);

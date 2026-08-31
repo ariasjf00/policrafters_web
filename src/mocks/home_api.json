@@ -1,0 +1,174 @@
+{
+  "type": "home_cms.HomePage",
+  "title": "Policrafters",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Policrafters | Diseño y mobiliario",
+    "search_description": "Mobiliario y diseño de interiores premium."
+  },
+  "fields": {
+    "copy": {
+      "hero_eyebrow": "DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO",
+      "hero_heading": "Tu Socio Experto en Interiores y Arquitectura",
+      "hero_cta": "CONTÁCTANOS AHORA",
+      "projects_eyebrow": "Nuestros proyectos",
+      "projects_heading": "MIRA LO QUE PODEMOS CREAR",
+      "projects_cta": "Ver todos los proyectos",
+      "projects_prev_aria": "Ver proyecto anterior",
+      "projects_next_aria": "Ver siguiente proyecto",
+      "projects_carousel_aria": "Carrusel de proyectos",
+      "projects_dot_aria": "Ir al proyecto",
+      "about_eyebrow": "Nosotros, Marcas",
+      "about_heading": "BIENVENIDO A POLICRAFTERS",
+      "about_body_1": "En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura.",
+      "about_body_2": "Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión.",
+      "about_brands_label": "Nuestras Marcas",
+      "about_cta": "Saber más",
+      "team_eyebrow": "Nuestro Equipo, Experiencia",
+      "team_heading": "LA GENTE DETRÁS DEL OFICIO",
+      "values_eyebrow": "Nuestros Valores",
+      "values_heading": "LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS",
+      "values_prev_aria": "Ver valor anterior",
+      "values_next_aria": "Ver siguiente valor",
+      "values_carousel_aria": "Carrusel de valores",
+      "values_dot_aria": "Ir al valor",
+      "catalogs_eyebrow": "Nuestros Catálogos",
+      "catalogs_heading": "EXPLORA NUESTRAS COLECCIONES Y SOLUCIONES",
+      "catalogs_prev_aria": "Anterior",
+      "catalogs_next_aria": "Siguiente",
+      "catalogs_dot_aria": "Ir a la página",
+      "contact_heading": "¿Te gustaría contactar directamente con Policrafters?",
+      "contact_cta": "Saber más"
+    },
+    "hero_video_horizontal": "/videos/horizontal_video_placeholder.mp4",
+    "hero_video_vertical": "/videos/vertical_video_placeholder.mp4",
+    "hero_image_horizontal": {
+      "url": "/images/pages/horizontal_video_static_image.png",
+      "alt": "Interior de lujo Policrafters"
+    },
+    "hero_image_vertical": {
+      "url": "/images/pages/vertical_video_static_image.png",
+      "alt": "Interior de lujo Policrafters"
+    },
+    "featured_projects": [
+      {
+        "title": "Easy Slide",
+        "slug": "easy-slide",
+        "thumbnail": { "url": "/images/projects/Easy_Slide.png", "alt": "Easy Slide" },
+        "description": "Sistema de puertas corredizas de bajo perfil que maximiza la luz natural sin sacrificar espacio en planta."
+      },
+      {
+        "title": "Pergola Thermal",
+        "slug": "pergola-thermal",
+        "thumbnail": { "url": "/images/projects/Pergola_Thermal.png", "alt": "Pergola Thermal" },
+        "description": "Estructura térmica resistente pensada para espacios exteriores confortables durante todo el año."
+      },
+      {
+        "title": "Vienna Shower Door",
+        "slug": "vienna-shower-door",
+        "thumbnail": { "url": "/images/projects/Vienna_Shower_Door.png", "alt": "Vienna Shower Door" },
+        "description": "Mampara de cristal templado con herrajes minimalistas que aportan elegancia al baño moderno."
+      },
+      {
+        "title": "Prima Pivot",
+        "slug": "prima-pivot",
+        "thumbnail": { "url": "/images/projects/Prima_Pivot.jpg", "alt": "Prima Pivot" },
+        "description": "Puerta pivotante de diseño limpio, ideal para accesos de gran formato con apertura suave."
+      },
+      {
+        "title": "Cardiff",
+        "slug": "cardiff",
+        "thumbnail": { "url": "/images/projects/Cardiff.jpg", "alt": "Cardiff" },
+        "description": "Solución de cerramiento en vidrio y acero que combina durabilidad con una estética sobria."
+      }
+    ],
+    "team_members": [
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": { "url": "/images/pages/office_portrait_1.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": { "url": "/images/pages/office_portrait_2.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": { "url": "/images/pages/office_portrait_3.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": { "url": "/images/pages/office_portrait_4.png", "alt": "Integrante del equipo Policrafters" },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ],
+    "values_slides": [
+      {
+        "title": "Calidad",
+        "image": { "url": "/images/pages/values_1.webp", "alt": "Calidad Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Durabilidad",
+        "image": { "url": "/images/pages/values_2.webp", "alt": "Durabilidad Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Experiencia",
+        "image": { "url": "/images/pages/values_3.webp", "alt": "Experiencia Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Innovación",
+        "image": { "url": "/images/pages/values_4.webp", "alt": "Innovación Policrafters" },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ],
+    "catalogs": [
+      { "title": "Catálogo 1", "image": { "url": "/images/pages/1_pergola.png", "alt": "Catálogo Policrafters 1" }, "file_url": "#" },
+      { "title": "Catálogo 2", "image": { "url": "/images/pages/2_pergola.png", "alt": "Catálogo Policrafters 2" }, "file_url": "#" },
+      { "title": "Catálogo 3", "image": { "url": "/images/pages/3_pergola.png", "alt": "Catálogo Policrafters 3" }, "file_url": "#" },
+      { "title": "Catálogo 4", "image": { "url": "/images/pages/4_pergola.png", "alt": "Catálogo Policrafters 4" }, "file_url": "#" },
+      { "title": "Catálogo 5", "image": { "url": "/images/pages/5_pergola.png", "alt": "Catálogo Policrafters 5" }, "file_url": "#" },
+      { "title": "Catálogo 6", "image": { "url": "/images/pages/6_pergola.png", "alt": "Catálogo Policrafters 6" }, "file_url": "#" },
+      { "title": "Catálogo 7", "image": { "url": "/images/pages/7_pergola.png", "alt": "Catálogo Policrafters 7" }, "file_url": "#" },
+      { "title": "Catálogo 8", "image": { "url": "/images/pages/8_pergola.png", "alt": "Catálogo Policrafters 8" }, "file_url": "#" },
+      { "title": "Catálogo 9", "image": { "url": "/images/pages/9_pergola.png", "alt": "Catálogo Policrafters 9" }, "file_url": "#" },
+      { "title": "Catálogo 10", "image": { "url": "/images/pages/10_pergola.png", "alt": "Catálogo Policrafters 10" }, "file_url": "#" },
+      { "title": "Catálogo 11", "image": { "url": "/images/pages/11_pergola.png", "alt": "Catálogo Policrafters 11" }, "file_url": "#" },
+      { "title": "Catálogo 12", "image": { "url": "/images/pages/12_pergola.png", "alt": "Catálogo Policrafters 12" }, "file_url": "#" },
+      { "title": "Catálogo 13", "image": { "url": "/images/pages/13_pergola.png", "alt": "Catálogo Policrafters 13" }, "file_url": "#" },
+      { "title": "Catálogo 14", "image": { "url": "/images/pages/14_pergola.png", "alt": "Catálogo Policrafters 14" }, "file_url": "#" },
+      { "title": "Catálogo 15", "image": { "url": "/images/pages/15_pergola.png", "alt": "Catálogo Policrafters 15" }, "file_url": "#" },
+      { "title": "Catálogo 16", "image": { "url": "/images/pages/16_pergola.png", "alt": "Catálogo Policrafters 16" }, "file_url": "#" }
+    ],
+    "contact_links": [
+      {
+        "title": "Servicio de Diseño de Interiores",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Falper Contract",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Distribuidores",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Contáctanos",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      }
+    ]
+  }
+}

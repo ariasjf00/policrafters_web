@@ -3,8 +3,8 @@ import PageLayout from '../layouts/PageLayout.astro';
 import collectionsPage from '../mocks/collections-page.json';
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || 'http://localhost:8000/api/collections/';
-const apiOrigin = apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
+const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
+const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 let isRemoteData = false;
 
 const normalizeAssetUrl = (value) => {
@@ -18,7 +18,7 @@ const normalizeAssetUrl = (value) => {
 
 let data = collectionsPage;
 
-if (useApi) {
+if (useApi && apiUrl) {
   try {
     const response = await fetch(apiUrl);
     if (response.ok) {
