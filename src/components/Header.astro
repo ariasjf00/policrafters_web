@@ -97,9 +97,9 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 				</button>
 			</li>
 			<li class="lang-switch" aria-label={isEs ? 'Selector de idioma' : 'Language selector'}>
-				<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
+				<a class:list={["lang-link", !isEs && "is-active"]} href={enHref} data-lang="en">EN</a>
 				<span>/</span>
-				<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ESP</a>
+				<a class:list={["lang-link", isEs && "is-active"]} href={esHref} data-lang="es">ESP</a>
 			</li>
 		</ul>
 	</nav>
@@ -153,7 +153,8 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		if (langInUrl) return langInUrl;
 		const stored = localStorage.getItem('siteLang');
 		if (stored === 'en' || stored === 'es') return stored;
-		return document.documentElement.lang === 'es' ? 'es' : 'en';
+		localStorage.setItem('siteLang', 'en');
+		return 'en';
 	};
 
 	const applyHeaderLanguage = (lang) => {
@@ -171,7 +172,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			});
 
 			header.querySelectorAll('.lang-link').forEach((link) => {
-				const linkLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
+				const linkLang = link.dataset.lang === 'en' ? 'en' : 'es';
 				link.classList.toggle('is-active', linkLang === activeLang);
 				// Keep the href truthful so middle-click / copy-link yield the right language.
 				link.setAttribute('href', appendLang(window.location.pathname + window.location.search, linkLang));
@@ -233,9 +234,12 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	header?.querySelectorAll('.lang-link').forEach((link) => {
 		link.addEventListener('click', (event) => {
 			event.preventDefault();
-			const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-			syncLangInUrl(target);
-			applyHeaderLanguage(target);
+			const target = link.dataset.lang === 'en' ? 'en' : 'es';
+			localStorage.setItem('siteLang', target);
+			const nextUrl = new URL(window.location.href);
+			if (target === 'es') nextUrl.searchParams.set('lang', 'es');
+			else nextUrl.searchParams.delete('lang');
+			window.location.assign(nextUrl.toString());
 			closeMenu();
 		});
 	});

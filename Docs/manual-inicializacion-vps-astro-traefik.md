@@ -435,3 +435,10 @@ Frontend Astro con mocks
 ```
 
 Durante la primera etapa, Wagtail no es necesario para que la home funcione. Cuando el CMS esté terminado, se puede activar `PUBLIC_USE_API=true`, reconstruir la imagen y desplegar nuevamente el contenedor.
+
+## Actualziacion de cambios
+cd /var/www/policrafters_web
+git pull origin home_test
+npm ci
+npm run build
+docker compose up -d --build
