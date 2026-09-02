@@ -1106,10 +1106,13 @@ const heroCtaUrl = '/contacto';
 	}
 
 	.projects-carousel {
+		/* The gap is what separates one project from the next, so the cards have to
+		   give it back: two cards plus one gap must still add up to the viewport. */
+		--projects-gap: 1.5rem;
 		display: grid;
 		grid-auto-flow: column;
-		grid-auto-columns: 50vw;
-		gap: 0;
+		grid-auto-columns: calc((100% - var(--projects-gap)) / 2);
+		gap: var(--projects-gap);
 		overflow-x: auto;
 		scroll-snap-type: x mandatory;
 		scrollbar-width: none;
@@ -1121,7 +1124,6 @@ const heroCtaUrl = '/contacto';
 
 	.projects-card {
 		scroll-snap-align: start;
-		border-right: 1px solid #ececec;
 		display: block;
 		text-decoration: none;
 		color: inherit;
@@ -1333,6 +1335,7 @@ const heroCtaUrl = '/contacto';
 		object-fit: cover;
 		display: block;
 		border-style: solid;
+		border-width: 1pt;
 		border-color: #2f3437;
 	}
 
