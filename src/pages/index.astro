@@ -1,5 +1,6 @@
 ---
-import home from "../mocks/home.json";
+import homeEn from "../mocks/home.en.json";
+import homeEs from "../mocks/home.es.json";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { Icon } from 'astro-icon/components';
@@ -10,6 +11,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || "";
 const apiOrigin = apiUrl && apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
 const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
 const requestedLang = langParam === "es" ? "es" : "en";
+const localHome = requestedLang === "es" ? homeEs : homeEn;
 const apiRequestUrl = (() => {
 	if (!apiUrl) return "";
 	try {
@@ -28,7 +30,7 @@ const normalizeAssetUrl = (value) => {
 	}
 	return value;
 };
-let data = home;
+let data = localHome;
 
 if (useApi && apiUrl) {
 	try {
@@ -44,12 +46,18 @@ if (useApi && apiUrl) {
 	}
 }
 
-const resolvedData = data ?? home;
-const resolvedFields = resolvedData.fields ?? home.fields ?? {};
-const resolvedMeta = resolvedData.meta ?? home.meta ?? {};
-const fallbackFields = home.fields ?? {};
+const resolvedData = data ?? localHome;
+const resolvedFields = resolvedData.fields ?? localHome.fields ?? {};
+const resolvedMeta = resolvedData.meta ?? localHome.meta ?? {};
+const fallbackFields = localHome.fields ?? {};
 const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
-const heroHeading = resolvedFields.hero_heading || resolvedData.title || fallbackFields.hero_heading || "Home";
+const copyFields = resolvedFields.copy ?? fallbackFields.copy ?? {};
+const getCopyText = (key, fallback = "") => {
+	const value = copyFields[key];
+	if (typeof value === "string" && value.trim()) return value;
+	return fallback;
+};
+const heroHeading = getCopyText("hero_heading", resolvedData.title || "Home");
 // Only CMS-provided paths need the API origin; local /public assets are served as-is.
 const heroAsset = (apiValue, localValue) => (useApi && apiValue ? normalizeAssetUrl(apiValue) : localValue);
 const teamMembersRaw = Array.isArray(resolvedFields.team_members) && resolvedFields.team_members.length
@@ -110,33 +118,6 @@ const siteLogo = typeof siteLogoCandidate === "string"
 		: { url: "/logo_black.png", alt: "Policrafters logo" };
 const selectedLang = requestedLang;
 const isEs = selectedLang === "es";
-
-const localCopyByKey = home.fields?.copy ?? {};
-const copyByKey = resolvedFields.copy ?? {};
-const getStructuredText = (value, lang, fallback = "") => {
-	if (!value || typeof value !== "object") return fallback;
-	const candidate = value[lang] ?? value.es ?? value.en ?? fallback;
-	if (typeof candidate === "string" && candidate.trim()) return candidate;
-	return fallback;
-};
-const getCopyText = (key, fallback = "") => {
-	const localCopyValue = localCopyByKey[key];
-	const copyValue = copyByKey[key];
-	const localText = getStructuredText(localCopyValue, selectedLang, fallback);
-	if (copyValue && typeof copyValue === "object") {
-		const apiText = getStructuredText(copyValue, selectedLang, localText);
-		const apiEs = typeof copyValue.es === "string" ? copyValue.es.trim() : "";
-		const apiEn = typeof copyValue.en === "string" ? copyValue.en.trim() : "";
-		if (apiEs && apiEn && apiEs !== apiEn) return apiText;
-		return localText;
-	}
-	const directValue = resolvedFields[key];
-	if (typeof directValue === "string") return directValue || localText;
-	if (directValue && typeof directValue === "object") {
-		return getStructuredText(directValue, selectedLang, localText);
-	}
-	return localText;
-};
 const localizedHeroHeading = getCopyText("hero_heading", heroHeading || "Home");
 const localizedHeroEyebrow = getCopyText("hero_eyebrow", "");
 const localizedHeroCta = getCopyText("hero_cta", "");
@@ -192,7 +173,7 @@ const heroCtaUrl = '/contacto';
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
 	</head>
-	<body data-api-url={apiUrl} data-api-url-lang={apiRequestUrl || apiUrl}>
+		<body data-api-url={apiUrl}>
 		<Header lang={selectedLang} logo={siteLogo} position="fixed" scrollShadow />
 
 		<section class="hero">
@@ -213,43 +194,43 @@ const heroCtaUrl = '/contacto';
 			></video>
 			<div class="hero-overlay" />
 			<div class="hero-content">
-				<p id="hero-eyebrow" class="eyebrow" data-i18n data-es={resolvedFields.copy?.hero_eyebrow?.es || localizedHeroEyebrow} data-en={resolvedFields.copy?.hero_eyebrow?.en || localizedHeroEyebrow}>{localizedHeroEyebrow}</p>
-				<h1 id="hero-heading" data-i18n data-es={resolvedFields.copy?.hero_heading?.es || localizedHeroHeading} data-en={resolvedFields.copy?.hero_heading?.en || localizedHeroHeading}>{localizedHeroHeading}</h1>
-				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl} data-i18n data-es={resolvedFields.copy?.hero_cta?.es || localizedHeroCta} data-en={resolvedFields.copy?.hero_cta?.en || localizedHeroCta}>{localizedHeroCta}</a>
+				<p id="hero-eyebrow" class="eyebrow">{localizedHeroEyebrow}</p>
+				<h1 id="hero-heading">{localizedHeroHeading}</h1>
+				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl}>{localizedHeroCta}</a>
 			</div>
 		</section>
 
 		<main>
 			<section class="projects-section">
-				<p id="projects-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.projects_eyebrow?.es || localizedProjectsEyebrow} data-en={resolvedFields.copy?.projects_eyebrow?.en || localizedProjectsEyebrow}>{localizedProjectsEyebrow}</p>
-				<h2 id="projects-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.projects_heading?.es || localizedProjectsHeading} data-en={resolvedFields.copy?.projects_heading?.en || localizedProjectsHeading}>{localizedProjectsHeading}</h2>
+				<p id="projects-eyebrow" class="section-eyebrow">{localizedProjectsEyebrow}</p>
+				<h2 id="projects-heading" class="section-heading">{localizedProjectsHeading}</h2>
 
 				<div class="projects-carousel-shell">
 					<div class="projects-carousel-viewport">
 						<div class="projects-carousel-controls" aria-hidden="true">
-							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={localizedProjectsPrevAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_prev_aria?.es || localizedProjectsPrevAria} data-aria-en={resolvedFields.copy?.projects_prev_aria?.en || localizedProjectsPrevAria}>
+							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
 								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
 							</button>
-							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={localizedProjectsNextAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_next_aria?.es || localizedProjectsNextAria} data-aria-en={resolvedFields.copy?.projects_next_aria?.en || localizedProjectsNextAria}>
+							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={localizedProjectsNextAria}>
 								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
 							</button>
 						</div>
 
-						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_carousel_aria?.es || localizedProjectsCarouselAria} data-aria-en={resolvedFields.copy?.projects_carousel_aria?.en || localizedProjectsCarouselAria}>
+						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria}>
 							{featuredProjects.map((p, index) => (
 								<a href="#" class="projects-card" data-project-index={index}>
 									<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
 									<div class="projects-card__body">
-										<h3 class="projects-card__title" data-i18n data-es={p.title_es || p.title} data-en={p.title_en || p.title}>{isEs ? (p.title_es || p.title) : (p.title_en || p.title)}</h3>
-										<p class="projects-card__description" data-i18n data-es={p.description_es || p.description} data-en={p.description_en || p.description}>{isEs ? (p.description_es || p.description) : (p.description_en || p.description)}</p>
+										<h3 class="projects-card__title">{p.title}</h3>
+										<p class="projects-card__description">{p.description}</p>
 									</div>
 								</a>
 							))}
 						</div>
 					</div>
 
-					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={localizedProjectsCarouselAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_carousel_aria?.es || localizedProjectsCarouselAria} data-aria-en={resolvedFields.copy?.projects_carousel_aria?.en || localizedProjectsCarouselAria}>
-						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={localizedProjectsPrevAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_prev_aria?.es || localizedProjectsPrevAria} data-aria-en={resolvedFields.copy?.projects_prev_aria?.en || localizedProjectsPrevAria}>
+					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={localizedProjectsCarouselAria}>
+						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
 							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 						</button>
 						<div class="projects-dots" id="projects-dots" data-dot-aria-es={resolvedFields.copy?.projects_dot_aria?.es || localizedProjectsDotAria} data-dot-aria-en={resolvedFields.copy?.projects_dot_aria?.en || localizedProjectsDotAria}>
@@ -259,19 +240,16 @@ const heroCtaUrl = '/contacto';
 									class:list={["projects-dot", index === 0 && "is-active"]}
 									data-dot-index={index}
 									aria-label={localizedProjectsDotAria + ' ' + (index + 1)}
-									data-aria-i18n
-									data-aria-es={(resolvedFields.copy?.projects_dot_aria?.es || localizedProjectsDotAria) + ' ' + (index + 1)}
-									data-aria-en={(resolvedFields.copy?.projects_dot_aria?.en || localizedProjectsDotAria) + ' ' + (index + 1)}
 								></button>
 							))}
 						</div>
-						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={localizedProjectsNextAria} data-aria-i18n data-aria-es={resolvedFields.copy?.projects_next_aria?.es || localizedProjectsNextAria} data-aria-en={resolvedFields.copy?.projects_next_aria?.en || localizedProjectsNextAria}>
+						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={localizedProjectsNextAria}>
 							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 						</button>
 					</div>
 				</div>
 
-				<a id="projects-cta" href="#" class="projects-cta-btn" data-i18n data-es={resolvedFields.copy?.projects_cta?.es || localizedProjectsCta} data-en={resolvedFields.copy?.projects_cta?.en || localizedProjectsCta}>{localizedProjectsCta}</a>
+				<a id="projects-cta" href="#" class="projects-cta-btn">{localizedProjectsCta}</a>
 			</section>
 
 			<hr class="section-rule" />
@@ -285,16 +263,16 @@ const heroCtaUrl = '/contacto';
 						loading="lazy"
 					/>
 					<div class="about-copy">
-						<p id="about-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.about_eyebrow?.es || localizedAboutEyebrow} data-en={resolvedFields.copy?.about_eyebrow?.en || localizedAboutEyebrow}>{localizedAboutEyebrow}</p>
-						<h2 id="about-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.about_heading?.es || localizedAboutHeading} data-en={resolvedFields.copy?.about_heading?.en || localizedAboutHeading}>{localizedAboutHeading}</h2>
-						<p id="about-body-1" data-i18n data-es={resolvedFields.copy?.about_body_1?.es || localizedAboutBody1} data-en={resolvedFields.copy?.about_body_1?.en || localizedAboutBody1}>{localizedAboutBody1}</p>
-						<p id="about-body-2" data-i18n data-es={resolvedFields.copy?.about_body_2?.es || localizedAboutBody2} data-en={resolvedFields.copy?.about_body_2?.en || localizedAboutBody2}>{localizedAboutBody2}</p>
-						<p id="about-brands-label" class="about-brands-label" data-i18n data-es={resolvedFields.copy?.about_brands_label?.es || localizedAboutBrandsLabel} data-en={resolvedFields.copy?.about_brands_label?.en || localizedAboutBrandsLabel}>{localizedAboutBrandsLabel}</p>
+						<p id="about-eyebrow" class="section-eyebrow">{localizedAboutEyebrow}</p>
+						<h2 id="about-heading" class="section-heading">{localizedAboutHeading}</h2>
+						<p id="about-body-1">{localizedAboutBody1}</p>
+						<p id="about-body-2">{localizedAboutBody2}</p>
+						<p id="about-brands-label" class="about-brands-label">{localizedAboutBrandsLabel}</p>
 						<ul class="about-brands-list">
 							<li><a href="https://glasstech-usa.com" target="_blank" rel="noopener" class="link-body">glasstech-usa.com</a></li>
 							<li><a href="https://alutech-usa.com" target="_blank" rel="noopener" class="link-body">alutech-usa.com</a></li>
 						</ul>
-						<a id="about-cta" href="#" class="about-cta-btn" data-i18n data-es={resolvedFields.copy?.about_cta?.es || localizedAboutCta} data-en={resolvedFields.copy?.about_cta?.en || localizedAboutCta}>{localizedAboutCta}</a>
+						<a id="about-cta" href="#" class="about-cta-btn">{localizedAboutCta}</a>
 					</div>
 				</div>
 			</section>
@@ -302,8 +280,8 @@ const heroCtaUrl = '/contacto';
 			<hr class="section-rule" />
 
 			<section class="container team-section">
-				<p id="team-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.team_eyebrow?.es || localizedTeamEyebrow} data-en={resolvedFields.copy?.team_eyebrow?.en || localizedTeamEyebrow}>{localizedTeamEyebrow}</p>
-				<h2 id="team-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.team_heading?.es || localizedTeamHeading} data-en={resolvedFields.copy?.team_heading?.en || localizedTeamHeading}>{localizedTeamHeading}</h2>
+				<p id="team-eyebrow" class="section-eyebrow">{localizedTeamEyebrow}</p>
+				<h2 id="team-heading" class="section-heading">{localizedTeamHeading}</h2>
 
 				<div class="team-grid">
 					{teamMembers.map((member) => (
@@ -315,24 +293,10 @@ const heroCtaUrl = '/contacto';
 								loading="lazy"
 							/>
 							<div class="team-card__meta">
-								<p
-									class="team-card__role"
-									data-i18n
-									data-es={member.role_es || member.role}
-									data-en={member.role_en || member.role}
-								>
-									{isEs ? (member.role_es || member.role) : (member.role_en || member.role)}
-								</p>
+								<p class="team-card__role">{member.role}</p>
 								<p class="team-card__name">{member.name}</p>
 							</div>
-							<p
-								class="team-card__bio"
-								data-i18n
-								data-es={member.bio_es || member.bio}
-								data-en={member.bio_en || member.bio}
-							>
-								{isEs ? (member.bio_es || member.bio) : (member.bio_en || member.bio)}
-							</p>
+							<p class="team-card__bio">{member.bio}</p>
 						</div>
 					))}
 				</div>
@@ -342,11 +306,11 @@ const heroCtaUrl = '/contacto';
 
 			<section class="values-section">
 				<div class="values-header">
-					<p id="values-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.values_eyebrow?.es || localizedValuesEyebrow} data-en={resolvedFields.copy?.values_eyebrow?.en || localizedValuesEyebrow}>{localizedValuesEyebrow}</p>
-					<h2 id="values-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.values_heading?.es || localizedValuesHeading} data-en={resolvedFields.copy?.values_heading?.en || localizedValuesHeading}>{localizedValuesHeading}</h2>
+					<p id="values-eyebrow" class="section-eyebrow">{localizedValuesEyebrow}</p>
+					<h2 id="values-heading" class="section-heading">{localizedValuesHeading}</h2>
 				</div>
 
-				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={localizedValuesCarouselAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_carousel_aria?.es || localizedValuesCarouselAria} data-aria-en={resolvedFields.copy?.values_carousel_aria?.en || localizedValuesCarouselAria}>
+				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={localizedValuesCarouselAria}>
 					{valuesSlides.map((slide, index) => (
 						<div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
 							<img
@@ -356,38 +320,24 @@ const heroCtaUrl = '/contacto';
 								loading={index === 0 ? "eager" : "lazy"}
 							/>
 							<div class="values-slide__caption">
-								<h3
-									class="values-slide__title"
-									data-i18n
-									data-es={slide.title_es || slide.title}
-									data-en={slide.title_en || slide.title}
-								>
-									{isEs ? (slide.title_es || slide.title) : (slide.title_en || slide.title)}
-								</h3>
-								<p
-									class="values-slide__description"
-									data-i18n
-									data-es={slide.description_es || slide.description}
-									data-en={slide.description_en || slide.description}
-								>
-									{isEs ? (slide.description_es || slide.description) : (slide.description_en || slide.description)}
-								</p>
+								<h3 class="values-slide__title">{slide.title}</h3>
+								<p class="values-slide__description">{slide.description}</p>
 							</div>
 						</div>
 					))}
 
 					<div class="values-slider-controls" aria-hidden="true">
-						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={localizedValuesPrevAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_prev_aria?.es || localizedValuesPrevAria} data-aria-en={resolvedFields.copy?.values_prev_aria?.en || localizedValuesPrevAria}>
+						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={localizedValuesPrevAria}>
 							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
 						</button>
-						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={localizedValuesNextAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_next_aria?.es || localizedValuesNextAria} data-aria-en={resolvedFields.copy?.values_next_aria?.en || localizedValuesNextAria}>
+						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={localizedValuesNextAria}>
 							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
 						</button>
 					</div>
 				</div>
 
-				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={localizedValuesCarouselAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_carousel_aria?.es || localizedValuesCarouselAria} data-aria-en={resolvedFields.copy?.values_carousel_aria?.en || localizedValuesCarouselAria}>
-					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={localizedValuesPrevAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_prev_aria?.es || localizedValuesPrevAria} data-aria-en={resolvedFields.copy?.values_prev_aria?.en || localizedValuesPrevAria}>
+				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={localizedValuesCarouselAria}>
+					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={localizedValuesPrevAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 					</button>
 					<div class="values-dots" id="values-dots">
@@ -397,13 +347,10 @@ const heroCtaUrl = '/contacto';
 								class:list={["values-dot", index === 0 && "is-active"]}
 								data-dot-index={index}
 								aria-label={localizedValuesDotAria + ' ' + (index + 1)}
-								data-aria-i18n
-								data-aria-es={(resolvedFields.copy?.values_dot_aria?.es || localizedValuesDotAria) + ' ' + (index + 1)}
-								data-aria-en={(resolvedFields.copy?.values_dot_aria?.en || localizedValuesDotAria) + ' ' + (index + 1)}
 							></button>
 						))}
 					</div>
-					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={localizedValuesNextAria} data-aria-i18n data-aria-es={resolvedFields.copy?.values_next_aria?.es || localizedValuesNextAria} data-aria-en={resolvedFields.copy?.values_next_aria?.en || localizedValuesNextAria}>
+					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={localizedValuesNextAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 					</button>
 				</div>
@@ -412,30 +359,23 @@ const heroCtaUrl = '/contacto';
 			<hr class="section-rule" />
 
 			<section class="container catalogs-section">
-				<p id="catalogs-eyebrow" class="section-eyebrow" data-i18n data-es={resolvedFields.copy?.catalogs_eyebrow?.es || localizedCatalogsEyebrow} data-en={resolvedFields.copy?.catalogs_eyebrow?.en || localizedCatalogsEyebrow}>{localizedCatalogsEyebrow}</p>
-				<h2 id="catalogs-heading" class="section-heading" data-i18n data-es={resolvedFields.copy?.catalogs_heading?.es || localizedCatalogsHeading} data-en={resolvedFields.copy?.catalogs_heading?.en || localizedCatalogsHeading}>{localizedCatalogsHeading}</h2>
+				<p id="catalogs-eyebrow" class="section-eyebrow">{localizedCatalogsEyebrow}</p>
+				<h2 id="catalogs-heading" class="section-heading">{localizedCatalogsHeading}</h2>
 
 				<div class="catalogs-track" id="catalogs-track">
 					{catalogs.map((item, index) => (
 						<a class="catalog-card" href={item.file_url || "#"} data-catalog-index={index}>
 							<img class="catalog-card__image" src={item.image.url} alt={item.image.alt} loading="lazy" />
 							<span class="catalog-card__label">
-								<span
-									class="catalog-card__title"
-									data-i18n
-									data-es={item.title_es || item.title}
-									data-en={item.title_en || item.title}
-								>
-									{isEs ? (item.title_es || item.title) : (item.title_en || item.title)}
-								</span>
+								<span class="catalog-card__title">{item.title}</span>
 								<Icon name="mdi:download" class="catalog-card__icon" />
 							</span>
 						</a>
 					))}
 				</div>
 
-				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={localizedCatalogsEyebrow} data-aria-i18n data-aria-es={resolvedFields.copy?.catalogs_eyebrow?.es || localizedCatalogsEyebrow} data-aria-en={resolvedFields.copy?.catalogs_eyebrow?.en || localizedCatalogsEyebrow}>
-					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={localizedCatalogsPrevAria} data-aria-i18n data-aria-es={resolvedFields.copy?.catalogs_prev_aria?.es || localizedCatalogsPrevAria} data-aria-en={resolvedFields.copy?.catalogs_prev_aria?.en || localizedCatalogsPrevAria}>
+				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={localizedCatalogsEyebrow}>
+					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={localizedCatalogsPrevAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
 					</button>
 					<div class="catalogs-dots" id="catalogs-dots">
@@ -445,39 +385,22 @@ const heroCtaUrl = '/contacto';
 								class:list={["catalogs-dot", index === 0 && "is-active"]}
 								data-dot-index={index}
 								aria-label={localizedCatalogsDotAria + ' ' + (index + 1)}
-								data-aria-i18n
-								data-aria-es={(resolvedFields.copy?.catalogs_dot_aria?.es || localizedCatalogsDotAria) + ' ' + (index + 1)}
-								data-aria-en={(resolvedFields.copy?.catalogs_dot_aria?.en || localizedCatalogsDotAria) + ' ' + (index + 1)}
 							></button>
 						))}
 					</div>
-					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={localizedCatalogsNextAria} data-aria-i18n data-aria-es={resolvedFields.copy?.catalogs_next_aria?.es || localizedCatalogsNextAria} data-aria-en={resolvedFields.copy?.catalogs_next_aria?.en || localizedCatalogsNextAria}>
+					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={localizedCatalogsNextAria}>
 						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
 					</button>
 				</div>
 
-				<h2 id="contact-heading" class="contact-heading" data-i18n data-es={resolvedFields.copy?.contact_heading?.es || localizedContactHeading} data-en={resolvedFields.copy?.contact_heading?.en || localizedContactHeading}>{localizedContactHeading}</h2>
+				<h2 id="contact-heading" class="contact-heading">{localizedContactHeading}</h2>
 
 				<div class="contact-grid">
 					{contactLinks.map((link) => (
 						<div class="contact-col">
-							<h3
-								class="contact-col__title"
-								data-i18n
-								data-es={link.title_es || link.title}
-								data-en={link.title_en || link.title}
-							>
-								{isEs ? (link.title_es || link.title) : (link.title_en || link.title)}
-							</h3>
-							<p
-								class="contact-col__description"
-								data-i18n
-								data-es={link.description_es || link.description}
-								data-en={link.description_en || link.description}
-							>
-								{isEs ? (link.description_es || link.description) : (link.description_en || link.description)}
-							</p>
-							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1" data-i18n data-es={resolvedFields.copy?.contact_cta?.es || localizedContactCta} data-en={resolvedFields.copy?.contact_cta?.en || localizedContactCta}>{localizedContactCta}</a>
+							<h3 class="contact-col__title">{link.title}</h3>
+							<p class="contact-col__description">{link.description}</p>
+							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{localizedContactCta}</a>
 						</div>
 					))}
 				</div>
@@ -486,10 +409,10 @@ const heroCtaUrl = '/contacto';
 
 		<Footer lang={selectedLang} />
 
-		<script type="module">
+		<script type="module" define:vars={{ homeEn, homeEs }}>
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
-			const shouldUseCms = import.meta.env.PUBLIC_USE_API === 'true' && Boolean(apiUrl);
+			const shouldUseCms = Boolean(apiUrl);
 			const apiOrigin = (() => {
 				try {
 					return apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
@@ -525,6 +448,12 @@ const heroCtaUrl = '/contacto';
 				return 'en';
 			};
 
+			const homePages = {
+				en: homeEn,
+				es: homeEs
+			};
+			let currentHomeData = homePages[getActiveLang()];
+
 			const buildApiUrlForLang = (lang) => {
 				if (!apiUrl) return '';
 				const safeLang = lang === 'es' ? 'es' : 'en';
@@ -537,133 +466,156 @@ const heroCtaUrl = '/contacto';
 				}
 			};
 
-			const resolveLocalizedText = (value, lang, fallback = '') => {
-				if (typeof value === 'string') return value || fallback;
-				if (value && typeof value === 'object') {
-					const text = value[lang] ?? value.es ?? value.en ?? fallback;
-					if (typeof text === 'string' && text.trim()) return text;
-					return fallback;
-				}
-				return fallback;
-			};
-
-			const getSafeCopyValue = (copy, key, lang) => {
-				const value = copy?.[key];
-				if (!value || typeof value !== 'object') return null;
-				const esText = typeof value.es === 'string' ? value.es.trim() : '';
-				const enText = typeof value.en === 'string' ? value.en.trim() : '';
-				if (esText && enText && esText !== enText) {
-					return value[lang] ?? value.es ?? value.en ?? null;
-				}
-				return null;
-			};
-
-			// Subscriber only. Header.astro owns lang state and is the sole dispatcher
-			// of `sitelangchange` — never dispatch it from here (feedback loop).
-			const applyHomeLanguage = (lang) => {
-				const activeLang = lang === 'en' ? 'en' : 'es';
-				document.querySelectorAll('[data-i18n]').forEach((el) => {
-					const value = el.dataset[activeLang];
-					if (value !== undefined) {
-						el.textContent = value;
-					}
-				});
-				document.querySelectorAll('[data-aria-i18n]').forEach((el) => {
-					const value = el.dataset[activeLang === 'en' ? 'ariaEn' : 'ariaEs'];
-					if (value !== undefined) {
-						el.setAttribute('aria-label', value);
-					}
-				});
-			};
-
-			const setText = (selector, value) => {
+			const applyText = (selector, value) => {
 				const element = document.querySelector(selector);
-				if (element && value != null) {
-					element.textContent = value;
-				}
+				if (element && typeof value === 'string') element.textContent = value;
 			};
 
-			const setI18nText = (selector, value, lang) => {
+			const applyAttr = (selector, attribute, value) => {
 				const element = document.querySelector(selector);
-				if (!element || value == null || value === '') return;
-				element.dataset[lang] = value;
-				element.textContent = value;
+				if (element && typeof value === 'string') element.setAttribute(attribute, value);
 			};
 
-			const setAttributeIfPresent = (selector, attribute, value) => {
-				const element = document.querySelector(selector);
-				if (element && value) {
-					element.setAttribute(attribute, value);
-				}
-			};
-
-			const applyApiData = (data, lang) => {
-				const activeLang = lang === 'es' ? 'es' : 'en';
-				const fields = data?.fields ?? {};
+			const applyHomeLanguage = (data, lang) => {
+				const activeLang = typeof data === 'string' && lang == null
+					? (data === 'es' ? 'es' : 'en')
+					: (lang === 'es' ? 'es' : 'en');
+				const page = data && typeof data === 'object' && !Array.isArray(data)
+					? data
+					: homePages[activeLang];
+				currentHomeData = page;
+				const fields = page?.fields ?? {};
 				const copy = fields.copy ?? {};
-				const meta = data?.meta ?? {};
-				if (data?.title) {
-					document.title = meta.seo_title || data.title;
-				}
-				if (meta.search_description) {
-					document.querySelector('meta[name="description"]')?.setAttribute('content', meta.search_description);
-				}
-				const safeHeroEyebrow = getSafeCopyValue(copy, 'hero_eyebrow', activeLang) ?? resolveLocalizedText(home?.fields?.copy?.hero_eyebrow ?? {}, activeLang, 'Home');
-				const safeHeroHeading = getSafeCopyValue(copy, 'hero_heading', activeLang) ?? resolveLocalizedText(home?.fields?.copy?.hero_heading ?? {}, activeLang, 'Home');
-				const safeHeroCta = getSafeCopyValue(copy, 'hero_cta', activeLang) ?? resolveLocalizedText(home?.fields?.copy?.hero_cta ?? {}, activeLang, 'Contact');
-				setI18nText('#hero-eyebrow', safeHeroEyebrow, activeLang);
-				setI18nText('#hero-heading', safeHeroHeading, activeLang);
-				setI18nText('#hero-cta', safeHeroCta, activeLang);
-				const siteLogoFromApi = fields.site_logo ?? fields.logo ?? fields.header_logo;
-				if (siteLogoFromApi) {
-					const logoUrl = typeof siteLogoFromApi === 'string' ? normalizeAssetUrl(siteLogoFromApi) : normalizeAssetUrl(siteLogoFromApi?.url);
-					const logoAlt = typeof siteLogoFromApi === 'string' ? 'Policrafters logo' : siteLogoFromApi?.alt || 'Policrafters logo';
-					const logoElement = document.querySelector('#site-logo');
-					if (logoElement) {
-						logoElement.setAttribute('src', logoUrl);
-						logoElement.setAttribute('alt', logoAlt);
-					}
-				}
-				setAttributeIfPresent('#hero-image', 'src', fields.hero_image_fallback?.url);
-				setAttributeIfPresent('#hero-image', 'alt', fields.hero_image_fallback?.alt);
-				const heroMedia = document.querySelector('#hero-media');
-				if (heroMedia && fields.hero_video_url) {
-					heroMedia.setAttribute('src', fields.hero_video_url);
-				}
-				setText('#hero-heading', resolveLocalizedText(copy.hero_heading ?? fields.hero_heading, activeLang, fields.hero_heading));
-				applyHomeLanguage(activeLang);
-			};
+				const featuredProjects = Array.isArray(fields.featured_projects) ? fields.featured_projects : [];
+				const teamMembers = Array.isArray(fields.team_members) ? fields.team_members : [];
+				const valuesSlides = Array.isArray(fields.values_slides) ? fields.values_slides : [];
+				const catalogs = Array.isArray(fields.catalogs) ? fields.catalogs : [];
+				const contactLinks = Array.isArray(fields.contact_links) ? fields.contact_links : [];
 
-			const loadCmsLanguage = (lang) => {
-				const activeLang = lang === 'es' ? 'es' : 'en';
-				const requestUrl = buildApiUrlForLang(activeLang);
-				if (!requestUrl) return Promise.resolve();
-				return fetch(requestUrl, { cache: 'no-store' })
-					.then((response) => {
-						if (!response.ok) throw new Error(`HTTP ${response.status}`);
-						return response.json();
-					})
-					.then((data) => applyApiData(data, activeLang))
-					.catch((error) => {
-						console.warn('No se pudo cargar la API de Wagtail:', error);
-					});
+				window.__SITE_LANG__ = activeLang;
+				localStorage.setItem('siteLang', activeLang);
+				document.documentElement.lang = activeLang;
+				document.title = page?.meta?.seo_title || page?.title || document.title;
+				const description = document.querySelector('meta[name="description"]');
+				if (description && typeof page?.meta?.search_description === 'string') {
+					description.setAttribute('content', page.meta.search_description);
+				}
+
+				applyText('#hero-eyebrow', copy.hero_eyebrow || '');
+				applyText('#hero-heading', copy.hero_heading || '');
+				applyText('#hero-cta', copy.hero_cta || '');
+				applyText('#projects-eyebrow', copy.projects_eyebrow || '');
+				applyText('#projects-heading', copy.projects_heading || '');
+				applyText('#projects-cta', copy.projects_cta || '');
+				applyText('#about-eyebrow', copy.about_eyebrow || '');
+				applyText('#about-heading', copy.about_heading || '');
+				applyText('#about-body-1', copy.about_body_1 || '');
+				applyText('#about-body-2', copy.about_body_2 || '');
+				applyText('#about-brands-label', copy.about_brands_label || '');
+				applyText('#about-cta', copy.about_cta || '');
+				applyText('#team-eyebrow', copy.team_eyebrow || '');
+				applyText('#team-heading', copy.team_heading || '');
+				applyText('#values-eyebrow', copy.values_eyebrow || '');
+				applyText('#values-heading', copy.values_heading || '');
+				applyText('#catalogs-eyebrow', copy.catalogs_eyebrow || '');
+				applyText('#catalogs-heading', copy.catalogs_heading || '');
+				applyText('#contact-heading', copy.contact_heading || '');
+
+				applyAttr('#projects-carousel', 'aria-label', copy.projects_carousel_aria || '');
+				applyAttr('#projects-indicator', 'aria-label', copy.projects_carousel_aria || '');
+				applyAttr('#projects-prev', 'aria-label', copy.projects_prev_aria || '');
+				applyAttr('#projects-next', 'aria-label', copy.projects_next_aria || '');
+				applyAttr('#values-slider', 'aria-label', copy.values_carousel_aria || '');
+				applyAttr('#values-indicator', 'aria-label', copy.values_carousel_aria || '');
+				applyAttr('#values-prev', 'aria-label', copy.values_prev_aria || '');
+				applyAttr('#values-next', 'aria-label', copy.values_next_aria || '');
+				applyAttr('#catalogs-indicator', 'aria-label', copy.catalogs_heading || '');
+				applyAttr('#catalogs-prev', 'aria-label', copy.catalogs_prev_aria || '');
+				applyAttr('#catalogs-next', 'aria-label', copy.catalogs_next_aria || '');
+
+				document.querySelectorAll('.projects-card').forEach((card, index) => {
+					const item = featuredProjects[index];
+					if (!item) return;
+					card.querySelector('.projects-card__title')?.replaceChildren(item.title ?? '');
+					card.querySelector('.projects-card__description')?.replaceChildren(item.description ?? '');
+				});
+
+				document.querySelectorAll('.projects-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.projects_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.team-card').forEach((card, index) => {
+					const item = teamMembers[index];
+					if (!item) return;
+					card.querySelector('.team-card__role')?.replaceChildren(item.role ?? '');
+					card.querySelector('.team-card__bio')?.replaceChildren(item.bio ?? '');
+				});
+
+				document.querySelectorAll('.values-slide').forEach((slide, index) => {
+					const item = valuesSlides[index];
+					if (!item) return;
+					slide.querySelector('.values-slide__title')?.replaceChildren(item.title ?? '');
+					slide.querySelector('.values-slide__description')?.replaceChildren(item.description ?? '');
+				});
+
+				document.querySelectorAll('.values-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.values_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.catalog-card').forEach((card, index) => {
+					const item = catalogs[index];
+					if (!item) return;
+					card.querySelector('.catalog-card__title')?.replaceChildren(item.title ?? '');
+				});
+
+				document.querySelectorAll('.catalogs-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.catalogs_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.contact-col').forEach((column, index) => {
+					const item = contactLinks[index];
+					if (!item) return;
+					column.querySelector('.contact-col__title')?.replaceChildren(item.title ?? '');
+					column.querySelector('.contact-col__description')?.replaceChildren(item.description ?? '');
+					column.querySelector('.contact-col__btn')?.replaceChildren(copy.contact_cta || '');
+				});
+
+				const heroImage = document.querySelector('.hero-image');
+				if (heroImage && fields.hero_image_horizontal?.url) {
+					heroImage.setAttribute('alt', fields.hero_image_horizontal?.alt || heroImage.getAttribute('alt') || '');
+				}
 			};
 
 			if (shouldUseCms) {
-				loadCmsLanguage(getActiveLang());
+				const requestUrl = buildApiUrlForLang(getActiveLang());
+				if (requestUrl) {
+					fetch(requestUrl, { cache: 'no-store' })
+						.then((response) => response.ok ? response.json() : null)
+						.then((data) => {
+							if (data && typeof data === 'object') applyHomeLanguage(data, getActiveLang());
+						})
+						.catch(() => {});
+				}
 			}
 
-			// Self-boot, then subscribe: component scripts run before this page script,
-			// so Header's boot dispatch would otherwise be missed (see Footer.astro).
-			applyHomeLanguage(getActiveLang());
 			document.addEventListener('sitelangchange', (event) => {
 				const nextLang = event?.detail === 'es' ? 'es' : 'en';
 				if (shouldUseCms) {
-					loadCmsLanguage(nextLang);
-					return;
+					const requestUrl = buildApiUrlForLang(nextLang);
+					if (requestUrl) {
+						fetch(requestUrl, { cache: 'no-store' })
+							.then((response) => response.ok ? response.json() : null)
+							.then((data) => {
+								applyHomeLanguage(data && typeof data === 'object' ? data : homePages[nextLang], nextLang);
+							})
+							.catch(() => applyHomeLanguage(homePages[nextLang], nextLang));
+						return;
+					}
 				}
-				applyHomeLanguage(nextLang);
+				applyHomeLanguage(homePages[nextLang], nextLang);
 			});
+
+			applyHomeLanguage(homePages[getActiveLang()], getActiveLang());
 
 			const heroVideo = document.querySelector('.hero-video');
 			if (heroVideo) {
@@ -737,9 +689,6 @@ const heroCtaUrl = '/contacto';
 					dot.type = 'button';
 					dot.className = 'projects-dot';
 					dot.setAttribute('data-dot-index', String(i));
-					dot.setAttribute('data-aria-i18n', '');
-					dot.dataset.ariaEs = `${dotAriaEs} ${i + 1}`;
-					dot.dataset.ariaEn = `${dotAriaEn} ${i + 1}`;
 					dot.setAttribute('aria-label', `${activeLang === 'es' ? dotAriaEs : dotAriaEn} ${i + 1}`);
 					astroScopeAttrs.forEach((attr) => dot.setAttribute(attr.name, attr.value));
 					projectsDotsContainer.appendChild(dot);
@@ -761,7 +710,7 @@ const heroCtaUrl = '/contacto';
 					projectsPageCount = nextPageCount;
 					renderProjectsDots(projectsPageCount);
 					projectsCurrentIndex = Math.min(projectsCurrentIndex, projectsPageCount - 1);
-					applyHomeLanguage(getActiveLang());
+					applyHomeLanguage(currentHomeData, getActiveLang());
 				}
 			};
 

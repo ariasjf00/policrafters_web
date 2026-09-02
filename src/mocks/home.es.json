@@ -54,31 +54,46 @@
       {
         "title": "Easy Slide",
         "slug": "easy-slide",
-        "thumbnail": { "url": "/images/projects/Easy_Slide.png", "alt": "Easy Slide" },
+        "thumbnail": {
+          "url": "/images/projects/Easy_Slide.png",
+          "alt": "Easy Slide"
+        },
         "description": "Sistema de puertas corredizas de bajo perfil que maximiza la luz natural sin sacrificar espacio en planta."
       },
       {
         "title": "Pergola Thermal",
         "slug": "pergola-thermal",
-        "thumbnail": { "url": "/images/projects/Pergola_Thermal.png", "alt": "Pergola Thermal" },
+        "thumbnail": {
+          "url": "/images/projects/Pergola_Thermal.png",
+          "alt": "Pergola Thermal"
+        },
         "description": "Estructura térmica resistente pensada para espacios exteriores confortables durante todo el año."
       },
       {
         "title": "Vienna Shower Door",
         "slug": "vienna-shower-door",
-        "thumbnail": { "url": "/images/projects/Vienna_Shower_Door.png", "alt": "Vienna Shower Door" },
+        "thumbnail": {
+          "url": "/images/projects/Vienna_Shower_Door.png",
+          "alt": "Vienna Shower Door"
+        },
         "description": "Mampara de cristal templado con herrajes minimalistas que aportan elegancia al baño moderno."
       },
       {
         "title": "Prima Pivot",
         "slug": "prima-pivot",
-        "thumbnail": { "url": "/images/projects/Prima_Pivot.jpg", "alt": "Prima Pivot" },
+        "thumbnail": {
+          "url": "/images/projects/Prima_Shower_D.jpg",
+          "alt": "Prima Pivot"
+        },
         "description": "Puerta pivotante de diseño limpio, ideal para accesos de gran formato con apertura suave."
       },
       {
         "title": "Cardiff",
         "slug": "cardiff",
-        "thumbnail": { "url": "/images/projects/Cardiff.jpg", "alt": "Cardiff" },
+        "thumbnail": {
+          "url": "/images/projects/Cardiff.jpg",
+          "alt": "Cardiff"
+        },
         "description": "Solución de cerramiento en vidrio y acero que combina durabilidad con una estética sobria."
       }
     ],
@@ -86,67 +101,203 @@
       {
         "name": "NAME LAST NAME",
         "role": "Puesto",
-        "photo": { "url": "/images/pages/office_portrait_1.png", "alt": "Integrante del equipo Policrafters" },
+        "photo": {
+          "url": "/images/pages/office_portrait_1.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
         "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "name": "NAME LAST NAME",
         "role": "Puesto",
-        "photo": { "url": "/images/pages/office_portrait_2.png", "alt": "Integrante del equipo Policrafters" },
+        "photo": {
+          "url": "/images/pages/office_portrait_2.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
         "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "name": "NAME LAST NAME",
         "role": "Puesto",
-        "photo": { "url": "/images/pages/office_portrait_3.png", "alt": "Integrante del equipo Policrafters" },
+        "photo": {
+          "url": "/images/pages/office_portrait_3.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
         "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "name": "NAME LAST NAME",
         "role": "Puesto",
-        "photo": { "url": "/images/pages/office_portrait_4.png", "alt": "Integrante del equipo Policrafters" },
+        "photo": {
+          "url": "/images/pages/office_portrait_4.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
         "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       }
     ],
     "values_slides": [
       {
         "title": "Calidad",
-        "image": { "url": "/images/pages/values_1.webp", "alt": "Calidad Policrafters" },
+        "image": {
+          "url": "/images/pages/values_1.webp",
+          "alt": "Calidad Policrafters"
+        },
         "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "title": "Durabilidad",
-        "image": { "url": "/images/pages/values_2.webp", "alt": "Durabilidad Policrafters" },
+        "image": {
+          "url": "/images/pages/values_2.webp",
+          "alt": "Durabilidad Policrafters"
+        },
         "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "title": "Experiencia",
-        "image": { "url": "/images/pages/values_3.webp", "alt": "Experiencia Policrafters" },
+        "image": {
+          "url": "/images/pages/values_3.webp",
+          "alt": "Experiencia Policrafters"
+        },
         "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
       {
         "title": "Innovación",
-        "image": { "url": "/images/pages/values_4.webp", "alt": "Innovación Policrafters" },
+        "image": {
+          "url": "/images/pages/values_4.webp",
+          "alt": "Innovación Policrafters"
+        },
         "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       }
     ],
     "catalogs": [
-      { "title": "Catálogo 1", "image": { "url": "/images/pages/1_pergola.png", "alt": "Catálogo Policrafters 1" }, "file_url": "#" },
-      { "title": "Catálogo 2", "image": { "url": "/images/pages/2_pergola.png", "alt": "Catálogo Policrafters 2" }, "file_url": "#" },
-      { "title": "Catálogo 3", "image": { "url": "/images/pages/3_pergola.png", "alt": "Catálogo Policrafters 3" }, "file_url": "#" },
-      { "title": "Catálogo 4", "image": { "url": "/images/pages/4_pergola.png", "alt": "Catálogo Policrafters 4" }, "file_url": "#" },
-      { "title": "Catálogo 5", "image": { "url": "/images/pages/5_pergola.png", "alt": "Catálogo Policrafters 5" }, "file_url": "#" },
-      { "title": "Catálogo 6", "image": { "url": "/images/pages/6_pergola.png", "alt": "Catálogo Policrafters 6" }, "file_url": "#" },
-      { "title": "Catálogo 7", "image": { "url": "/images/pages/7_pergola.png", "alt": "Catálogo Policrafters 7" }, "file_url": "#" },
-      { "title": "Catálogo 8", "image": { "url": "/images/pages/8_pergola.png", "alt": "Catálogo Policrafters 8" }, "file_url": "#" },
-      { "title": "Catálogo 9", "image": { "url": "/images/pages/9_pergola.png", "alt": "Catálogo Policrafters 9" }, "file_url": "#" },
-      { "title": "Catálogo 10", "image": { "url": "/images/pages/10_pergola.png", "alt": "Catálogo Policrafters 10" }, "file_url": "#" },
-      { "title": "Catálogo 11", "image": { "url": "/images/pages/11_pergola.png", "alt": "Catálogo Policrafters 11" }, "file_url": "#" },
-      { "title": "Catálogo 12", "image": { "url": "/images/pages/12_pergola.png", "alt": "Catálogo Policrafters 12" }, "file_url": "#" },
-      { "title": "Catálogo 13", "image": { "url": "/images/pages/13_pergola.png", "alt": "Catálogo Policrafters 13" }, "file_url": "#" },
-      { "title": "Catálogo 14", "image": { "url": "/images/pages/14_pergola.png", "alt": "Catálogo Policrafters 14" }, "file_url": "#" },
-      { "title": "Catálogo 15", "image": { "url": "/images/pages/15_pergola.png", "alt": "Catálogo Policrafters 15" }, "file_url": "#" },
-      { "title": "Catálogo 16", "image": { "url": "/images/pages/16_pergola.png", "alt": "Catálogo Policrafters 16" }, "file_url": "#" }
+      {
+        "title": "Catálogo 1",
+        "image": {
+          "url": "/images/pages/1_pergola.png",
+          "alt": "Catálogo Policrafters 1"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 2",
+        "image": {
+          "url": "/images/pages/2_pergola.png",
+          "alt": "Catálogo Policrafters 2"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 3",
+        "image": {
+          "url": "/images/pages/3_pergola.png",
+          "alt": "Catálogo Policrafters 3"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 4",
+        "image": {
+          "url": "/images/pages/4_pergola.png",
+          "alt": "Catálogo Policrafters 4"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 5",
+        "image": {
+          "url": "/images/pages/5_pergola.png",
+          "alt": "Catálogo Policrafters 5"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 6",
+        "image": {
+          "url": "/images/pages/6_pergola.png",
+          "alt": "Catálogo Policrafters 6"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 7",
+        "image": {
+          "url": "/images/pages/7_pergola.png",
+          "alt": "Catálogo Policrafters 7"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 8",
+        "image": {
+          "url": "/images/pages/8_pergola.png",
+          "alt": "Catálogo Policrafters 8"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 9",
+        "image": {
+          "url": "/images/pages/9_pergola.png",
+          "alt": "Catálogo Policrafters 9"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 10",
+        "image": {
+          "url": "/images/pages/10_pergola.png",
+          "alt": "Catálogo Policrafters 10"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 11",
+        "image": {
+          "url": "/images/pages/11_pergola.png",
+          "alt": "Catálogo Policrafters 11"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 12",
+        "image": {
+          "url": "/images/pages/12_pergola.png",
+          "alt": "Catálogo Policrafters 12"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 13",
+        "image": {
+          "url": "/images/pages/13_pergola.png",
+          "alt": "Catálogo Policrafters 13"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 14",
+        "image": {
+          "url": "/images/pages/14_pergola.png",
+          "alt": "Catálogo Policrafters 14"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 15",
+        "image": {
+          "url": "/images/pages/15_pergola.png",
+          "alt": "Catálogo Policrafters 15"
+        },
+        "file_url": "#"
+      },
+      {
+        "title": "Catálogo 16",
+        "image": {
+          "url": "/images/pages/16_pergola.png",
+          "alt": "Catálogo Policrafters 16"
+        },
+        "file_url": "#"
+      }
     ],
     "contact_links": [
       {

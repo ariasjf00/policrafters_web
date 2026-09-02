@@ -143,11 +143,10 @@
       "url": "/images/pages/vertical_video_static_image.png",
       "alt": "Interior de lujo Policrafters"
     },
-    "hero_heading": "Tu Socio Experto en Interiores y Arquitectura",
     "featured_projects": [
       {
         "title_en": "Easy Slide",
-        "title_es": "Easy Slide",
+        "title_es": "Fácil Desplazamiento",
         "slug": "easy-slide",
         "thumbnail": {
           "url": "/images/projects/Easy_Slide.png",
@@ -158,7 +157,7 @@
       },
       {
         "title_en": "Pergola Thermal",
-        "title_es": "Pergola Thermal",
+        "title_es": "Pergola Termal",
         "slug": "pergola-thermal",
         "thumbnail": {
           "url": "/images/projects/Pergola_Thermal.png",
@@ -169,7 +168,7 @@
       },
       {
         "title_en": "Vienna Shower Door",
-        "title_es": "Vienna Shower Door",
+        "title_es": "Puerta de Ducha Vienna",
         "slug": "vienna-shower-door",
         "thumbnail": {
           "url": "/images/projects/Vienna_Shower_Door.png",
@@ -180,7 +179,7 @@
       },
       {
         "title_en": "Prima Pivot",
-        "title_es": "Prima Pivot",
+        "title_es": "Pivotante Prima",
         "slug": "prima-pivot",
         "thumbnail": {
           "url": "/images/projects/Prima_Shower_D.jpg",
@@ -209,7 +208,7 @@
           "url": "/images/pages/office_portrait_1.png",
           "alt": "Integrante del equipo Policrafters"
         },
-        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "role_es": "Puesto",
         "bio_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -220,7 +219,7 @@
           "url": "/images/pages/office_portrait_2.png",
           "alt": "Integrante del equipo Policrafters"
         },
-        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "role_es": "Puesto",
         "bio_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -231,7 +230,7 @@
           "url": "/images/pages/office_portrait_3.png",
           "alt": "Integrante del equipo Policrafters"
         },
-        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "role_es": "Puesto",
         "bio_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -242,7 +241,7 @@
           "url": "/images/pages/office_portrait_4.png",
           "alt": "Integrante del equipo Policrafters"
         },
-        "bio_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "bio_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "role_es": "Puesto",
         "bio_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       }
@@ -254,7 +253,7 @@
           "url": "/images/pages/values_1.webp",
           "alt": "Calidad Policrafters"
         },
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "title_es": "Calidad",
         "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -264,7 +263,7 @@
           "url": "/images/pages/values_2.webp",
           "alt": "Durabilidad Policrafters"
         },
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "title_es": "Durabilidad",
         "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -274,7 +273,7 @@
           "url": "/images/pages/values_3.webp",
           "alt": "Experiencia Policrafters"
         },
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "title_es": "Experiencia",
         "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       },
@@ -284,7 +283,7 @@
           "url": "/images/pages/values_4.webp",
           "alt": "Innovación Policrafters"
         },
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "description_en": "(en) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
         "title_es": "Innovación",
         "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       }

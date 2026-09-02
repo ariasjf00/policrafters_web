@@ -442,3 +442,8 @@ git pull origin home_test
 npm ci
 npm run build
 docker compose up -d --build
+
+## Usar la lllave existente del SSH 
+git remote set-url origin git@github.com:ariasjf00/policrafters_web.git
+git remote -v
+git pull origin home_test

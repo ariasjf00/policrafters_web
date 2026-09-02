@@ -46,7 +46,6 @@ const selectedLang = langParam === 'en' || langParam === 'es'
   ? langParam
   : (isEsLocale ? 'es' : 'en');
 const isEs = selectedLang === 'es';
-// Base keys hold Spanish, `_en` keys hold English (same convention as home.json).
 const pick = (es, en) => (isEs ? es : (en ?? es));
 
 const esTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Colecciones';
