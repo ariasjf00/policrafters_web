@@ -165,12 +165,14 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     return lang === 'en' || lang === 'es' ? lang : null;
   };
 
+  // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+  // Header owns writing `siteLang`; this is a subscriber, so it only reads.
   const getActiveLang = () => {
     const inUrl = getLangFromUrl();
     if (inUrl) return inUrl;
     const stored = localStorage.getItem('siteLang');
     if (stored === 'en' || stored === 'es') return stored;
-    return document.documentElement.lang === 'es' ? 'es' : 'en';
+    return 'en';
   };
 
   // All copy ships in the markup as data-copy-es/-en and data-aria-es/-en, so both

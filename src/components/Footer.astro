@@ -262,12 +262,14 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     return lang === 'en' || lang === 'es' ? lang : null;
   };
 
+  // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+  // Header owns writing `siteLang`; this is a subscriber, so it only reads.
   const resolveActiveLang = () => {
     const langInUrl = getLangFromUrl();
     if (langInUrl) return langInUrl;
     const stored = localStorage.getItem('siteLang');
     if (stored === 'en' || stored === 'es') return stored;
-    return document.documentElement.lang === 'es' ? 'es' : 'en';
+    return 'en';
   };
 
   const applyFooterLanguage = (lang) => {

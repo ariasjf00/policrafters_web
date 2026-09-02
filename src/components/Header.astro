@@ -145,9 +145,8 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		return queryString ? `${path}?${queryString}` : path;
 	};
 
-	// url -> localStorage -> server-rendered <html lang> -> 'en'.
-	// The <html lang> tier lets each page keep its own server-side default
-	// (index derives it from the CMS locale) without a per-page resolver.
+	// url -> localStorage -> 'en'. Seeds `siteLang` on first visit so subscribers
+	// (Footer, ScrollToTop, colecciones) all read the same stored value.
 	const resolveActiveLang = () => {
 		const langInUrl = getLangFromUrl();
 		if (langInUrl) return langInUrl;
