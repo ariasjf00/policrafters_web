@@ -1,0 +1,163 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  lang?: 'es' | 'en';
+}
+
+const { lang = 'en' } = Astro.props;
+
+// Used for both the accessible name and the hover tooltip; keeping them identical
+// avoids screen readers announcing something different from what sighted users see.
+const labels = {
+  es: 'Volver arriba',
+  en: 'Scroll to top',
+};
+
+const t = labels[lang] ?? labels.en;
+---
+
+<button
+  type="button"
+  id="scroll-to-top"
+  class="scroll-to-top"
+  aria-label={t}
+  title={t}
+>
+  <Icon name="mdi:chevron-up" />
+</button>
+
+<script>
+  const button = document.getElementById('scroll-to-top');
+
+  if (button) {
+    // Roughly half a viewport of scrolling before the button is offered.
+    const SHOW_AFTER = 400;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const updateVisibility = () => {
+      button.classList.toggle('is-visible', window.scrollY > SHOW_AFTER);
+    };
+
+    updateVisibility();
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+
+    button.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion.matches ? 'auto' : 'smooth',
+      });
+    });
+
+    // Label follows the site language. Header.astro owns the language state and is
+    // the sole dispatcher of `sitelangchange`; this only listens (see Footer.astro).
+    const LABELS = { es: 'Volver arriba', en: 'Scroll to top' };
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    const resolveActiveLang = () => {
+      const langInUrl = getLangFromUrl();
+      if (langInUrl) return langInUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return document.documentElement.lang === 'es' ? 'es' : 'en';
+    };
+
+    const applyScrollTopLanguage = (lang) => {
+      const activeLang = lang === 'en' ? 'en' : 'es';
+      button.setAttribute('aria-label', LABELS[activeLang]);
+      button.setAttribute('title', LABELS[activeLang]);
+    };
+
+    applyScrollTopLanguage(resolveActiveLang());
+    document.addEventListener('sitelangchange', (event) => {
+      applyScrollTopLanguage(event.detail);
+    });
+  }
+</script>
+
+<style>
+  .scroll-to-top {
+    /* Astro scopes `*` to the component that declares it, so the page-level
+       box-sizing reset does not reach here. Set it locally or the border would
+       push the button past its declared size. */
+    box-sizing: border-box;
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    /* Below the header's z-index: 20, so the mobile nav drawer covers it. */
+    z-index: 15;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #b6ae99;
+    border-radius: 50%;
+    background: #2f3437;
+    color: #b6ae99;
+    cursor: pointer;
+    /* Hidden resting state. `visibility` keeps it out of the tab order while
+       hidden; it is transitioned so it flips only after the fade completes. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s,
+      background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .scroll-to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .scroll-to-top:hover,
+  .scroll-to-top:focus-visible {
+    background: #b6ae99;
+    color: #2f3437;
+  }
+
+  .scroll-to-top:focus-visible {
+    outline: 2px solid #b6ae99;
+    outline-offset: 3px;
+  }
+
+  .scroll-to-top svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  @media (max-width: 560px) {
+    .scroll-to-top {
+      right: 1rem;
+      bottom: 1rem;
+      width: 40px;
+      height: 40px;
+    }
+
+    .scroll-to-top svg {
+      width: 27px;
+      height: 27px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-to-top {
+      transition: opacity 0.25s ease, visibility 0.25s;
+      transform: none;
+    }
+
+    .scroll-to-top.is-visible {
+      transform: none;
+    }
+  }
+</style>

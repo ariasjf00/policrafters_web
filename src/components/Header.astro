@@ -242,7 +242,9 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		});
 	});
 
-	if (header?.hasAttribute('data-scroll-shadow')) {
+	// Runs on every page: `is-scrolled` compacts the header. The drop shadow it also
+	// drives is gated in CSS behind [data-scroll-shadow], so it stays home-page only.
+	if (header) {
 		const SCROLL_THRESHOLD = 40;
 		const updateHeaderOnScroll = () => {
 			header.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
@@ -287,20 +289,49 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		align-items: center;
 		background: #fff;
 		border-bottom: 1px solid #ececec;
+		transition: padding .25s ease;
 	}
 
 	/* Home page: overlays the 100vh hero, so it must be out of flow. */
 	.site-header.is-fixed {
 		position: fixed;
 		left: 0;
-		transition: box-shadow .3s ease;
+		transition: padding .25s ease, box-shadow .3s ease;
 	}
 
+	/* Compacted state, applied past the scroll threshold and removed at the top.
+	   Only the vertical padding is touched so the mobile breakpoint keeps its own
+	   horizontal padding. */
 	.site-header.is-scrolled {
+		padding-top: .45rem;
+		padding-bottom: .45rem;
+	}
+
+	/* The drop shadow stays opt-in (home page only); the compacting above is not. */
+	.site-header[data-scroll-shadow].is-scrolled {
 		box-shadow: 0 1px 0 #ececec;
 	}
 
-	.logo img { height: 34px; width: auto; display: block; }
+	.logo img {
+		height: 34px;
+		width: auto;
+		display: block;
+		transition: height .25s ease;
+	}
+
+	.site-header.is-scrolled .logo img {
+		height: 24px;
+	}
+
+	/* The compacting is a size change; honour a reduced-motion preference by
+	   snapping between states instead of animating. */
+	@media (prefers-reduced-motion: reduce) {
+		.site-header,
+		.site-header.is-fixed,
+		.logo img {
+			transition: none;
+		}
+	}
 
 	nav ul {
 		list-style: none;

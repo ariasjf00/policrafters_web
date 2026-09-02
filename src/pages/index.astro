@@ -3,6 +3,7 @@ import homeEn from "../mocks/home.en.json";
 import homeEs from "../mocks/home.es.json";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import ScrollToTop from "../components/ScrollToTop.astro";
 import { Icon } from 'astro-icon/components';
 import "../styles/links.css";
 
@@ -408,6 +409,8 @@ const heroCtaUrl = '/contacto';
 		</main>
 
 		<Footer lang={selectedLang} />
+
+		<ScrollToTop lang={selectedLang} />
 
 		<script type="module" define:vars={{ homeEn, homeEs }}>
 			const body = document.body;
@@ -936,6 +939,12 @@ const heroCtaUrl = '/contacto';
 		font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 		color: var(--text);
 		background: #fff;
+		/* Full-bleed sections use `width: 100vw`, which counts the vertical scrollbar
+		   while the page's content box does not — leaving them a scrollbar-width too
+		   wide and producing a horizontal scrollbar. Clip that overhang.
+		   `clip`, not `hidden`: `hidden` would create a scroll container and break
+		   `position: sticky` headers. `clip` does not. */
+		overflow-x: clip;
 	}
 
 	.hero {

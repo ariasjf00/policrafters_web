@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ScrollToTop from '../components/ScrollToTop.astro';
 
 interface Props {
   title?: string;
@@ -61,6 +62,8 @@ const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en'
     </main>
 
     <Footer lang={selectedLang} />
+
+    <ScrollToTop lang={selectedLang} />
   </body>
 </html>
 
@@ -77,6 +80,12 @@ const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en'
     font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: var(--text);
     background: #fff;
+    /* Full-bleed sections use `width: 100vw`, which counts the vertical scrollbar
+       while the page's content box does not — leaving them a scrollbar-width too
+       wide and producing a horizontal scrollbar. Clip that overhang.
+       `clip`, not `hidden`: `hidden` would create a scroll container and break
+       this layout's `position: sticky` header. `clip` does not. */
+    overflow-x: clip;
   }
 
   .hero-page {

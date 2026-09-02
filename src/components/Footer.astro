@@ -89,6 +89,14 @@ const socialLinks = [
   { name: 'youtube', icon: 'simple-icons:youtube', label: 'Policrafters on YouTube' },
   { name: 'pinterest', icon: 'simple-icons:pinterest', label: 'Policrafters on Pinterest' }
 ];
+
+// Contact details. `tel:` must be punctuation-free E.164 to dial reliably, so the
+// dialled value is kept separate from the formatted one shown to the reader.
+const contactPhoneDisplay = '+1 (813) 812-0650';
+const contactPhoneHref = `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const contactEmail = 'info@policrafters.com';
+const contactAddress = '7735 NW 75th Ave, Medley, FL 33166';
+const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`;
 ---
 
 <footer class="site-footer">
@@ -112,7 +120,7 @@ const socialLinks = [
         <Icon name="mdi:phone-in-talk" class="footer-contact-icon" />
         <div>
           <span id="footer-phone-label" class="footer-contact-label">{t.phoneLabel}</span>
-          <span class="footer-contact-value">+1 (813) 812-0650</span>
+          <a class="footer-contact-value link-underline" href={contactPhoneHref}>{contactPhoneDisplay}</a>
         </div>
       </div>
       <span id="footer-residential-label" class="footer-section-label">{t.residentialLabel}</span>
@@ -128,7 +136,7 @@ const socialLinks = [
         <Icon name="mdi:email" class="footer-contact-icon" />
         <div>
           <span id="footer-email-label" class="footer-contact-label">{t.emailLabel}</span>
-          <span class="footer-contact-value">info@policrafters.com</span>
+          <a class="footer-contact-value link-underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
         </div>
       </div>
       <span id="footer-commercial-label" class="footer-section-label">{t.commercialLabel}</span>
@@ -144,7 +152,12 @@ const socialLinks = [
         <Icon name="mdi:map-marker" class="footer-contact-icon" />
         <div>
           <span id="footer-address-label" class="footer-contact-label">{t.addressLabel}</span>
-          <span class="footer-contact-value">7735 NW 75th<br />Ave. Medley, FL. 33166</span>
+          <a
+            class="footer-contact-value link-underline"
+            href={contactMapHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >7735 NW 75th<br />Ave. Medley, FL. 33166</a>
         </div>
       </div>
       <span id="footer-social-label" class="footer-section-label">{t.socialLabel}</span>
@@ -377,7 +390,10 @@ const socialLinks = [
   }
 
   .footer-contact-value {
-    display: block;
+    /* Inline (not block) so the link-underline gradient tracks the text width and,
+       on the two-line address, underlines each line rather than the whole box.
+       The label above is display:block, so this still starts on its own line. */
+    display: inline;
     font-size: 0.9rem;
     line-height: 1.4;
   }
@@ -397,19 +413,22 @@ const socialLinks = [
   }
 
   .footer-social-icon {
-    width: 34px;
-    height: 34px;
+    /* border-box + 36px keeps the outer circle a fixed size, so thickening the
+       border on hover grows the ring inward instead of nudging the row. */
+    box-sizing: border-box;
+    width: 36px;
+    height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid #b6ae99;
     border-radius: 50%;
+    transition: border-width 0.2s ease;
   }
 
-  .footer-social-icon:hover {
-    background: #b6ae99;
-    color: #2f3437;
-    opacity: 1;
+  .footer-social-icon:hover,
+  .footer-social-icon:focus-visible {
+    border-width: 3px;
   }
 
   .footer-social-icon svg {

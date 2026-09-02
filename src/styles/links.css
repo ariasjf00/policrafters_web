@@ -7,6 +7,7 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition: background-size 0.25s ease;
+  padding-bottom: 3px;
 }
 
 .link-underline {
@@ -22,9 +23,17 @@
   background-size: 100% 1px;
 }
 
+/* Declared before :hover so the LVHA order holds. Scoped to .link-body on purpose:
+   the .link-underline links are still placeholders pointing at "#", which resolves
+   to the current page and would therefore match :visited immediately. */
+.link-body:visited {
+  color: #808080;
+}
+
 .link-body:hover,
 .link-body:focus-visible {
   background-size: 100% 2px;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {
