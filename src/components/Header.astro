@@ -342,7 +342,6 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	}
 
 	nav a.nav-link {
-		position: relative;
 		color: #2f3437;
 		text-decoration: none;
 		font-weight: 500;
@@ -350,27 +349,13 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		padding: 0.5rem 0.9rem;
-		border-radius: 999px;
-		transition: background-color 0.2s ease;
+		transition: background-color 0.2s ease, color 0.2s ease;
 	}
 
-	nav a.nav-link::after {
-		content: "";
-		position: absolute;
-		left: 0.9rem;
-		right: 0.9rem;
-		bottom: 0.35rem;
-		height: 1px;
-		background: currentColor;
-		transform: scaleX(0);
-		transform-origin: left;
-		transition: transform 0.25s ease;
-	}
-
-	nav a.nav-link:hover::after,
-	nav a.nav-link:focus-visible::after,
-	nav a.nav-link.is-active-page::after {
-		transform: scaleX(1);
+	nav a.nav-link:hover,
+	nav a.nav-link:focus-visible {
+		background: #b6ae99;
+		color: #ffffff;
 	}
 
 	nav a.nav-link.is-active-page {
