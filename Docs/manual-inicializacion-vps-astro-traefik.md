@@ -447,3 +447,44 @@ docker compose up -d --build
 git remote set-url origin git@github.com:ariasjf00/policrafters_web.git
 git remote -v
 git pull origin home_test
+
+## Resolver divergencia de ramas en VPS (git pull)
+
+Si al ejecutar `git pull origin home_test` aparece el mensaje de ramas divergentes,
+usar uno de estos flujos.
+
+### Opcion recomendada para despliegue (dejar VPS igual a remoto)
+
+Atencion: este flujo descarta cambios locales en el VPS.
+
+```bash
+cd /var/www/policrafters_web
+git fetch origin
+git checkout home_test
+git reset --hard origin/home_test
+git status -sb
+```
+
+Opcional para limpiar archivos no versionados:
+
+```bash
+git clean -fd
+```
+
+### Opcion alternativa (conservar cambios locales del VPS)
+
+```bash
+cd /var/www/policrafters_web
+git pull --rebase origin home_test
+git status -sb
+```
+
+### Evitar el aviso en futuros pull
+
+Para servidores, se recomienda fast-forward only:
+
+```bash
+git config pull.ff only
+```
+
+Con esto, `git pull` solo avanza si no hay divergencia. Si la hay, falla y avisa.
