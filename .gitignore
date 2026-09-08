@@ -21,6 +21,3 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
-
-# local agent instructions
-CLAUDE.md
