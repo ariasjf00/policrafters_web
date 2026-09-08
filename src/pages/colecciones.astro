@@ -7,9 +7,8 @@ type AnyRecord = Record<string, any>;
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
 const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || 'http://localhost:8000/api/collections/';
-const clientApiUrl = import.meta.env.DEV ? '/wagtail-api/api/collections/' : apiUrl;
-const apiOrigin = apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
+const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
+const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 let isRemoteData = false;
 
 const normalizeAssetUrl = (value: unknown): string => {
@@ -24,7 +23,7 @@ const normalizeAssetUrl = (value: unknown): string => {
 
 let data = collectionsPage;
 
-if (useApi) {
+if (useApi && apiUrl) {
   try {
     let localizedApiUrl = apiUrl;
 
@@ -52,55 +51,99 @@ const resolvedFields = (resolvedData.fields ?? collectionsPage.fields ?? {}) as 
 const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
 const fallbackFields = (collectionsPage.fields ?? {}) as AnyRecord;
 
-const normalizeRichText = (value: unknown): string =>
-  String(value ?? '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+// Mirrors index.astro: ?lang= wins, otherwise the payload's locale decides.
+const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
+const isEsLocale = normalizedLocale.includes('es');
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es'
+  ? langParam
+  : (isEsLocale ? 'es' : 'en');
+const isEs = selectedLang === 'es';
+const pick = (es, en) => (isEs ? es : (en ?? es));
 
-const dataSource = data === collectionsPage ? 'mock' : 'api';
-const pageTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Collections';
-const pageSubtitle = normalizeRichText(resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '');
-const introText = normalizeRichText(resolvedFields.intro_text || fallbackFields.intro_text || '');
-const apiItems = Array.isArray(resolvedFields.items) ? resolvedFields.items : [];
-const fallbackItems = Array.isArray(fallbackFields.collection_items) ? fallbackFields.collection_items : [];
-const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecord[];
+const esTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Colecciones';
+const enTitle = resolvedFields.hero_title_en || fallbackFields.hero_title_en || esTitle;
+const esSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
+const enSubtitle = resolvedFields.hero_subtitle_en || fallbackFields.hero_subtitle_en || esSubtitle;
+const esIntro = resolvedFields.intro_text || fallbackFields.intro_text || '';
+const enIntro = resolvedFields.intro_text_en || fallbackFields.intro_text_en || esIntro;
+const esPrevAria = resolvedFields.prev_aria || fallbackFields.prev_aria || 'Ver colección anterior';
+const enPrevAria = resolvedFields.prev_aria_en || fallbackFields.prev_aria_en || esPrevAria;
+const esNextAria = resolvedFields.next_aria || fallbackFields.next_aria || 'Ver siguiente colección';
+const enNextAria = resolvedFields.next_aria_en || fallbackFields.next_aria_en || esNextAria;
+const esCarouselAria = resolvedFields.carousel_aria || fallbackFields.carousel_aria || 'Carrusel de colecciones';
+const enCarouselAria = resolvedFields.carousel_aria_en || fallbackFields.carousel_aria_en || esCarouselAria;
+
+const pageTitle = pick(esTitle, enTitle);
+const pageSubtitle = pick(esSubtitle, enSubtitle);
+const introText = pick(esIntro, enIntro);
+const collectionItems = Array.isArray(resolvedFields.collection_items)
+  ? resolvedFields.collection_items
+  : fallbackFields.collection_items ?? [];
 ---
 
 <PageLayout
   title={resolvedMeta.seo_title || 'Collections | Policrafters'}
-  description={resolvedMeta.search_description || 'Colecciones destacadas de Policrafters'}
+  description={pick(resolvedMeta.search_description, resolvedMeta.search_description_en) || 'Featured Policrafters collections'}
   heroTitle={pageTitle}
   heroSubtitle={pageSubtitle}
+  heroTitleEs={esTitle}
+  heroTitleEn={enTitle}
+  heroSubtitleEs={esSubtitle}
+  heroSubtitleEn={enSubtitle}
 >
-  <section
-    class="collections-section"
-    data-collections-source={dataSource}
-    data-api-url={apiUrl}
-    data-client-api-url={clientApiUrl}
-    data-api-origin={apiOrigin}
-  >
-    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-      <h2 id="collections-title" style="margin:0;">{pageTitle}</h2>
-    </div>
-    <p id="collections-intro" class="collections-copy">{introText}</p>
+  <section class="collections-section">
+    <h2 id="collections-title" data-copy-es={esTitle} data-copy-en={enTitle}>{pageTitle}</h2>
+    <p id="collections-intro" class="collections-copy" data-copy-es={esIntro} data-copy-en={enIntro}>{introText}</p>
 
     <div class="carousel-shell">
       <div class="carousel-viewport">
         <div class="carousel-controls" aria-hidden="true">
-          <button id="collections-prev" class="carousel-btn carousel-btn--icon" data-action="prev" aria-label="Ver colección anterior">&lt;</button>
-          <button id="collections-next" class="carousel-btn carousel-btn--icon" data-action="next" aria-label="Ver siguiente colección">&gt;</button>
+          <button
+            id="collections-prev"
+            class="carousel-btn carousel-btn--icon"
+            data-action="prev"
+            data-aria-es={esPrevAria}
+            data-aria-en={enPrevAria}
+            aria-label={pick(esPrevAria, enPrevAria)}
+          >&lt;</button>
+          <button
+            id="collections-next"
+            class="carousel-btn carousel-btn--icon"
+            data-action="next"
+            data-aria-es={esNextAria}
+            data-aria-en={enNextAria}
+            aria-label={pick(esNextAria, enNextAria)}
+          >&gt;</button>
         </div>
 
-        <div class="collection-carousel" id="collection-carousel" aria-label="Carrusel de colecciones">
-          {collectionItems.map((item: AnyRecord, index: number) => (
+        <div
+          class="collection-carousel"
+          id="collection-carousel"
+          data-aria-es={esCarouselAria}
+          data-aria-en={enCarouselAria}
+          aria-label={pick(esCarouselAria, enCarouselAria)}
+        >
+          {collectionItems.map((item, index) => (
             <article class="collection-card" data-collection-index={index}>
               <img src={normalizeAssetUrl(item.image?.url)} alt={item.image?.alt || item.type} loading="lazy" />
               <div class="collection-card__body">
-                <h3 class="collection-type">{item.type}</h3>
-                <p class="collection-description">{item.description}</p>
-                <a href={item.cta_url || '/contacto'} class="discover-btn">{item.cta_text || 'Descubre más'}</a>
+                <h3
+                  class="collection-type"
+                  data-copy-es={item.type}
+                  data-copy-en={item.type_en || item.type}
+                >{pick(item.type, item.type_en)}</h3>
+                <p
+                  class="collection-description"
+                  data-copy-es={item.description}
+                  data-copy-en={item.description_en || item.description}
+                >{pick(item.description, item.description_en)}</p>
+                <a
+                  href={item.cta_url || '/contacto'}
+                  class="discover-btn"
+                  data-copy-es={item.cta_text || 'Descubre más'}
+                  data-copy-en={item.cta_text_en || item.cta_text || 'Discover more'}
+                >{pick(item.cta_text || 'Descubre más', item.cta_text_en || 'Discover more')}</a>
               </div>
             </article>
           ))}
@@ -119,12 +162,6 @@ const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecor
   const clientApiUrl = sourcePanel?.dataset?.clientApiUrl || apiUrl;
   const apiOrigin = sourcePanel?.dataset?.apiOrigin || '';
   const buttons = document.querySelectorAll('.carousel-btn');
-  const titleNode = document.getElementById('collections-title');
-  const introNode = document.getElementById('collections-intro');
-  const heroTitleNode = document.getElementById('page-hero-title');
-  const heroSubtitleNode = document.getElementById('page-hero-subtitle');
-  const prevButton = document.getElementById('collections-prev');
-  const nextButton = document.getElementById('collections-next');
   const initialCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
   const baseCount = initialCards.length;
   let virtualIndex = baseCount;
@@ -132,26 +169,11 @@ const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecor
   let loopReady = false;
   let isAnimating = false;
 
-  const getUiCopy = (lang) => {
-    const activeLang = lang === 'en' ? 'en' : 'es';
-    if (activeLang === 'en') {
-      return {
-        prevAria: 'View previous collection',
-        nextAria: 'View next collection',
-        carouselAria: 'Collections carousel'
-      };
-    }
-    return {
-      prevAria: 'Ver colección anterior',
-      nextAria: 'Ver siguiente colección',
-      carouselAria: 'Carrusel de colecciones'
-    };
-  };
-
   const appendLang = (href, lang) => {
     const [path, query = ''] = href.split('?');
     const params = new URLSearchParams(query);
-    params.set('lang', lang);
+    if (lang === 'es') params.set('lang', 'es');
+    else params.delete('lang');
     const queryString = params.toString();
     return queryString ? `${path}?${queryString}` : path;
   };
@@ -162,139 +184,34 @@ const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecor
     return lang === 'en' || lang === 'es' ? lang : null;
   };
 
+  // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+  // Header owns writing `siteLang`; this is a subscriber, so it only reads.
   const getActiveLang = () => {
     const inUrl = getLangFromUrl();
     if (inUrl) return inUrl;
     const stored = localStorage.getItem('siteLang');
     if (stored === 'en' || stored === 'es') return stored;
-    return 'es';
+    return 'en';
   };
 
-  const localeFromValue = (value) => {
-    const normalized = String(value || '').toLowerCase();
-    if (normalized.startsWith('en')) return 'en';
-    if (normalized.startsWith('es')) return 'es';
-    return null;
-  };
-
-  const getLocaleCandidates = (lang) => {
-    if (lang === 'en') return ['en', 'en-us', 'en-gb'];
-    return ['es', 'es-es'];
-  };
-
-  const normalizeRichText = (value) =>
-    String(value || '')
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-  const normalizeAssetUrl = (value) => {
-    if (!value) return '';
-    if (/^https?:\/\//i.test(value)) return value;
-    if (value.startsWith('/')) {
-      return apiOrigin ? `${apiOrigin}${value}` : value;
-    }
-    return value;
-  };
-
-  const fetchCollectionsPayload = async (lang) => {
-    const endpointBase = clientApiUrl || apiUrl;
-    if (!endpointBase) return null;
-    const requestedLang = lang === 'en' ? 'en' : 'es';
-    const candidates = getLocaleCandidates(requestedLang);
-
-    for (const locale of candidates) {
-      try {
-        const url = new URL(endpointBase, window.location.origin);
-        url.searchParams.set('locale', locale);
-        url.searchParams.set('lang', requestedLang);
-
-        const response = await fetch(url.toString(), { cache: 'no-store' });
-        if (!response.ok) continue;
-
-        const payload = await response.json();
-        if (!payload || typeof payload !== 'object') continue;
-
-        const apiLocaleLang = localeFromValue(payload.locale);
-        if (apiLocaleLang && apiLocaleLang !== requestedLang) {
-          continue;
-        }
-
-        return payload;
-      } catch (error) {
-        console.warn('No se pudo cargar colecciones desde API para locale:', locale, error);
-      }
-    }
-
-    return null;
-  };
-
-  const applyApiPayload = (payload, lang) => {
-    const fields = payload?.fields && typeof payload.fields === 'object' ? payload.fields : {};
-    const nextTitle = fields.hero_title || payload?.title || (lang === 'en' ? 'Collections' : 'Colecciones');
-    const nextSubtitle = normalizeRichText(fields.hero_subtitle || '');
-    const nextIntro = normalizeRichText(fields.intro_text || '');
-
-    if (heroTitleNode) heroTitleNode.textContent = nextTitle;
-    if (heroSubtitleNode && nextSubtitle) heroSubtitleNode.textContent = nextSubtitle;
-    if (titleNode) titleNode.textContent = nextTitle;
-    if (introNode) introNode.textContent = nextIntro;
-
-    const apiItems = Array.isArray(fields.items) ? fields.items : [];
-    if (!apiItems.length) return;
-
-    const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
-    allCards.forEach((card) => {
-      const cardIndex = Number.parseInt(card.getAttribute('data-collection-index') || '0', 10);
-      const item = apiItems[cardIndex % apiItems.length];
-      if (!item) return;
-
-      const img = card.querySelector('img');
-      const typeNode = card.querySelector('.collection-type');
-      const descriptionNode = card.querySelector('.collection-description');
-      const ctaNode = card.querySelector('.discover-btn');
-
-      if (img) {
-        const imageUrl = normalizeAssetUrl(item.image?.url);
-        if (imageUrl) {
-          img.setAttribute('src', imageUrl);
-        } else {
-          img.removeAttribute('src');
-        }
-        img.setAttribute('alt', item.image?.alt || item.type || 'Collection item');
-      }
-
-      if (typeNode) typeNode.textContent = item.type || '';
-      if (descriptionNode) descriptionNode.textContent = item.description || '';
-      if (ctaNode) {
-        ctaNode.textContent = item.cta_text || (lang === 'en' ? 'Discover more' : 'Descubre más');
-        ctaNode.setAttribute('href', appendLang(item.cta_url || '/contacto', lang));
-      }
-    });
-
-    const prevLabel = lang === 'en' ? 'View previous collection' : 'Ver colección anterior';
-    const nextLabel = lang === 'en' ? 'View next collection' : 'Ver siguiente colección';
-    const carouselLabel = lang === 'en' ? 'Collections carousel' : 'Carrusel de colecciones';
-    if (prevButton) prevButton.setAttribute('aria-label', prevLabel);
-    if (nextButton) nextButton.setAttribute('aria-label', nextLabel);
-    if (carousel) carousel.setAttribute('aria-label', carouselLabel);
-  };
-
+  // All copy ships in the markup as data-copy-es/-en and data-aria-es/-en, so both
+  // languages are present server-side and cloned carousel cards carry their own copy.
   const applyCollectionsLanguage = (lang) => {
     const activeLang = lang === 'en' ? 'en' : 'es';
-    const copy = getUiCopy(activeLang);
+    const key = activeLang === 'en' ? 'en' : 'es';
 
-    if (prevButton) prevButton.setAttribute('aria-label', copy.prevAria);
-    if (nextButton) nextButton.setAttribute('aria-label', copy.nextAria);
-    if (carousel) carousel.setAttribute('aria-label', copy.carouselAria);
+    document.querySelectorAll('[data-copy-es]').forEach((el) => {
+      const value = el.getAttribute('data-copy-' + key);
+      if (value !== null) el.textContent = value;
+    });
 
-    const allCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
-    allCards.forEach((card) => {
-      const ctaNode = card.querySelector('.discover-btn');
-      if (ctaNode) {
-        ctaNode.setAttribute('href', appendLang(ctaNode.getAttribute('href') || '/contacto', activeLang));
-      }
+    document.querySelectorAll('[data-aria-es]').forEach((el) => {
+      const value = el.getAttribute('data-aria-' + key);
+      if (value !== null) el.setAttribute('aria-label', value);
+    });
+
+    document.querySelectorAll('.discover-btn').forEach((cta) => {
+      cta.setAttribute('href', appendLang(cta.getAttribute('href') || '/contacto', activeLang));
     });
   };
 
@@ -387,35 +304,13 @@ const collectionItems = (apiItems.length ? apiItems : fallbackItems) as AnyRecor
     loopReady = true;
   };
 
-  document.querySelectorAll('.lang-link').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      const targetLang = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-      const nextUrl = new URL(window.location.href);
-      nextUrl.searchParams.set('lang', targetLang);
-      localStorage.setItem('siteLang', targetLang);
-      window.location.href = nextUrl.toString();
-    });
-  });
+  setupInfiniteCarousel();
 
-  const initializeCollectionsLanguage = async () => {
-    const activeLang = getActiveLang();
-
-    if (sourceMode === 'api') {
-      const payload = await fetchCollectionsPayload(activeLang);
-      if (payload) {
-        applyApiPayload(payload, activeLang);
-      } else {
-        applyCollectionsLanguage(activeLang);
-      }
-    } else {
-      applyCollectionsLanguage(activeLang);
-    }
-
-    setupInfiniteCarousel();
-  };
-
-  initializeCollectionsLanguage();
+  // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+  // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+  // before this page script runs (see Footer.astro for the same pattern).
+  applyCollectionsLanguage(getActiveLang());
+  document.addEventListener('sitelangchange', (event) => applyCollectionsLanguage(event.detail));
 </script>
 
 <style>

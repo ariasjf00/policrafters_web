@@ -1,0 +1,60 @@
+{
+    "type": "home_cms.HomePage", 
+    "title": "Home", 
+    "locale": "en", 
+    "meta": {
+        "seo_title": "", 
+        "search_description": ""
+    }, 
+    "fields": {
+        "copy": {
+            "hero_eyebrow": {"es": "Inicio", "en": "Home"}, 
+            "hero_heading": {"es": "(es)Your Premier Interiors & Arquitectural Partner", "en": "Your Premier Interiors & Arquitectural Partner"}, 
+            "hero_cta": {"es": "Galeria", "en": "Galeria"}, 
+            "projects_eyebrow": {"es": "Proyectos", "en": "Projects"}, 
+            "projects_heading": {"es": "Nuestros proyectos", "en": "Our projects"}, 
+            "projects_cta": {"es": "Ver proyectos", 
+            "en": "View projects"}, 
+            "projects_prev_aria": {"es": "Proyecto anterior", "en": "Previous project"}, 
+            "projects_next_aria": {"es": "Proyecto siguiente", "en": "Next project"}, 
+            "projects_carousel_aria": {"es": "Carrusel de proyectos", "en": "Projects carousel"}, 
+            "projects_dot_aria": {"es": "Ir al proyecto", "en": "Go to project"}, 
+            "about_eyebrow": {"es": "Nosotros", "en": "About us"}, 
+            "about_heading": {"es": "Sobre nosotros", "en": "About us"}, 
+            "about_body_1": {"es": "We create experiences through furniture, finishes, and end-to-end interior solutions. (from wagtail)</p>", "en": "<p>We create experiences through furniture, finishes, and end-to-end interior solutions. (from wagtail)</p>"}, 
+            "about_body_2": {"es": "Diseñamos soluciones modernas y funcionales para cada espacio.", "en": "We design modern, functional solutions for every space."}, 
+            "about_brands_label": {"es": "Nuestras marcas", "en": "Our brands"}, 
+            "about_cta": {"es": "Saber m\u00e1s", "en": "Learn more"}, 
+            "team_eyebrow": {"es": "Equipo", "en": "Team"}, 
+            "team_heading": {"es": "Nuestro equipo", "en": "Our team"}, 
+            "values_eyebrow": {"es": "Valores", "en": "Values"}, 
+            "values_heading": {"es": "Nuestros valores", "en": "Our values"}, 
+            "values_prev_aria": {"es": "Valor anterior", "en": "Previous value"}, 
+            "values_next_aria": {"es": "Valor siguiente", "en": "Next value"}, 
+            "values_carousel_aria": {"es": "Carrusel de valores", "en": "Values carousel"}, 
+            "values_dot_aria": {"es": "Ir al valor", "en": "Go to value"}, 
+            "catalogs_eyebrow": {"es": "Cat\u00e1logos", "en": "Catalogs"}, 
+            "catalogs_heading": {"es": "Cat\u00e1logos", "en": "Catalogs"}, 
+            "catalogs_prev_aria": {"es": "Cat\u00e1logo anterior", "en": "Previous catalog"}, 
+            "catalogs_next_aria": {"es": "Cat\u00e1logo siguiente", "en": "Next catalog"}, 
+            "catalogs_dot_aria": {"es": "Ir al cat\u00e1logo", "en": "Go to catalog"}, 
+            "contact_heading": {"es": "Cta heading", "en": "Cta heading"}, 
+            "contact_cta": {"es": "Galeria", "en": "Galeria"}
+            }, 
+            "hero_video_horizontal": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", 
+            "hero_video_vertical": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", 
+            "hero_image_horizontal": {
+                "url": "/media/original_images/Bellagio_Shower_Door_AkmDlaD.jpg", 
+                "alt": "phyton"
+                }, 
+            "hero_image_vertical": {
+                "url": "/media/original_images/Bellagio_Shower_Door_AkmDlaD.jpg", 
+                "alt": "phyton"
+            }, 
+            "featured_projects": [], 
+            "team_members": [], 
+            "values_slides": [], 
+            "catalogs": [], 
+            "contact_links": []
+            }
+        }

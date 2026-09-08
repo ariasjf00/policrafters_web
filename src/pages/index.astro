@@ -1,15 +1,31 @@
 ---
-import home from "../mocks/home.json";
+import homeEn from "../mocks/home.en.json";
+import homeEs from "../mocks/home.es.json";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import ScrollToTop from "../components/ScrollToTop.astro";
+import { Icon } from 'astro-icon/components';
+import "../styles/links.css";
 
 type AnyRecord = Record<string, any>;
 
 const useApi = import.meta.env.PUBLIC_USE_API === "true";
-const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/home/";
-const clientApiUrl = import.meta.env.DEV ? "/wagtail-api/api/home/" : apiUrl;
-const apiOrigin = apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
+const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+const apiOrigin = apiUrl && apiUrl.startsWith("http") ? new URL(apiUrl).origin : "";
 const langParam = Astro.url.searchParams.get("lang")?.toLowerCase();
-const requestedLang = langParam === "en" || langParam === "es" ? langParam : null;
-const normalizeAssetUrl = (value: unknown): string => {
+const requestedLang = langParam === "es" ? "es" : "en";
+const localHome = requestedLang === "es" ? homeEs : homeEn;
+const apiRequestUrl = (() => {
+	if (!apiUrl) return "";
+	try {
+		const url = new URL(apiUrl);
+		url.searchParams.set("lang", requestedLang);
+		return url.toString();
+	} catch {
+		return apiUrl;
+	}
+})();
+const normalizeAssetUrl = (value) => {
 	if (!value) return "";
 	if (typeof value !== "string") return "";
 	if (/^https?:\/\//i.test(value)) return value;
@@ -18,17 +34,11 @@ const normalizeAssetUrl = (value: unknown): string => {
 	}
 	return value;
 };
-let data = home;
+let data = localHome;
 
-if (useApi) {
+if (useApi && apiUrl) {
 	try {
-		let localizedApiUrl = apiUrl;
-		if (requestedLang && apiUrl.startsWith("http")) {
-			const url = new URL(apiUrl);
-			url.searchParams.set("locale", requestedLang);
-			localizedApiUrl = url.toString();
-		}
-		const response = await fetch(localizedApiUrl);
+		const response = await fetch(apiRequestUrl || apiUrl);
 		if (response.ok) {
 			const payload = await response.json();
 			if (payload && typeof payload === "object") {
@@ -40,188 +50,383 @@ if (useApi) {
 	}
 }
 
-const resolvedData = data ?? home;
-const resolvedFields = (resolvedData.fields ?? home.fields ?? {}) as AnyRecord;
-const resolvedMeta = resolvedData.meta ?? home.meta ?? {};
-const fallbackFields = (home.fields ?? {}) as AnyRecord;
+const resolvedData = data ?? localHome;
+const resolvedFields = resolvedData.fields ?? localHome.fields ?? {};
+const resolvedMeta = resolvedData.meta ?? localHome.meta ?? {};
+const fallbackFields = localHome.fields ?? {};
 const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
-const featuredBrands = Array.isArray(resolvedFields.featured_brands) ? resolvedFields.featured_brands : [];
-const testimonials = Array.isArray(resolvedFields.testimonials) ? resolvedFields.testimonials : [];
-const heroHeading = resolvedFields.hero_heading || resolvedData.title || fallbackFields.hero_heading || "Home";
-const heroSubheading = resolvedFields.hero_subheading || fallbackFields.hero_subheading || "";
-const introText = (resolvedFields.intro_text || fallbackFields.intro_text || "")
-	.replace(/<[^>]*>/g, "")
-	.replace(/&nbsp;/g, " ")
-	.trim();
-const heroVideoUrl = resolvedFields.hero_video_url || fallbackFields.hero_video_url || "https://www.w3schools.com/html/mov_bbb.mp4";
-const heroImageUrl = resolvedFields.hero_image_fallback?.url || fallbackFields.hero_image_fallback?.url || "/images/hero-fallback.svg";
-const heroImageAlt = resolvedFields.hero_image_fallback?.alt || fallbackFields.hero_image_fallback?.alt || "Policrafters";
+const copyFields = resolvedFields.copy ?? fallbackFields.copy ?? {};
+const getCopyText = (key, fallback = "") => {
+	const value = copyFields[key];
+	if (typeof value === "string" && value.trim()) return value;
+	return fallback;
+};
+const heroHeading = getCopyText("hero_heading", resolvedData.title || "Home");
+// Only CMS-provided paths need the API origin; local /public assets are served as-is.
+const heroAsset = (apiValue, localValue) => (useApi && apiValue ? normalizeAssetUrl(apiValue) : localValue);
+const teamMembersRaw = Array.isArray(resolvedFields.team_members) && resolvedFields.team_members.length
+	? resolvedFields.team_members
+	: (fallbackFields.team_members ?? []);
+const teamMembers = teamMembersRaw.map((member) => ({
+	...member,
+	photo: {
+		url: heroAsset(member.photo?.url, member.photo?.url),
+		alt: member.photo?.alt || ""
+	}
+}));
+const valuesSlidesRaw = Array.isArray(resolvedFields.values_slides) && resolvedFields.values_slides.length
+	? resolvedFields.values_slides
+	: (fallbackFields.values_slides ?? []);
+const valuesSlides = valuesSlidesRaw.map((slide) => ({
+	...slide,
+	image: {
+		url: heroAsset(slide.image?.url, slide.image?.url),
+		alt: slide.image?.alt || ""
+	}
+}));
+const catalogsRaw = Array.isArray(resolvedFields.catalogs) && resolvedFields.catalogs.length
+	? resolvedFields.catalogs
+	: (fallbackFields.catalogs ?? []);
+const catalogs = catalogsRaw.map((item) => ({
+	...item,
+	image: {
+		url: heroAsset(item.image?.url, item.image?.url),
+		alt: item.image?.alt || ""
+	}
+}));
+const contactLinks = Array.isArray(resolvedFields.contact_links) && resolvedFields.contact_links.length
+	? resolvedFields.contact_links
+	: (fallbackFields.contact_links ?? []);
+const heroVideoHorizontal = heroAsset(
+	resolvedFields.hero_video_horizontal,
+	fallbackFields.hero_video_horizontal || "/videos/horizontal_video_placeholder.mp4"
+);
+const heroVideoVertical = heroAsset(
+	resolvedFields.hero_video_vertical,
+	fallbackFields.hero_video_vertical || "/videos/vertical_video_placeholder.mp4"
+);
+const heroImageHorizontal = heroAsset(
+	resolvedFields.hero_image_horizontal?.url,
+	fallbackFields.hero_image_horizontal?.url || "/images/pages/horizontal_video_static_image.png"
+);
+const heroImageVertical = heroAsset(
+	resolvedFields.hero_image_vertical?.url,
+	fallbackFields.hero_image_vertical?.url || "/images/pages/vertical_video_static_image.png"
+);
+const heroImageAlt = resolvedFields.hero_image_horizontal?.alt || fallbackFields.hero_image_horizontal?.alt || "Policrafters";
 const siteLogoCandidate = resolvedFields.site_logo ?? resolvedFields.logo ?? resolvedFields.header_logo ?? fallbackFields.site_logo ?? fallbackFields.logo ?? fallbackFields.header_logo;
 const siteLogo = typeof siteLogoCandidate === "string"
 	? { url: normalizeAssetUrl(siteLogoCandidate), alt: "Policrafters logo" }
 	: siteLogoCandidate?.url
 		? { url: normalizeAssetUrl(siteLogoCandidate.url), alt: siteLogoCandidate.alt || "Policrafters logo" }
 		: { url: "/logo_black.png", alt: "Policrafters logo" };
-const ctaHeading = resolvedFields.cta_heading || fallbackFields.cta_heading || "";
-const ctaButtonText = resolvedFields.cta_button_text || fallbackFields.cta_button_text || "Contáctanos";
-const ctaButtonUrl = resolvedFields.cta_button_url || fallbackFields.cta_button_url || "/contacto";
-const normalizedLocale = typeof resolvedData.locale === "string" ? resolvedData.locale.toLowerCase() : "";
-const isEsLocale = normalizedLocale.includes("es") || normalizedLocale.includes("español");
-const initialApiLocale = isEsLocale ? "es" : "en";
-const selectedLang = requestedLang
-	? requestedLang
-	: isEsLocale
-		? "es"
-		: "en";
+const selectedLang = requestedLang;
 const isEs = selectedLang === "es";
-const appendLang = (href: string, lang: string): string => {
-	const [path, query = ""] = href.split("?");
-	const params = new URLSearchParams(query);
-	params.set("lang", lang);
-	const queryString = params.toString();
-	return queryString ? `${path}?${queryString}` : path;
-};
-const menu = isEs
-	? [
-			{ key: "home", label: "Inicio", href: appendLang("/", selectedLang) },
-			{ key: "projects", label: "Proyectos", href: appendLang("/proyectos", selectedLang) },
-			{ key: "collections", label: "Colecciones", href: appendLang("/colecciones", selectedLang) },
-			{ key: "brands", label: "Marcas", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contacto", href: appendLang("/contacto", selectedLang) }
-		]
-	: [
-			{ key: "home", label: "Home", href: appendLang("/", selectedLang) },
-			{ key: "projects", label: "Projects", href: appendLang("/proyectos", selectedLang) },
-			{ key: "collections", label: "Collections", href: appendLang("/colecciones", selectedLang) },
-			{ key: "brands", label: "Brands", href: appendLang("/marcas", selectedLang) },
-			{ key: "contact", label: "Contact", href: appendLang("/contacto", selectedLang) }
-		];
-const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
-const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
-
-const localizedHeroHeading = heroHeading;
-const localizedHeroSubheading = heroSubheading;
-const localizedIntroText = introText;
-const localizedCtaHeading = ctaHeading;
-const localizedCtaButtonText = ctaButtonText;
+const localizedHeroHeading = getCopyText("hero_heading", heroHeading || "Home");
+const localizedHeroEyebrow = getCopyText("hero_eyebrow", "");
+const localizedHeroCta = getCopyText("hero_cta", "");
+const localizedProjectsEyebrow = getCopyText("projects_eyebrow", "");
+const localizedProjectsHeading = getCopyText("projects_heading", "");
+const localizedProjectsCta = getCopyText("projects_cta", "");
+const localizedAboutEyebrow = getCopyText("about_eyebrow", "");
+const localizedAboutHeading = getCopyText("about_heading", "");
+const localizedAboutCta = getCopyText("about_cta", "");
+const localizedTeamEyebrow = getCopyText("team_eyebrow", "");
+const localizedTeamHeading = getCopyText("team_heading", "");
+const localizedValuesEyebrow = getCopyText("values_eyebrow", "");
+const localizedValuesHeading = getCopyText("values_heading", "");
+const localizedCatalogsEyebrow = getCopyText("catalogs_eyebrow", "");
+const localizedCatalogsHeading = getCopyText("catalogs_heading", "");
+const localizedContactHeading = getCopyText("contact_heading", "");
+const localizedContactCta = getCopyText("contact_cta", "");
+const localizedAboutBody1 = getCopyText("about_body_1", "");
+const localizedAboutBody2 = getCopyText("about_body_2", "");
+const localizedAboutBrandsLabel = getCopyText("about_brands_label", "");
+const localizedAboutAlt = isEs ? 'Equipo de Policrafters' : 'The Policrafters team';
+const localizedProjectsPrevAria = getCopyText("projects_prev_aria", "");
+const localizedProjectsNextAria = getCopyText("projects_next_aria", "");
+const localizedProjectsCarouselAria = getCopyText("projects_carousel_aria", "");
+const localizedProjectsDotAria = getCopyText("projects_dot_aria", "");
+const localizedValuesPrevAria = getCopyText("values_prev_aria", "");
+const localizedValuesNextAria = getCopyText("values_next_aria", "");
+const localizedValuesCarouselAria = getCopyText("values_carousel_aria", "");
+const localizedValuesDotAria = getCopyText("values_dot_aria", "");
+const localizedCatalogsPrevAria = getCopyText("catalogs_prev_aria", "");
+const localizedCatalogsNextAria = getCopyText("catalogs_next_aria", "");
+const localizedCatalogsDotAria = getCopyText("catalogs_dot_aria", "");
+const heroCtaUrl = '/contacto';
 ---
 
 <html lang={isEs ? "es" : "en"}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<script is:inline>
+			(() => {
+				const params = new URLSearchParams(window.location.search);
+				const urlLang = params.get('lang');
+				const lang = urlLang === 'es' ? 'es' : 'en';
+				window.__SITE_LANG__ = lang;
+				localStorage.setItem('siteLang', lang);
+				document.documentElement.lang = lang;
+			})();
+		</script>
 		<title>{resolvedMeta.seo_title || resolvedData.title || home.title}</title>
 		<meta name="description" content={resolvedMeta.search_description || ""} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
 	</head>
-	<body data-api-url={clientApiUrl} data-api-origin={apiOrigin}>
-		<header class="site-header">
-			<a class="logo" href="/">
-				<img id="site-logo" src={siteLogo.url} alt={siteLogo.alt} />
-			</a>
-			<nav aria-label="Main navigation">
-				<ul>
-					{menu.map((item) => (
-						<li><a href={item.href} data-menu-key={item.key}>{item.label}</a></li>
-					))}
-					<li class="lang-switch" aria-label={isEs ? "Selector de idioma" : "Language selector"}>
-						<a class:list={["lang-link", isEs && "is-active"]} href={esHref}>ES</a>
-						<span>/</span>
-						<a class:list={["lang-link", !isEs && "is-active"]} href={enHref}>EN</a>
-					</li>
-				</ul>
-			</nav>
-		</header>
+		<body data-api-url={apiUrl}>
+		<Header lang={selectedLang} logo={siteLogo} position="fixed" scrollShadow />
 
 		<section class="hero">
-			{heroVideoUrl ? (
-				<video
-					class="hero-media"
-					autoplay
-					muted
-					loop
-					playsinline
-					poster={heroImageUrl}
-				>
-					<source src={heroVideoUrl} type="video/mp4" />
-				</video>
-			) : (
-				<img
-					class="hero-media"
-					src={heroImageUrl}
-					alt={heroImageAlt}
-					loading="eager"
-				/>
-			)}
+			<picture class="hero-poster">
+				<source media="(max-width: 900px)" srcset={heroImageVertical} />
+				<img src={heroImageHorizontal} alt={heroImageAlt} loading="eager" fetchpriority="high" />
+			</picture>
+			<video
+				class="hero-video"
+				autoplay
+				muted
+				loop
+				playsinline
+				preload="none"
+				aria-hidden="true"
+				data-src-horizontal={heroVideoHorizontal}
+				data-src-vertical={heroVideoVertical}
+			></video>
 			<div class="hero-overlay" />
 			<div class="hero-content">
-				<p class="eyebrow">Policrafters</p>
+				<p id="hero-eyebrow" class="eyebrow">{localizedHeroEyebrow}</p>
 				<h1 id="hero-heading">{localizedHeroHeading}</h1>
-				<p id="hero-subheading">{localizedHeroSubheading}</p>
+				<a id="hero-cta" class="hero-cta-btn" href={heroCtaUrl}>{localizedHeroCta}</a>
 			</div>
 		</section>
 
 		<main>
-			<section class="container intro">
-				<p id="intro-text">{localizedIntroText}</p>
+			<section class="projects-section">
+				<p id="projects-eyebrow" class="section-eyebrow">{localizedProjectsEyebrow}</p>
+				<h2 id="projects-heading" class="section-heading">{localizedProjectsHeading}</h2>
+
+				<div class="projects-carousel-shell">
+					<div class="projects-carousel-viewport">
+						<div class="projects-carousel-controls" aria-hidden="true">
+							<button id="projects-prev" class="projects-arrow-btn" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
+								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+							</button>
+							<button id="projects-next" class="projects-arrow-btn" data-action="next" aria-label={localizedProjectsNextAria}>
+								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+							</button>
+						</div>
+
+						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria}>
+							{featuredProjects.map((p, index) => (
+								<a href="#" class="projects-card" data-project-index={index}>
+									<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
+									<div class="projects-card__body">
+										<h3 class="projects-card__title">{p.title}</h3>
+										<p class="projects-card__description">{p.description}</p>
+									</div>
+								</a>
+							))}
+						</div>
+					</div>
+
+					<div class="projects-indicator" id="projects-indicator" role="tablist" aria-label={localizedProjectsCarouselAria}>
+						<button type="button" class="projects-indicator-arrow" data-action="prev" disabled aria-label={localizedProjectsPrevAria}>
+							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+						</button>
+						<div class="projects-dots" id="projects-dots" data-dot-aria-es={resolvedFields.copy?.projects_dot_aria?.es || localizedProjectsDotAria} data-dot-aria-en={resolvedFields.copy?.projects_dot_aria?.en || localizedProjectsDotAria}>
+							{featuredProjects.map((_, index) => (
+								<button
+									type="button"
+									class:list={["projects-dot", index === 0 && "is-active"]}
+									data-dot-index={index}
+									aria-label={localizedProjectsDotAria + ' ' + (index + 1)}
+								></button>
+							))}
+						</div>
+						<button type="button" class="projects-indicator-arrow" data-action="next" aria-label={localizedProjectsNextAria}>
+							<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+						</button>
+					</div>
+				</div>
+
+				<a id="projects-cta" href="#" class="projects-cta-btn">{localizedProjectsCta}</a>
 			</section>
 
-			<section class="container">
-				<h2 id="featured-projects-heading">{isEs ? "Proyectos destacados" : "Featured projects"}</h2>
-				<div class="grid projects">
-					{featuredProjects.map((p) => (
-						<article class="card">
-							<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
-							<div class="card-body">
-								<h3>{p.title}</h3>
-								<p>{p.location}</p>
+			<hr class="section-rule" />
+
+			<section class="container about-section">
+				<div class="about-grid">
+					<img
+						class="about-image"
+						src="/images/pages/about_us.png"
+						alt={localizedAboutAlt}
+						loading="lazy"
+					/>
+					<div class="about-copy">
+						<p id="about-eyebrow" class="section-eyebrow">{localizedAboutEyebrow}</p>
+						<h2 id="about-heading" class="section-heading">{localizedAboutHeading}</h2>
+						<p id="about-body-1">{localizedAboutBody1}</p>
+						<p id="about-body-2">{localizedAboutBody2}</p>
+						<p id="about-brands-label" class="about-brands-label">{localizedAboutBrandsLabel}</p>
+						<ul class="about-brands-list">
+							<li><a href="https://glasstech-usa.com" target="_blank" rel="noopener" class="link-body">glasstech-usa.com</a></li>
+							<li><a href="https://alutech-usa.com" target="_blank" rel="noopener" class="link-body">alutech-usa.com</a></li>
+						</ul>
+						<a id="about-cta" href="#" class="about-cta-btn">{localizedAboutCta}</a>
+					</div>
+				</div>
+			</section>
+
+			<hr class="section-rule" />
+
+			<section class="container team-section">
+				<p id="team-eyebrow" class="section-eyebrow">{localizedTeamEyebrow}</p>
+				<h2 id="team-heading" class="section-heading">{localizedTeamHeading}</h2>
+
+				<div class="team-grid">
+					{teamMembers.map((member) => (
+						<div class="team-card">
+							<img
+								class="team-card__photo"
+								src={member.photo.url}
+								alt={member.photo.alt || (isEs ? "Integrante del equipo Policrafters" : "Policrafters team member")}
+								loading="lazy"
+							/>
+							<div class="team-card__meta">
+								<p class="team-card__role">{member.role}</p>
+								<p class="team-card__name">{member.name}</p>
 							</div>
-						</article>
+							<p class="team-card__bio">{member.bio}</p>
+						</div>
 					))}
 				</div>
 			</section>
 
-			<section class="container brands">
-				<h2 id="brands-heading">{isEs ? "Marcas" : "Brands"}</h2>
-				<div class="brand-row">
-					{featuredBrands.map((b) => (
-						<img src={b.logo.url} alt={b.logo.alt} loading="lazy" />
+			<hr class="section-rule" />
+
+			<section class="values-section">
+				<div class="values-header">
+					<p id="values-eyebrow" class="section-eyebrow">{localizedValuesEyebrow}</p>
+					<h2 id="values-heading" class="section-heading">{localizedValuesHeading}</h2>
+				</div>
+
+				<div class="values-slider" id="values-slider" aria-roledescription="carousel" aria-label={localizedValuesCarouselAria}>
+					{valuesSlides.map((slide, index) => (
+						<div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
+							<img
+								class="values-slide__image"
+								src={slide.image.url}
+								alt={slide.image.alt}
+								loading={index === 0 ? "eager" : "lazy"}
+							/>
+							<div class="values-slide__caption">
+								<h3 class="values-slide__title">{slide.title}</h3>
+								<p class="values-slide__description">{slide.description}</p>
+							</div>
+						</div>
 					))}
+
+					<div class="values-slider-controls" aria-hidden="true">
+						<button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={localizedValuesPrevAria}>
+							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+						</button>
+						<button id="values-next" class="values-arrow-btn" data-action="next" aria-label={localizedValuesNextAria}>
+							<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+						</button>
+					</div>
+				</div>
+
+				<div class="values-indicator" id="values-indicator" role="tablist" aria-label={localizedValuesCarouselAria}>
+					<button type="button" class="values-indicator-arrow" data-action="prev" aria-label={localizedValuesPrevAria}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+					</button>
+					<div class="values-dots" id="values-dots">
+						{valuesSlides.map((_, index) => (
+							<button
+								type="button"
+								class:list={["values-dot", index === 0 && "is-active"]}
+								data-dot-index={index}
+								aria-label={localizedValuesDotAria + ' ' + (index + 1)}
+							></button>
+						))}
+					</div>
+					<button type="button" class="values-indicator-arrow" data-action="next" aria-label={localizedValuesNextAria}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+					</button>
 				</div>
 			</section>
 
-			<section class="container testimonials">
-				<h2 id="testimonials-heading">{isEs ? "Testimonios" : "Testimonials"}</h2>
-				{testimonials.map((t) => (
-					<blockquote>
-						“{t.quote}”
-						<cite>{t.author}</cite>
-					</blockquote>
-				))}
-			</section>
+			<hr class="section-rule" />
 
-			<section class="cta">
-				<div class="container cta-inner">
-					<h2 id="cta-heading">{localizedCtaHeading}</h2>
-					<a id="cta-button" class="btn" href={ctaButtonUrl}>{localizedCtaButtonText}</a>
+			<section class="container catalogs-section">
+				<p id="catalogs-eyebrow" class="section-eyebrow">{localizedCatalogsEyebrow}</p>
+				<h2 id="catalogs-heading" class="section-heading">{localizedCatalogsHeading}</h2>
+
+				<div class="catalogs-track" id="catalogs-track">
+					{catalogs.map((item, index) => (
+						<a class="catalog-card" href={item.file_url || "#"} data-catalog-index={index}>
+							<img class="catalog-card__image" src={item.image.url} alt={item.image.alt} loading="lazy" />
+							<span class="catalog-card__label">
+								<span class="catalog-card__title">{item.title}</span>
+								<Icon name="mdi:download" class="catalog-card__icon" />
+							</span>
+						</a>
+					))}
+				</div>
+
+				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={localizedCatalogsEyebrow}>
+					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={localizedCatalogsPrevAria}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+					</button>
+					<div class="catalogs-dots" id="catalogs-dots">
+						{Array.from({ length: Math.ceil(catalogs.length / 4) }, (_, index) => (
+							<button
+								type="button"
+								class:list={["catalogs-dot", index === 0 && "is-active"]}
+								data-dot-index={index}
+								aria-label={localizedCatalogsDotAria + ' ' + (index + 1)}
+							></button>
+						))}
+					</div>
+					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={localizedCatalogsNextAria}>
+						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+					</button>
+				</div>
+
+				<h2 id="contact-heading" class="contact-heading">{localizedContactHeading}</h2>
+
+				<div class="contact-grid">
+					{contactLinks.map((link) => (
+						<div class="contact-col">
+							<h3 class="contact-col__title">{link.title}</h3>
+							<p class="contact-col__description">{link.description}</p>
+							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{localizedContactCta}</a>
+						</div>
+					))}
 				</div>
 			</section>
 		</main>
-		<aside class="debug-panel" id="debug-panel" aria-live="polite">
-			<div class="debug-header">
-				<p class="debug-title">API Debug</p>
-				<button class="debug-toggle" id="debug-toggle" type="button" aria-expanded="true">Ocultar</button>
-			</div>
-			<p><strong>Lang activo:</strong> <span id="debug-active-lang">{selectedLang}</span></p>
-			<p><strong>Locale API:</strong> <span id="debug-api-locale">{initialApiLocale}</span></p>
-			<p><strong>Hero heading:</strong> <span id="debug-hero-heading">{localizedHeroHeading}</span></p>
-			<p><strong>API URL:</strong> <span id="debug-api-url">{apiUrl}</span></p>
-		</aside>
-		<script is:inline type="module">
+
+		<Footer lang={selectedLang} />
+
+		<ScrollToTop lang={selectedLang} />
+
+		<script type="module" define:vars={{ homeEn, homeEs }}>
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl;
-			const apiOrigin = body?.dataset?.apiOrigin || (apiUrl?.startsWith('http') ? new URL(apiUrl).origin : '');
-			let apiLocale = null;
-			let apiContent = null;
+			const shouldUseCms = Boolean(apiUrl);
+			const apiOrigin = (() => {
+				try {
+					return apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
+				} catch {
+					return '';
+				}
+			})();
+
 			const normalizeAssetUrl = (value) => {
 				if (!value) return '';
 				if (/^https?:\/\//i.test(value)) return value;
@@ -229,76 +434,6 @@ const localizedCtaButtonText = ctaButtonText;
 					return apiOrigin ? `${apiOrigin}${value}` : value;
 				}
 				return value;
-			};
-			const sanitizeRichText = (value) => {
-				if (typeof value !== 'string') return value ?? '';
-				return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-			};
-			const updateDebugPanel = ({ activeLang, localeFromApi, heroHeading, resolvedApiUrl }) => {
-				document.querySelector('#debug-active-lang')?.replaceChildren(activeLang || '-');
-				document.querySelector('#debug-api-locale')?.replaceChildren(localeFromApi || '-');
-				document.querySelector('#debug-hero-heading')?.replaceChildren(heroHeading || '-');
-				document.querySelector('#debug-api-url')?.replaceChildren(resolvedApiUrl || '-');
-			};
-			const debugPanel = document.querySelector('#debug-panel');
-			const debugToggle = document.querySelector('#debug-toggle');
-			const DEBUG_PANEL_STORAGE_KEY = 'policrafters-debug-visible';
-			const syncDebugPanelVisibility = () => {
-				if (!debugPanel || !debugToggle) return;
-				const isVisible = localStorage.getItem(DEBUG_PANEL_STORAGE_KEY) !== 'false';
-				debugPanel.classList.toggle('is-hidden', !isVisible);
-				debugToggle.textContent = isVisible ? 'Ocultar' : 'Mostrar';
-				debugToggle.setAttribute('aria-expanded', String(isVisible));
-			};
-			debugToggle?.addEventListener('click', () => {
-				const shouldShow = debugPanel?.classList.contains('is-hidden');
-				localStorage.setItem(DEBUG_PANEL_STORAGE_KEY, String(shouldShow));
-				syncDebugPanelVisibility();
-			});
-			syncDebugPanelVisibility();
-			const uiByLang = {
-				es: {
-					menu: {
-						home: { label: 'Inicio', href: '/' },
-						projects: { label: 'Proyectos', href: '/proyectos' },
-						collections: { label: 'Colecciones', href: '/colecciones' },
-						brands: { label: 'Marcas', href: '/marcas' },
-						contact: { label: 'Contacto', href: '/contacto' }
-					},
-					sections: {
-						projects: 'Proyectos destacados',
-						brands: 'Marcas',
-						testimonials: 'Testimonios'
-					},
-					content: {
-						heroHeading: 'Diseño que transforma espacios',
-						heroSubheading: 'Colecciones exclusivas para proyectos residenciales y comerciales.',
-						introText: 'Creamos experiencias a través de mobiliario, acabados y soluciones integrales.',
-						ctaHeading: '¿Listo para tu próximo proyecto?',
-						ctaButton: 'Contáctanos'
-					}
-				},
-				en: {
-					menu: {
-						home: { label: 'Home', href: '/' },
-						projects: { label: 'Projects', href: '/proyectos' },
-						collections: { label: 'Collections', href: '/colecciones' },
-						brands: { label: 'Brands', href: '/marcas' },
-						contact: { label: 'Contact', href: '/contacto' }
-					},
-					sections: {
-						projects: 'Featured projects',
-						brands: 'Brands',
-						testimonials: 'Testimonials'
-					},
-					content: {
-						heroHeading: 'Design that transforms spaces',
-						heroSubheading: 'Exclusive collections for residential and commercial projects.',
-						introText: 'We create experiences through furniture, finishes, and end-to-end interior solutions.',
-						ctaHeading: 'Ready for your next project?',
-						ctaButton: 'Contact us'
-					}
-				}
 			};
 
 			const getLangFromUrl = () => {
@@ -308,152 +443,487 @@ const localizedCtaButtonText = ctaButtonText;
 			};
 
 			const getActiveLang = () => {
+				if (window.__SITE_LANG__ === 'en' || window.__SITE_LANG__ === 'es') {
+					return window.__SITE_LANG__;
+				}
 				const urlLang = getLangFromUrl();
 				if (urlLang) return urlLang;
 				const storedLang = localStorage.getItem('siteLang');
 				if (storedLang === 'en' || storedLang === 'es') return storedLang;
-				return document.documentElement.lang === 'en' ? 'en' : 'es';
+				localStorage.setItem('siteLang', 'en');
+				return 'en';
 			};
 
-			const appendLang = (href, lang) => {
-				const [path, query = ''] = href.split('?');
-				const params = new URLSearchParams(query);
-				params.set('lang', lang);
-				const queryString = params.toString();
-				return queryString ? `${path}?${queryString}` : path;
+			const homePages = {
+				en: homeEn,
+				es: homeEs
 			};
+			let currentHomeData = homePages[getActiveLang()];
 
 			const buildApiUrlForLang = (lang) => {
 				if (!apiUrl) return '';
+				const safeLang = lang === 'es' ? 'es' : 'en';
 				try {
-					const url = new URL(apiUrl, window.location.origin);
-					url.searchParams.set('locale', lang === 'es' ? 'es' : 'en');
+					const url = new URL(apiUrl);
+					url.searchParams.set('lang', safeLang);
 					return url.toString();
 				} catch {
 					return apiUrl;
 				}
 			};
 
-			const applyLanguage = (lang) => {
-				const activeLang = lang === 'en' ? 'en' : 'es';
-				const copy = uiByLang[activeLang];
-				const contentSource = apiContent && apiLocale === activeLang ? apiContent : copy.content;
-				document.documentElement.lang = activeLang;
-				localStorage.setItem('siteLang', activeLang);
-
-				document.querySelectorAll('[data-menu-key]').forEach((link) => {
-					const key = link.getAttribute('data-menu-key');
-					if (!key || !copy.menu[key]) return;
-					link.textContent = copy.menu[key].label;
-					link.setAttribute('href', appendLang(copy.menu[key].href, activeLang));
-				});
-
-				document.querySelector('#featured-projects-heading')?.replaceChildren(copy.sections.projects);
-				document.querySelector('#brands-heading')?.replaceChildren(copy.sections.brands);
-				document.querySelector('#testimonials-heading')?.replaceChildren(copy.sections.testimonials);
-				document.querySelector('#hero-heading')?.replaceChildren(contentSource.heroHeading || '');
-				document.querySelector('#hero-subheading')?.replaceChildren(contentSource.heroSubheading || '');
-				document.querySelector('#intro-text')?.replaceChildren(contentSource.introText || '');
-				document.querySelector('#cta-heading')?.replaceChildren(contentSource.ctaHeading || '');
-				document.querySelector('#cta-button')?.replaceChildren(contentSource.ctaButton || '');
-				updateDebugPanel({
-					activeLang,
-					localeFromApi: apiLocale,
-					heroHeading: contentSource.heroHeading,
-					resolvedApiUrl: buildApiUrlForLang(activeLang)
-				});
-				document.querySelectorAll('.lang-link').forEach((link) => {
-					const linkLang = link.textContent?.trim().toLowerCase();
-					link.classList.toggle('is-active', linkLang === activeLang);
-				});
-			};
-			const setAttributeIfPresent = (selector, attribute, value) => {
+			const applyText = (selector, value) => {
 				const element = document.querySelector(selector);
-				if (element && value) {
-					element.setAttribute(attribute, value);
+				if (element && typeof value === 'string') element.textContent = value;
+			};
+
+			const applyAttr = (selector, attribute, value) => {
+				const element = document.querySelector(selector);
+				if (element && typeof value === 'string') element.setAttribute(attribute, value);
+			};
+
+			const applyHomeLanguage = (data, lang) => {
+				const activeLang = typeof data === 'string' && lang == null
+					? (data === 'es' ? 'es' : 'en')
+					: (lang === 'es' ? 'es' : 'en');
+				const page = data && typeof data === 'object' && !Array.isArray(data)
+					? data
+					: homePages[activeLang];
+				currentHomeData = page;
+				const fields = page?.fields ?? {};
+				const copy = fields.copy ?? {};
+				const featuredProjects = Array.isArray(fields.featured_projects) ? fields.featured_projects : [];
+				const teamMembers = Array.isArray(fields.team_members) ? fields.team_members : [];
+				const valuesSlides = Array.isArray(fields.values_slides) ? fields.values_slides : [];
+				const catalogs = Array.isArray(fields.catalogs) ? fields.catalogs : [];
+				const contactLinks = Array.isArray(fields.contact_links) ? fields.contact_links : [];
+
+				window.__SITE_LANG__ = activeLang;
+				localStorage.setItem('siteLang', activeLang);
+				document.documentElement.lang = activeLang;
+				document.title = page?.meta?.seo_title || page?.title || document.title;
+				const description = document.querySelector('meta[name="description"]');
+				if (description && typeof page?.meta?.search_description === 'string') {
+					description.setAttribute('content', page.meta.search_description);
+				}
+
+				applyText('#hero-eyebrow', copy.hero_eyebrow || '');
+				applyText('#hero-heading', copy.hero_heading || '');
+				applyText('#hero-cta', copy.hero_cta || '');
+				applyText('#projects-eyebrow', copy.projects_eyebrow || '');
+				applyText('#projects-heading', copy.projects_heading || '');
+				applyText('#projects-cta', copy.projects_cta || '');
+				applyText('#about-eyebrow', copy.about_eyebrow || '');
+				applyText('#about-heading', copy.about_heading || '');
+				applyText('#about-body-1', copy.about_body_1 || '');
+				applyText('#about-body-2', copy.about_body_2 || '');
+				applyText('#about-brands-label', copy.about_brands_label || '');
+				applyText('#about-cta', copy.about_cta || '');
+				applyText('#team-eyebrow', copy.team_eyebrow || '');
+				applyText('#team-heading', copy.team_heading || '');
+				applyText('#values-eyebrow', copy.values_eyebrow || '');
+				applyText('#values-heading', copy.values_heading || '');
+				applyText('#catalogs-eyebrow', copy.catalogs_eyebrow || '');
+				applyText('#catalogs-heading', copy.catalogs_heading || '');
+				applyText('#contact-heading', copy.contact_heading || '');
+
+				applyAttr('#projects-carousel', 'aria-label', copy.projects_carousel_aria || '');
+				applyAttr('#projects-indicator', 'aria-label', copy.projects_carousel_aria || '');
+				applyAttr('#projects-prev', 'aria-label', copy.projects_prev_aria || '');
+				applyAttr('#projects-next', 'aria-label', copy.projects_next_aria || '');
+				applyAttr('#values-slider', 'aria-label', copy.values_carousel_aria || '');
+				applyAttr('#values-indicator', 'aria-label', copy.values_carousel_aria || '');
+				applyAttr('#values-prev', 'aria-label', copy.values_prev_aria || '');
+				applyAttr('#values-next', 'aria-label', copy.values_next_aria || '');
+				applyAttr('#catalogs-indicator', 'aria-label', copy.catalogs_heading || '');
+				applyAttr('#catalogs-prev', 'aria-label', copy.catalogs_prev_aria || '');
+				applyAttr('#catalogs-next', 'aria-label', copy.catalogs_next_aria || '');
+
+				document.querySelectorAll('.projects-card').forEach((card, index) => {
+					const item = featuredProjects[index];
+					if (!item) return;
+					card.querySelector('.projects-card__title')?.replaceChildren(item.title ?? '');
+					card.querySelector('.projects-card__description')?.replaceChildren(item.description ?? '');
+				});
+
+				document.querySelectorAll('.projects-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.projects_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.team-card').forEach((card, index) => {
+					const item = teamMembers[index];
+					if (!item) return;
+					card.querySelector('.team-card__role')?.replaceChildren(item.role ?? '');
+					card.querySelector('.team-card__bio')?.replaceChildren(item.bio ?? '');
+				});
+
+				document.querySelectorAll('.values-slide').forEach((slide, index) => {
+					const item = valuesSlides[index];
+					if (!item) return;
+					slide.querySelector('.values-slide__title')?.replaceChildren(item.title ?? '');
+					slide.querySelector('.values-slide__description')?.replaceChildren(item.description ?? '');
+				});
+
+				document.querySelectorAll('.values-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.values_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.catalog-card').forEach((card, index) => {
+					const item = catalogs[index];
+					if (!item) return;
+					card.querySelector('.catalog-card__title')?.replaceChildren(item.title ?? '');
+				});
+
+				document.querySelectorAll('.catalogs-dot').forEach((dot, index) => {
+					dot.setAttribute('aria-label', `${copy.catalogs_dot_aria || ''} ${index + 1}`.trim());
+				});
+
+				document.querySelectorAll('.contact-col').forEach((column, index) => {
+					const item = contactLinks[index];
+					if (!item) return;
+					column.querySelector('.contact-col__title')?.replaceChildren(item.title ?? '');
+					column.querySelector('.contact-col__description')?.replaceChildren(item.description ?? '');
+					column.querySelector('.contact-col__btn')?.replaceChildren(copy.contact_cta || '');
+				});
+
+				const heroImage = document.querySelector('.hero-image');
+				if (heroImage && fields.hero_image_horizontal?.url) {
+					heroImage.setAttribute('alt', fields.hero_image_horizontal?.alt || heroImage.getAttribute('alt') || '');
 				}
 			};
 
-			const applyApiData = (data) => {
-				const fields = data?.fields ?? {};
-				const meta = data?.meta ?? {};
-				const normalizedLocale = typeof data?.locale === 'string' ? data.locale.toLowerCase() : '';
-				apiLocale = normalizedLocale.includes('es') || normalizedLocale.includes('español') ? 'es' : 'en';
-				apiContent = {
-					heroHeading: fields.hero_heading || data?.title || '',
-					heroSubheading: fields.hero_subheading || '',
-					introText: sanitizeRichText(fields.intro_text),
-					ctaHeading: fields.cta_heading || '',
-					ctaButton: fields.cta_button_text || ''
-				};
-				updateDebugPanel({
-					activeLang: getActiveLang(),
-					localeFromApi: apiLocale,
-					heroHeading: apiContent.heroHeading,
-					resolvedApiUrl: buildApiUrlForLang(getActiveLang())
-				});
-				if (data?.title) {
-					document.title = meta.seo_title || data.title;
+			if (shouldUseCms) {
+				const requestUrl = buildApiUrlForLang(getActiveLang());
+				if (requestUrl) {
+					fetch(requestUrl, { cache: 'no-store' })
+						.then((response) => response.ok ? response.json() : null)
+						.then((data) => {
+							if (data && typeof data === 'object') applyHomeLanguage(data, getActiveLang());
+						})
+						.catch(() => {});
 				}
-				if (meta.search_description) {
-					document.querySelector('meta[name="description"]')?.setAttribute('content', meta.search_description);
-				}
-				const siteLogoFromApi = fields.site_logo ?? fields.logo ?? fields.header_logo;
-				if (siteLogoFromApi) {
-					const logoUrl = typeof siteLogoFromApi === 'string' ? normalizeAssetUrl(siteLogoFromApi) : normalizeAssetUrl(siteLogoFromApi?.url);
-					const logoAlt = typeof siteLogoFromApi === 'string' ? 'Policrafters logo' : siteLogoFromApi?.alt || 'Policrafters logo';
-					const logoElement = document.querySelector('#site-logo');
-					if (logoElement) {
-						logoElement.setAttribute('src', logoUrl);
-						logoElement.setAttribute('alt', logoAlt);
+			}
+
+			document.addEventListener('sitelangchange', (event) => {
+				const nextLang = event?.detail === 'es' ? 'es' : 'en';
+				if (shouldUseCms) {
+					const requestUrl = buildApiUrlForLang(nextLang);
+					if (requestUrl) {
+						fetch(requestUrl, { cache: 'no-store' })
+							.then((response) => response.ok ? response.json() : null)
+							.then((data) => {
+								applyHomeLanguage(data && typeof data === 'object' ? data : homePages[nextLang], nextLang);
+							})
+							.catch(() => applyHomeLanguage(homePages[nextLang], nextLang));
+						return;
 					}
 				}
-				setAttributeIfPresent('#hero-image', 'src', fields.hero_image_fallback?.url);
-				setAttributeIfPresent('#hero-image', 'alt', fields.hero_image_fallback?.alt);
-				const heroMedia = document.querySelector('#hero-media');
-				if (heroMedia && fields.hero_video_url) {
-					heroMedia.setAttribute('src', fields.hero_video_url);
-				}
-				applyLanguage(getActiveLang());
-			};
-
-			const fetchAndApplyApiData = async (lang) => {
-				const localizedApiUrl = buildApiUrlForLang(lang);
-				if (!localizedApiUrl) return;
-				try {
-					const response = await fetch(localizedApiUrl, { cache: 'no-store' });
-					if (!response.ok) throw new Error(`HTTP ${response.status}`);
-					const payload = await response.json();
-					applyApiData(payload);
-				} catch (error) {
-					console.warn('No se pudo cargar la API de Wagtail:', error);
-				}
-			};
-
-			fetchAndApplyApiData(getActiveLang());
-
-			const langLinks = document.querySelectorAll('.lang-link');
-			langLinks.forEach((link) => {
-				link.addEventListener('click', (event) => {
-					event.preventDefault();
-					const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-					const url = new URL(window.location.href);
-					url.searchParams.set('lang', target);
-					window.history.replaceState({}, '', url);
-					applyLanguage(target);
-					fetchAndApplyApiData(target);
-				});
+				applyHomeLanguage(homePages[nextLang], nextLang);
 			});
 
-			applyLanguage(getActiveLang());
+			applyHomeLanguage(homePages[getActiveLang()], getActiveLang());
 
-			const siteHeader = document.querySelector('.site-header');
-			const SCROLL_THRESHOLD = 40;
-			const updateHeaderOnScroll = () => {
-				siteHeader?.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+			const heroVideo = document.querySelector('.hero-video');
+			if (heroVideo) {
+				const isVertical = window.matchMedia('(max-width: 900px)');
+				const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+				const loadHeroVideo = () => {
+					// Reduced-motion users keep the static poster.
+					if (prefersReducedMotion.matches) return;
+					const src = isVertical.matches
+						? heroVideo.dataset.srcVertical
+						: heroVideo.dataset.srcHorizontal;
+					if (!src || heroVideo.getAttribute('src') === src) return;
+					heroVideo.muted = true;
+					heroVideo.setAttribute('src', src);
+					heroVideo.load();
+					const played = heroVideo.play();
+					// Autoplay can be blocked; the poster simply stays.
+					if (played && typeof played.catch === 'function') played.catch(() => {});
+				};
+
+				// Only reveal the video once frames are actually rendering.
+				heroVideo.addEventListener('playing', () => heroVideo.classList.add('is-ready'));
+				heroVideo.addEventListener('error', () => heroVideo.classList.remove('is-ready'));
+
+				const swapOrientation = () => {
+					heroVideo.classList.remove('is-ready');
+					loadHeroVideo();
+				};
+
+				if (typeof isVertical.addEventListener === 'function') {
+					isVertical.addEventListener('change', swapOrientation);
+					prefersReducedMotion.addEventListener('change', swapOrientation);
+				}
+
+				loadHeroVideo();
+			}
+
+			const projectsCarousel = document.getElementById('projects-carousel');
+			const projectsButtons = document.querySelectorAll('#projects-prev, #projects-next, .projects-indicator-arrow');
+			const projectsDotsContainer = document.getElementById('projects-dots');
+			const projectsCards = projectsCarousel ? Array.from(projectsCarousel.querySelectorAll('.projects-card')) : [];
+			const projectsCount = projectsCards.length;
+			let projectsCurrentIndex = 0;
+			let projectsStepSize = 0;
+			let projectsPageCount = projectsCount;
+			let projectsScrollRaf = null;
+
+			const getCardOffset = (index) => {
+				const safeIndex = Math.max(0, Math.min(index, projectsCards.length - 1));
+				const target = projectsCards[safeIndex];
+				return target ? target.offsetLeft : 0;
 			};
-			updateHeaderOnScroll();
-			window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+
+			// Astro's scoped styles only match elements carrying its data-astro-cid-*
+			// attribute, which is baked in at build time. Buttons created here at runtime
+			// need that same attribute copied over or the scoped .projects-dot rules
+			// (shape, fill, active state) silently fail to apply to them.
+			const astroScopeAttrs = projectsDotsContainer
+				? Array.from(projectsDotsContainer.attributes).filter((attr) => attr.name.startsWith('data-astro-cid-'))
+				: [];
+
+			const renderProjectsDots = (pageCount) => {
+				if (!projectsDotsContainer) return;
+				const dotAriaEs = projectsDotsContainer.dataset.dotAriaEs || 'Ir al proyecto';
+				const dotAriaEn = projectsDotsContainer.dataset.dotAriaEn || 'Go to project';
+				const activeLang = getActiveLang();
+				projectsDotsContainer.innerHTML = '';
+				for (let i = 0; i < pageCount; i += 1) {
+					const dot = document.createElement('button');
+					dot.type = 'button';
+					dot.className = 'projects-dot';
+					dot.setAttribute('data-dot-index', String(i));
+					dot.setAttribute('aria-label', `${activeLang === 'es' ? dotAriaEs : dotAriaEn} ${i + 1}`);
+					astroScopeAttrs.forEach((attr) => dot.setAttribute(attr.name, attr.value));
+					projectsDotsContainer.appendChild(dot);
+				}
+			};
+
+			const measureProjectsStep = () => {
+				if (!projectsCarousel || projectsCards.length < 2) return;
+				projectsStepSize = projectsCards[1].offsetLeft - projectsCards[0].offsetLeft;
+				if (projectsStepSize <= 0) {
+					projectsStepSize = projectsCards[0].getBoundingClientRect().width;
+				}
+				// A carousel that shows more than one card per step has fewer distinct
+				// scroll stops than cards: the last (visibleCount - 1) cards share their
+				// stop with an earlier one, so the dot count must follow visible count.
+				const visibleCount = Math.max(1, Math.round(projectsCarousel.clientWidth / projectsStepSize));
+				const nextPageCount = Math.max(1, projectsCount - visibleCount + 1);
+				if (nextPageCount !== projectsPageCount) {
+					projectsPageCount = nextPageCount;
+					renderProjectsDots(projectsPageCount);
+					projectsCurrentIndex = Math.min(projectsCurrentIndex, projectsPageCount - 1);
+					applyHomeLanguage(currentHomeData, getActiveLang());
+				}
+			};
+
+			const updateProjectsIndicator = () => {
+				if (!projectsPageCount) return;
+				document.querySelectorAll('.projects-dot').forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === projectsCurrentIndex);
+				});
+				projectsButtons.forEach((button) => {
+					const action = button.getAttribute('data-action');
+					if (action === 'prev') button.disabled = projectsCurrentIndex === 0;
+					if (action === 'next') button.disabled = projectsCurrentIndex === projectsPageCount - 1;
+				});
+			};
+
+			const scrollProjectsToIndex = (index) => {
+				if (!projectsCarousel) return;
+				const clamped = Math.max(0, Math.min(index, projectsPageCount - 1));
+				const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+				const left = clamped === projectsPageCount - 1 ? maxScroll : getCardOffset(clamped);
+				projectsCarousel.scrollTo({ left, behavior: 'smooth' });
+				projectsCurrentIndex = clamped;
+				updateProjectsIndicator();
+			};
+
+			const handleProjectsScroll = () => {
+				if (projectsScrollRaf) return;
+				projectsScrollRaf = requestAnimationFrame(() => {
+					projectsScrollRaf = null;
+					if (!projectsStepSize || !projectsCarousel) return;
+					const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+					const atEnd = maxScroll - projectsCarousel.scrollLeft < 2;
+					projectsCurrentIndex = atEnd
+						? projectsPageCount - 1
+						: Math.min(Math.round(projectsCarousel.scrollLeft / projectsStepSize), projectsPageCount - 1);
+					updateProjectsIndicator();
+				});
+			};
+
+			const setupProjectsCarousel = () => {
+				if (!projectsCarousel || !projectsCount) return;
+
+				requestAnimationFrame(() => {
+					measureProjectsStep();
+					updateProjectsIndicator();
+				});
+
+				window.addEventListener('resize', () => {
+					requestAnimationFrame(measureProjectsStep);
+				});
+
+				projectsCarousel.addEventListener('scroll', handleProjectsScroll, { passive: true });
+
+				projectsButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						scrollProjectsToIndex(projectsCurrentIndex + direction);
+					});
+				});
+
+				projectsDotsContainer?.addEventListener('click', (event) => {
+					const dot = event.target.closest('.projects-dot');
+					if (!dot) return;
+					const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					scrollProjectsToIndex(targetIndex);
+				});
+			};
+
+			setupProjectsCarousel();
+
+			const valuesSlider = document.getElementById('values-slider');
+			const valuesSlides = valuesSlider ? Array.from(valuesSlider.querySelectorAll('.values-slide')) : [];
+			const valuesDots = document.querySelectorAll('.values-dot');
+			const valuesButtons = document.querySelectorAll('#values-prev, #values-next, .values-indicator-arrow');
+			const valuesCount = valuesSlides.length;
+			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			let valuesCurrentIndex = 0;
+			let valuesIntervalId = null;
+
+			const goToValuesSlide = (index) => {
+				valuesCurrentIndex = (index + valuesCount) % valuesCount;
+				valuesSlides.forEach((slide, i) => {
+					const isActive = i === valuesCurrentIndex;
+					slide.classList.toggle('is-active', isActive);
+					slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+				});
+				valuesDots.forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === valuesCurrentIndex);
+				});
+			};
+
+			const stopValuesAutoplay = () => {
+				if (valuesIntervalId) {
+					clearInterval(valuesIntervalId);
+					valuesIntervalId = null;
+				}
+			};
+
+			const startValuesAutoplay = () => {
+				if (prefersReducedMotion || !valuesCount) return;
+				stopValuesAutoplay();
+				valuesIntervalId = setInterval(() => {
+					goToValuesSlide(valuesCurrentIndex + 1);
+				}, 4000);
+			};
+
+			const setupValuesSlider = () => {
+				if (!valuesSlider || !valuesCount) return;
+
+				valuesButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						goToValuesSlide(valuesCurrentIndex + direction);
+						startValuesAutoplay();
+					});
+				});
+
+				valuesDots.forEach((dot) => {
+					dot.addEventListener('click', () => {
+						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+						goToValuesSlide(targetIndex);
+						startValuesAutoplay();
+					});
+				});
+
+				valuesSlider.addEventListener('mouseenter', stopValuesAutoplay);
+				valuesSlider.addEventListener('mouseleave', startValuesAutoplay);
+
+				document.addEventListener('visibilitychange', () => {
+					if (document.hidden) {
+						stopValuesAutoplay();
+					} else {
+						startValuesAutoplay();
+					}
+				});
+
+				startValuesAutoplay();
+			};
+
+			setupValuesSlider();
+
+			const catalogsTrack = document.getElementById('catalogs-track');
+			const catalogsButtons = document.querySelectorAll('#catalogs-prev, #catalogs-next');
+			const catalogsDots = document.querySelectorAll('.catalogs-dot');
+			const catalogsPageCount = catalogsDots.length;
+			let catalogsCurrentPage = 0;
+			let catalogsScrollRaf = null;
+
+			const updateCatalogsIndicator = () => {
+				catalogsDots.forEach((dot) => {
+					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+					dot.classList.toggle('is-active', dotIndex === catalogsCurrentPage);
+				});
+				catalogsButtons.forEach((button) => {
+					const action = button.getAttribute('data-action');
+					if (action === 'prev') button.disabled = catalogsCurrentPage === 0;
+					if (action === 'next') button.disabled = catalogsCurrentPage === catalogsPageCount - 1;
+				});
+			};
+
+			const scrollCatalogsToPage = (page) => {
+				if (!catalogsTrack) return;
+				const clamped = Math.max(0, Math.min(page, catalogsPageCount - 1));
+				catalogsCurrentPage = clamped;
+				catalogsTrack.scrollTo({ left: clamped * catalogsTrack.clientWidth, behavior: 'smooth' });
+				updateCatalogsIndicator();
+			};
+
+			const handleCatalogsScroll = () => {
+				if (catalogsScrollRaf) return;
+				catalogsScrollRaf = requestAnimationFrame(() => {
+					catalogsScrollRaf = null;
+					if (!catalogsTrack) return;
+					const maxScroll = catalogsTrack.scrollWidth - catalogsTrack.clientWidth;
+					const atEnd = maxScroll - catalogsTrack.scrollLeft < 2;
+					catalogsCurrentPage = atEnd
+						? catalogsPageCount - 1
+						: Math.min(Math.round(catalogsTrack.scrollLeft / catalogsTrack.clientWidth), catalogsPageCount - 1);
+					updateCatalogsIndicator();
+				});
+			};
+
+			const setupCatalogsSlider = () => {
+				if (!catalogsTrack || !catalogsPageCount) return;
+
+				requestAnimationFrame(updateCatalogsIndicator);
+
+				catalogsTrack.addEventListener('scroll', handleCatalogsScroll, { passive: true });
+
+				catalogsButtons.forEach((button) => {
+					button.addEventListener('click', () => {
+						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+						scrollCatalogsToPage(catalogsCurrentPage + direction);
+					});
+				});
+
+				catalogsDots.forEach((dot) => {
+					dot.addEventListener('click', () => {
+						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+						scrollCatalogsToPage(targetIndex);
+					});
+				});
+			};
+
+			setupCatalogsSlider();
 		</script>
 	</body>
 </html>
@@ -469,78 +939,15 @@ const localizedCtaButtonText = ctaButtonText;
 	* { box-sizing: border-box; }
 	body {
 		margin: 0;
-		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 		color: var(--text);
 		background: #fff;
-	}
-
-	.site-header {
-		position: fixed;
-		z-index: 20;
-		top: 0;
-		left: 0;
-		width: 100%;
-		padding: 1rem 2rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
-		transition: background-color .3s ease, box-shadow .3s ease;
-	}
-
-	.site-header.is-scrolled {
-		background: #fff;
-		box-shadow: 0 1px 0 #ececec;
-	}
-
-	.logo img { height: 34px; width: auto; display: block; }
-
-	nav ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		gap: 1.2rem;
-	}
-	nav a {
-		color: #fff;
-		text-decoration: none;
-		font-weight: 500;
-		letter-spacing: .02em;
-		transition: color .3s ease;
-	}
-
-	.site-header.is-scrolled nav a {
-		color: #111;
-	}
-
-	.lang-switch {
-		display: inline-flex;
-		align-items: center;
-		gap: .32rem;
-		color: rgba(255,255,255,.75);
-		font-size: .86rem;
-		letter-spacing: .08em;
-		transition: color .3s ease;
-	}
-
-	.site-header.is-scrolled .lang-switch {
-		color: rgba(17,17,17,.65);
-	}
-
-	.lang-link {
-		opacity: .7;
-		transition: opacity .2s ease;
-	}
-
-	.lang-link:hover {
-		opacity: 1;
-	}
-
-	.lang-link.is-active {
-		opacity: 1;
-		text-decoration: underline;
-		text-underline-offset: .18em;
+		/* Full-bleed sections use `width: 100vw`, which counts the vertical scrollbar
+		   while the page's content box does not — leaving them a scrollbar-width too
+		   wide and producing a horizontal scrollbar. Clip that overhang.
+		   `clip`, not `hidden`: `hidden` would create a scroll container and break
+		   `position: sticky` headers. `clip` does not. */
+		overflow-x: clip;
 	}
 
 	.debug-panel {
@@ -605,11 +1012,32 @@ const localizedCtaButtonText = ctaButtonText;
 		overflow: hidden;
 		background: #000;
 	}
-	.hero-media {
+	/* The poster sits underneath and stays visible until the video is actually
+	   playing, so a slow load or blocked autoplay leaves a static image. */
+	.hero-poster,
+	.hero-video {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	.hero-poster img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		display: block;
+	}
+
+	.hero-video {
+		object-fit: cover;
+		opacity: 0;
+		transition: opacity .6s ease;
+	}
+
+	.hero-video.is-ready {
+		opacity: 1;
 	}
 	.hero-overlay {
 		position: absolute;
@@ -618,27 +1046,52 @@ const localizedCtaButtonText = ctaButtonText;
 	}
 	.hero-content {
 		position: absolute;
-		left: 8%;
-		bottom: 12%;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
 		color: #fff;
-		max-width: 760px;
+		padding: 0 1.5rem;
 	}
 	.hero-content .eyebrow {
-		margin: 0 0 .5rem;
+		margin: 0 0 1.25rem;
 		text-transform: uppercase;
-		letter-spacing: .12em;
-		font-size: .82rem;
+		letter-spacing: .18em;
+		font-size: clamp(.7rem, 1vw, .85rem);
+		font-weight: 600;
 		opacity: .9;
 	}
 	.hero-content h1 {
-		margin: 0 0 .8rem;
-		font-size: clamp(2rem, 4vw, 4rem);
-		line-height: 1.05;
+		margin: 0 0 2.5rem;
+		max-width: 21ch;
+		font-size: clamp(2rem, 4.5vw, 3.5rem);
+		font-weight: 700;
+		line-height: 1.1;
 	}
-	.hero-content p {
-		margin: 0;
-		font-size: clamp(1rem, 1.5vw, 1.3rem);
-		max-width: 65ch;
+	.hero-cta-btn {
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border: 1px solid rgba(255, 255, 255, .85);
+		border-radius: 999px;
+		background: transparent;
+		color: #fff;
+		text-decoration: none;
+		text-transform: uppercase;
+		letter-spacing: .12em;
+		font-size: clamp(.7rem, .9vw, .8rem);
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+	.hero-cta-btn:hover,
+	.hero-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+	.hero-cta-btn:focus-visible {
+		outline: 2px solid #fff;
+		outline-offset: 3px;
 	}
 
 	.container {
@@ -647,81 +1100,717 @@ const localizedCtaButtonText = ctaButtonText;
 		padding: 4rem 0;
 	}
 
-	.intro p {
-		font-size: 1.2rem;
-		color: #333;
-		max-width: 70ch;
+	.projects-section {
+		width: min(var(--max), 92%);
+		margin-inline: auto;
+		padding: 4rem 0;
+		text-align: center;
 	}
 
-	.grid.projects {
+	.section-eyebrow {
+		margin: 0 0 .4rem;
+		font-style: italic;
+		font-size: .95rem;
+		color: #555;
+	}
+
+	.section-heading {
+		margin: 0 0 2.5rem;
+		font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+		font-weight: 700;
+		letter-spacing: .04em;
+		text-transform: uppercase;
+		color: #B6AE99;
+	}
+
+	.projects-carousel-shell {
+		width: 100vw;
+		margin-left: calc(50% - 50vw);
+	}
+
+	.projects-carousel-viewport {
+		position: relative;
+	}
+
+	.projects-carousel-controls {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 1rem;
+		pointer-events: none;
+		z-index: 2;
+	}
+
+	.projects-arrow-btn {
+		border: none;
+		background: none;
+		padding: .5rem;
+		cursor: pointer;
+		pointer-events: auto;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+		transition: opacity .2s ease;
+	}
+
+	.projects-arrow-btn:hover {
+		opacity: .75;
+	}
+
+	.projects-arrow-btn:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.projects-carousel {
+		/* The gap is what separates one project from the next, so the cards have to
+		   give it back: two cards plus one gap must still add up to the viewport. */
+		--projects-gap: 1.5rem;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 1.25rem;
+		grid-auto-flow: column;
+		grid-auto-columns: calc((100% - var(--projects-gap)) / 2);
+		gap: var(--projects-gap);
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
 	}
-	.card {
-		border: 1px solid #ececec;
-		border-radius: 12px;
-		overflow: hidden;
-		background: #fff;
+
+	.projects-carousel::-webkit-scrollbar {
+		display: none;
 	}
-	.card img {
+
+	.projects-card {
+		scroll-snap-align: start;
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.projects-card img {
 		width: 100%;
 		aspect-ratio: 16/10;
 		object-fit: cover;
 		display: block;
 	}
-	.card-body { padding: 1rem; }
-	.card-body h3 { margin: 0 0 .35rem; }
-	.card-body p { margin: 0; color: var(--muted); }
 
-	.brand-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 2rem;
-		align-items: center;
-	}
-	.brand-row img {
-		height: 30px;
-		width: auto;
-		opacity: .9;
+	.projects-card__body {
+		padding: 1.25rem 2rem 0;
+		text-align: center;
 	}
 
-	.testimonials blockquote {
-		margin: 0;
-		padding: 1.25rem;
-		border-left: 3px solid #111;
-		background: #f8f8f8;
+	.projects-card__title {
+		margin: 0 0 .5rem;
+		font-size: 1.05rem;
+		font-weight: 700;
 	}
-	.testimonials cite {
-		display: block;
-		margin-top: .7rem;
+
+	.projects-card__description {
+		margin: 0 auto;
+		max-width: 42ch;
+		font-size: .9rem;
+		line-height: 1.5;
 		color: var(--muted);
-		font-style: normal;
 	}
 
-	.cta {
-		background: var(--bg);
-		color: #fff;
+	.projects-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 2.5rem;
 	}
-	.cta-inner {
+
+	.projects-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.projects-indicator-arrow:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.projects-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.projects-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.projects-dot.is-active {
+		background: #2f3437;
+	}
+
+	.projects-cta-btn {
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border: 1px solid #2f3437;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
+		text-decoration: none;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		font-size: .82rem;
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.projects-cta-btn:hover,
+	.projects-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+
+	.projects-cta-btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
+	}
+
+	.section-rule {
+		width: min(var(--max), 92%);
+		margin: 0 auto;
+		border: none;
+		border-top: 1px solid #2f3437;
+	}
+
+	.about-section {
+		padding: 4rem 0;
+	}
+
+	.about-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+		gap: 3rem;
+		align-items: stretch;
+		--page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
+	}
+
+	.about-image {
+		width: calc(100% + var(--page-gutter));
+		margin-left: calc(-1 * var(--page-gutter));
+		height: 100%;
+		min-height: 320px;
+		object-fit: contain;
+		display: block;
+	}
+
+	.about-copy {
+		display: flex;
+		flex-direction: column;
+		text-align: left;
+	}
+
+	.about-copy .section-eyebrow,
+	.about-copy .section-heading {
+		text-align: left;
+	}
+
+	.about-copy p {
+		margin: 0 0 1.25rem;
+		line-height: 1.6;
+		color: #333;
+	}
+
+	.about-brands-label {
+		margin: .5rem 0 .75rem;
+		font-weight: 700;
+	}
+
+	.about-brands-list {
+		margin: 0 0 2rem;
+		padding-left: 1.25rem;
+		list-style: disc;
+	}
+
+	.about-brands-list li {
+		margin-bottom: .4rem;
+	}
+
+	.about-brands-list a {
+		color: #2f3437;
+	}
+
+	.about-cta-btn {
+		align-self: flex-end;
+		margin-top: auto;
+		display: inline-block;
+		padding: .85rem 2.25rem;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
+		text-decoration: none;
+		font-size: .95rem;
+		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.about-cta-btn:hover,
+	.about-cta-btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+		box-shadow: inset 0 0 0 1px #2f3437;
+	}
+
+	.about-cta-btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
+	}
+
+	.team-section {
+		text-align: center;
+	}
+
+	.team-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.team-card {
+		text-align: left;
+	}
+
+	.team-card__photo {
+		width: 100%;
+		aspect-ratio: 4 / 5;
+		object-fit: cover;
+		display: block;
+		border-style: solid;
+		border-width: 1pt;
+		border-color: #2f3437;
+	}
+
+	.team-card__meta {
+		margin-top: 1rem;
+		border-left-style: solid;
+		border-left-color: #2f3437;
+		border-left-width: 1pt;
+		padding-left: 7px;
+	}
+
+	.team-card__role {
+		margin: 0 0 .25rem;
+		font-style: italic;
+		font-size: .78rem;
+		color: #777;
+	}
+
+	.team-card__name {
+		margin: 0 0 .5rem;
+		text-transform: uppercase;
+		font-weight: 700;
+		font-size: 1.05rem;
+		color: #111;
+	}
+
+	.team-card__bio {
+		margin: 0;
+		font-size: .82rem;
+		line-height: 1.55;
+		color: #666;
+	}
+
+	.values-section {
+		padding: 4rem 0;
+		text-align: center;
+	}
+
+	.values-header {
+		width: min(var(--max), 92%);
+		margin-inline: auto;
+	}
+
+	.values-slider {
+		position: relative;
+		width: 100%;
+		margin-top: 2.5rem;
+		aspect-ratio: 16 / 7;
+		overflow: hidden;
+	}
+
+	.values-slide {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		z-index: 1;
+		pointer-events: none;
+		transition: opacity .8s ease;
+	}
+
+	.values-slide.is-active {
+		opacity: 1;
+		z-index: 2;
+		pointer-events: auto;
+	}
+
+	.values-slide::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: linear-gradient(to top left, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 55%);
+	}
+
+	.values-slide__image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.values-slide__caption {
+		position: absolute;
+		right: 6%;
+		bottom: 12%;
+		z-index: 2;
+		max-width: 42ch;
+		text-align: left;
+		border-left-style: solid;
+		border-left-color: #b6ae99;
+		padding-left: 12px;
+	}
+
+	.values-slide__title {
+		margin: 0 0 .5rem;
+		text-transform: uppercase;
+		font-weight: 700;
+		font-size: 2.5rem;
+		color: #fff;
+		text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+	}
+
+	.values-slide__description {
+		margin: 0;
+		font-size: .9rem;
+		line-height: 1.55;
+		color: #fff;
+		text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+	}
+
+	.values-slider-controls {
+		position: absolute;
+		inset: 0;
 		display: flex;
 		justify-content: space-between;
-		gap: 1rem;
+		align-items: center;
+		padding: 0 1rem;
+		pointer-events: none;
+		z-index: 3;
+	}
+
+	.values-arrow-btn {
+		border: none;
+		background: none;
+		padding: .5rem;
+		cursor: pointer;
+		pointer-events: auto;
+		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+		transition: opacity .2s ease;
+	}
+
+	.values-arrow-btn:hover {
+		opacity: .75;
+	}
+
+	.values-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 0;
+	}
+
+	.values-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.values-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.values-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.values-dot.is-active {
+		background: #2f3437;
+	}
+
+	.catalogs-section {
+		text-align: center;
+	}
+
+	.catalogs-track {
+		--catalogs-gap: 1.5rem;
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: calc((100% - (3 * var(--catalogs-gap))) / 4);
+		gap: var(--catalogs-gap);
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+	}
+
+	.catalogs-track::-webkit-scrollbar {
+		display: none;
+	}
+
+	.catalog-card {
+		scroll-snap-align: start;
+		display: block;
+		text-decoration: none;
+		color: inherit;
+		transition: opacity .2s ease;
+	}
+
+	.catalog-card:hover {
+		opacity: .85;
+	}
+
+	.catalog-card__image {
+		width: 100%;
+		aspect-ratio: 3 / 4;
+		object-fit: cover;
+		display: block;
+	}
+
+	.catalog-card__label {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .4rem;
+		margin-top: .9rem;
+	}
+
+	.catalog-card__title {
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		font-size: .8rem;
+		color: var(--text);
+	}
+
+	.catalog-card__icon {
+		width: 1rem;
+		height: 1rem;
+		color: var(--text);
+	}
+
+	.catalogs-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: .6rem;
+		margin: 1.75rem 0 2.5rem;
+	}
+
+	.catalogs-indicator-arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		padding: .3rem;
+		cursor: pointer;
+	}
+
+	.catalogs-indicator-arrow:disabled {
+		opacity: .35;
+		cursor: default;
+	}
+
+	.catalogs-dots {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+	}
+
+	.catalogs-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: 1px solid #2f3437;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+		transition: background-color .2s ease;
+	}
+
+	.catalogs-dot.is-active {
+		background: #2f3437;
+	}
+
+	.contact-heading {
+		margin: 3.5rem 0 2.5rem;
+		font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+		font-weight: 700;
+		text-transform: none;
+		color: #B6AE99;
+	}
+
+	.contact-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 2rem;
+	}
+
+	.contact-col {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 	}
-	.btn {
+
+	.contact-col__title {
+		margin: 0 0 .6rem;
+		padding-bottom: .6rem;
+		width: 100%;
+		border-bottom: 1px solid #2f3437;
+		font-size: 1.05rem;
+		font-weight: 400;
+		color: var(--text);
+	}
+
+	.contact-col__description {
+		margin: 1rem 0 1.5rem;
+		font-size: .82rem;
+		line-height: 1.55;
+		color: var(--muted);
+	}
+
+	.contact-col__btn {
 		display: inline-block;
-		padding: .8rem 1.2rem;
-		background: #fff;
-		color: #111;
+		margin-top: auto;
+		padding: .6rem 1.5rem;
+		border: 1px solid #2f3437;
+		border-radius: 999px;
+		background: #2f3437;
+		color: #fff;
 		text-decoration: none;
-		border-radius: 8px;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		font-size: .72rem;
 		font-weight: 600;
+		transition: background-color .2s ease, color .2s ease;
+	}
+
+	.contact-col__btn:hover,
+	.contact-col__btn:focus-visible {
+		background: #fff;
+		color: #2f3437;
+	}
+
+	.contact-col__btn:focus-visible {
+		outline: 2px solid #2f3437;
+		outline-offset: 3px;
 	}
 
 	@media (max-width: 900px) {
-		.site-header { padding: .9rem 1rem; }
-		nav ul { gap: .8rem; font-size: .92rem; }
-		.cta-inner { flex-direction: column; align-items: flex-start; }
+		.hero-content h1 { margin-bottom: 1.75rem; }
+
+		.projects-carousel {
+			grid-auto-columns: 88vw;
+		}
+
+		.projects-card__body {
+			padding: 1rem 1.25rem 0;
+		}
+
+		.about-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.about-image {
+			width: 100%;
+			margin-left: 0;
+			height: auto;
+			min-height: 0;
+		}
+
+		.about-cta-btn {
+			align-self: flex-start;
+		}
+
+		.team-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.values-slider {
+			aspect-ratio: 4 / 3;
+		}
+
+		.values-slide__caption {
+			left: 6%;
+			right: 6%;
+			max-width: none;
+		}
+
+		.values-slide__title {
+			font-size: 1.9rem;
+		}
+
+		.catalogs-track {
+			grid-auto-columns: calc((100% - var(--catalogs-gap)) / 2);
+		}
+
+		.contact-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+	}
+
+	@media (max-width: 560px) {
+		.team-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.values-slide__title {
+			font-size: 1.5rem;
+		}
+
+		.values-slide__description {
+			font-size: .8rem;
+		}
+
+		.values-slide__caption {
+			bottom: 8%;
+		}
+
+		.catalogs-track {
+			grid-auto-columns: 100%;
+		}
+
+		.contact-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

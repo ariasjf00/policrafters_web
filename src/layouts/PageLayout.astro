@@ -1,5 +1,8 @@
 ---
 import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ScrollToTop from '../components/ScrollToTop.astro';
 
 interface Props {
   title?: string;
@@ -7,6 +10,12 @@ interface Props {
   heroTitle?: string;
   heroSubtitle?: string;
   showHero?: boolean;
+  /* Optional per-language hero copy. When supplied, both languages ship in the
+     markup as data-copy-es/-en so a page script can switch the hero client-side. */
+  heroTitleEs?: string;
+  heroTitleEn?: string;
+  heroSubtitleEs?: string;
+  heroSubtitleEn?: string;
 }
 
 const {
@@ -15,36 +24,14 @@ const {
   heroTitle = 'Policrafters',
   heroSubtitle = '',
   showHero = true,
+  heroTitleEs,
+  heroTitleEn,
+  heroSubtitleEs,
+  heroSubtitleEn,
 } = Astro.props;
 
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
-const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
-const navItems = selectedLang === 'en'
-  ? [
-      { key: 'home', label: 'Home', href: '/' },
-      { key: 'projects', label: 'Projects', href: '/proyectos' },
-      { key: 'collections', label: 'Collections', href: '/colecciones' },
-      { key: 'brands', label: 'Brands', href: '/marcas' },
-      { key: 'contact', label: 'Contact', href: '/contacto' },
-    ]
-  : [
-      { key: 'home', label: 'Inicio', href: '/' },
-      { key: 'projects', label: 'Proyectos', href: '/proyectos' },
-      { key: 'collections', label: 'Colecciones', href: '/colecciones' },
-      { key: 'brands', label: 'Marcas', href: '/marcas' },
-      { key: 'contact', label: 'Contacto', href: '/contacto' },
-    ];
-
-const appendLang = (href: string, lang: string) => {
-  const [path, query = ''] = href.split('?');
-  const params = new URLSearchParams(query);
-  params.set('lang', lang);
-  const queryString = params.toString();
-  return queryString ? `${path}?${queryString}` : path;
-};
-
-const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
-const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
 ---
 <!doctype html>
 <html lang={selectedLang}>
@@ -53,32 +40,19 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <header class="site-header">
-      <a class="logo" href="/">
-        <img src="/logo_black.png" alt="Policrafters logo" />
-      </a>
-      <nav aria-label="Main navigation">
-        <ul>
-          {navItems.map((item) => (
-            <li><a href={appendLang(item.href, selectedLang)} data-menu-key={item.key}>{item.label}</a></li>
-          ))}
-          <li class="lang-switch" aria-label={selectedLang === 'es' ? 'Selector de idioma' : 'Language selector'}>
-            <a class:list={["lang-link", selectedLang === 'es' && "is-active"]} href={esHref}>ES</a>
-            <span>/</span>
-            <a class:list={["lang-link", selectedLang === 'en' && "is-active"]} href={enHref}>EN</a>
-          </li>
-        </ul>
-      </nav>
-    </header>
+    <Header lang={selectedLang} />
 
     {showHero && (
       <section class="hero-page">
         <div class="hero-page__content">
           <p class="eyebrow">Policrafters</p>
-          <h1 id="page-hero-title">{heroTitle}</h1>
-          {heroSubtitle && <p id="page-hero-subtitle">{heroSubtitle}</p>}
+          <h1 data-copy-es={heroTitleEs} data-copy-en={heroTitleEn}>{heroTitle}</h1>
+          {heroSubtitle && <p data-copy-es={heroSubtitleEs} data-copy-en={heroSubtitleEn}>{heroSubtitle}</p>}
         </div>
       </section>
     )}
@@ -87,86 +61,9 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
       <slot />
     </main>
 
-    <script>
-      // @ts-nocheck
-      const menuByLang = {
-        es: {
-          home: { label: 'Inicio', href: '/' },
-          projects: { label: 'Proyectos', href: '/proyectos' },
-          collections: { label: 'Colecciones', href: '/colecciones' },
-          brands: { label: 'Marcas', href: '/marcas' },
-          contact: { label: 'Contacto', href: '/contacto' }
-        },
-        en: {
-          home: { label: 'Home', href: '/' },
-          projects: { label: 'Projects', href: '/proyectos' },
-          collections: { label: 'Collections', href: '/colecciones' },
-          brands: { label: 'Brands', href: '/marcas' },
-          contact: { label: 'Contact', href: '/contacto' }
-        }
-      };
+    <Footer lang={selectedLang} />
 
-      const getLangFromUrl = () => {
-        const params = new URLSearchParams(window.location.search);
-        const lang = params.get('lang');
-        return lang === 'en' || lang === 'es' ? lang : null;
-      };
-
-      const appendLang = (href, lang) => {
-        const [path, query = ''] = href.split('?');
-        const params = new URLSearchParams(query);
-        params.set('lang', lang);
-        const queryString = params.toString();
-        return queryString ? `${path}?${queryString}` : path;
-      };
-
-      const applyLanguage = (lang) => {
-        const activeLang = lang === 'en' ? 'en' : 'es';
-        localStorage.setItem('siteLang', activeLang);
-        document.documentElement.lang = activeLang;
-        const copy = menuByLang[activeLang];
-
-        document.querySelectorAll('[data-menu-key]').forEach((link) => {
-          const key = link.getAttribute('data-menu-key');
-          if (!key || !copy[key]) return;
-          link.textContent = copy[key].label;
-          link.setAttribute('href', appendLang(copy[key].href, activeLang));
-        });
-
-        document.querySelectorAll('.lang-link').forEach((link) => {
-          const linkLang = link.textContent?.trim().toLowerCase();
-          link.classList.toggle('is-active', linkLang === activeLang);
-          link.setAttribute('href', appendLang(window.location.pathname + window.location.search, linkLang === 'en' ? 'en' : 'es'));
-        });
-      };
-
-      const resolveActiveLang = () => {
-        const langInUrl = getLangFromUrl();
-        if (langInUrl) return langInUrl;
-        const stored = localStorage.getItem('siteLang');
-        if (stored === 'en' || stored === 'es') return stored;
-        return 'es';
-      };
-
-      document.querySelectorAll('.lang-link').forEach((link) => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          const target = link.textContent?.trim().toLowerCase() === 'en' ? 'en' : 'es';
-          const nextUrl = new URL(window.location.href);
-          nextUrl.searchParams.set('lang', target);
-          localStorage.setItem('siteLang', target);
-          window.location.href = nextUrl.toString();
-        });
-      });
-
-      const activeLang = resolveActiveLang();
-      if (!getLangFromUrl()) {
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.set('lang', activeLang);
-        window.location.href = nextUrl.toString();
-      }
-      applyLanguage(activeLang);
-    </script>
+    <ScrollToTop lang={selectedLang} />
   </body>
 </html>
 
@@ -180,62 +77,15 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: var(--text);
     background: #fff;
-  }
-
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    width: 100%;
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid #ececec;
-  }
-
-  .logo img { height: 34px; width: auto; display: block; }
-
-  nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 1.2rem;
-  }
-
-  nav a {
-    color: #111;
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .lang-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.28rem;
-    color: #666;
-    font-size: 0.82rem;
-    letter-spacing: 0.08em;
-  }
-
-  .lang-link {
-    opacity: 0.65;
-    transition: opacity 0.2s ease;
-  }
-
-  .lang-link:hover {
-    opacity: 1;
-  }
-
-  .lang-link.is-active {
-    opacity: 1;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+    /* Full-bleed sections use `width: 100vw`, which counts the vertical scrollbar
+       while the page's content box does not — leaving them a scrollbar-width too
+       wide and producing a horizontal scrollbar. Clip that overhang.
+       `clip`, not `hidden`: `hidden` would create a scroll container and break
+       this layout's `position: sticky` header. `clip` does not. */
+    overflow-x: clip;
   }
 
   .hero-page {
@@ -276,4 +126,5 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
     margin: 0 auto;
     padding: 3rem 0 4rem;
   }
+
 </style>

@@ -18,7 +18,15 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
 
 ---
 
-## HomePage
+## HomePage (contrato nuevo para diseño actual)
+
+Este contrato refleja el diseño real de la home y compatibiliza con [src/mocks/home.json](../src/mocks/home.json) y [src/pages/index.astro](../src/pages/index.astro).
+
+Importante:
+- `featured_projects`, `team_members`, `values_slides`, `catalogs` y `contact_links` son arrays dinámicos con múltiples registros.
+- La API devuelve un solo idioma por respuesta: `locale` indica el idioma resuelto y el backend debe devolver inglés por defecto cuando `lang` no venga o no sea válido.
+- `fields.copy` contiene strings ya localizados; el frontend no espera objetos bilingües dentro de la misma respuesta.
+- Los arrays también vienen ya localizados, sin pares base + `_en`.
 
 ```json
 {
@@ -30,36 +38,158 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
     "search_description": "string"
   },
   "fields": {
-    "hero_video_url": "string | null",
-    "hero_image_fallback": { "url": "string", "alt": "string" },
-    "hero_heading": "string",
-    "hero_subheading": "string",
-    "intro_text": "string",
+    "copy": {
+      "hero_eyebrow": "string",
+      "hero_heading": "string",
+      "hero_cta": "string",
+      "projects_eyebrow": "string",
+      "projects_heading": "string",
+      "projects_cta": "string",
+      "projects_prev_aria": "string",
+      "projects_next_aria": "string",
+      "projects_carousel_aria": "string",
+      "projects_dot_aria": "string",
+      "about_eyebrow": "string",
+      "about_heading": "string",
+      "about_body_1": "string",
+      "about_body_2": "string",
+      "about_brands_label": "string",
+      "about_cta": "string",
+      "team_eyebrow": "string",
+      "team_heading": "string",
+      "values_eyebrow": "string",
+      "values_heading": "string",
+      "values_prev_aria": "string",
+      "values_next_aria": "string",
+      "values_carousel_aria": "string",
+      "values_dot_aria": "string",
+      "catalogs_eyebrow": "string",
+      "catalogs_heading": "string",
+      "catalogs_prev_aria": "string",
+      "catalogs_next_aria": "string",
+      "catalogs_dot_aria": "string",
+      "contact_heading": "string",
+      "contact_cta": "string"
+    },
+
+    "hero_video_horizontal": "string | null",
+    "hero_video_vertical": "string | null",
+    "hero_image_horizontal": {
+      "url": "string",
+      "alt": "string"
+    },
+    "hero_image_vertical": {
+      "url": "string",
+      "alt": "string"
+    },
+    "site_logo": {
+      "url": "string",
+      "alt": "string"
+    },
+
     "featured_projects": [
       {
         "title": "string",
         "slug": "string",
-        "thumbnail": { "url": "string", "alt": "string" },
-        "location": "string"
+        "thumbnail": {
+          "url": "string",
+          "alt": "string"
+        },
+        "description": "string"
       }
     ],
-    "featured_brands": [
+
+    "team_members": [
       {
         "name": "string",
-        "slug": "string",
-        "logo": { "url": "string", "alt": "string" }
+        "role": "string",
+        "photo": {
+          "url": "string",
+          "alt": "string"
+        },
+        "bio": "string"
       }
     ],
-    "testimonials": [
+
+    "values_slides": [
       {
-        "author": "string",
-        "quote": "string",
-        "project_ref": "string | null"
+        "title": "string",
+        "image": {
+          "url": "string",
+          "alt": "string"
+        },
+        "description": "string"
       }
     ],
-    "cta_heading": "string",
-    "cta_button_text": "string",
-    "cta_button_url": "string"
+
+    "catalogs": [
+      {
+        "title": "string",
+        "image": {
+          "url": "string",
+          "alt": "string"
+        },
+        "file_url": "string | null"
+      }
+    ],
+
+    "contact_links": [
+      {
+        "title": "string",
+        "description": "string",
+        "url": "string"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `featured_projects` es un array dinámico. Puede tener 1, 5, 12 o N registros; el frontend itera sobre el array sin asumir un número fijo.
+- `team_members` es otro array dinámico. Cada elemento sigue el mismo esquema y puede tener varios miembros.
+- `copy` debe ser un objeto con strings ya resueltos para el idioma solicitado. No se espera `copy.hero_heading` como objeto bilingüe.
+- El backend debe resolver el idioma antes de serializar la respuesta; el frontend no hace merge de `es` y `en`.
+- Cuando el frontend recibe una respuesta, debe poder renderizar `featured_projects` y `team_members` sin cambios en la estructura, solo con nuevos datos.
+
+### Ejemplo realista
+
+```json
+{
+  "type": "home_cms.HomePage",
+  "title": "Policrafters",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Policrafters | Diseño y mobiliario",
+    "search_description": "Mobiliario y diseño de interiores premium."
+  },
+  "fields": {
+    "copy": {
+      "hero_eyebrow": "DONDE LA INNOVACIÓN SE ENCUENTRA CON EL DISEÑO",
+      "hero_heading": "Tu Socio Experto en Interiores y Arquitectura"
+    },
+    "featured_projects": [
+      {
+        "title": "Easy Slide",
+        "slug": "easy-slide",
+        "thumbnail": { "url": "/images/projects/Easy_Slide.png", "alt": "Easy Slide" },
+        "description": "Sistema de puertas corredizas de bajo perfil."
+      },
+      {
+        "title": "Pergola Thermal",
+        "slug": "pergola-thermal",
+        "thumbnail": { "url": "/images/projects/Pergola_Thermal.png", "alt": "Pergola Thermal" },
+        "description": "Estructura térmica resistente pensada para exteriores."
+      }
+    ],
+    "team_members": [
+      {
+        "name": "María López",
+        "role": "Diseñadora de interiores",
+        "photo": { "url": "/images/team/maria.jpg", "alt": "María López" },
+        "bio": "Especialista en espacios residenciales y comerciales."
+      }
+    ]
   }
 }
 ```
