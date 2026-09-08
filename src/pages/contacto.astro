@@ -1,15 +1,35 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const lang = langParam === 'en' ? 'en' : 'es';
+const copy = lang === 'en'
+  ? {
+      title: 'Contact | Policrafters',
+      description: 'Get in touch with Policrafters',
+      heroTitle: 'Contact',
+      heroSubtitle: 'Send us a message to discuss your next project.',
+      sectionTitle: 'Contact',
+      sectionBody: 'This space can become a real form connected to the CRM or CMS.'
+    }
+  : {
+      title: 'Contacto | Policrafters',
+      description: 'Ponte en contacto con Policrafters',
+      heroTitle: 'Contacto',
+      heroSubtitle: 'Escríbenos para hablar sobre tu próximo proyecto.',
+      sectionTitle: 'Contacto',
+      sectionBody: 'Este espacio puede convertirse en formulario real conectado al CRM o al CMS.'
+    };
 ---
 
 <PageLayout
-  title="Contacto | Policrafters"
-  description="Ponte en contacto con Policrafters"
-  heroTitle="Contacto"
-  heroSubtitle="Escríbenos para hablar sobre tu próximo proyecto."
+  title={copy.title}
+  description={copy.description}
+  heroTitle={copy.heroTitle}
+  heroSubtitle={copy.heroSubtitle}
 >
   <section>
-    <h2>Contacto</h2>
-    <p>Este espacio puede convertirse en formulario real conectado al CRM o al CMS.</p>
+    <h2>{copy.sectionTitle}</h2>
+    <p>{copy.sectionBody}</p>
   </section>
 </PageLayout>

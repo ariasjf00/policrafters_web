@@ -2,13 +2,18 @@
 import PageLayout from '../layouts/PageLayout.astro';
 import collectionsPage from '../mocks/collections-page.json';
 
+type AnyRecord = Record<string, any>;
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
 const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 let isRemoteData = false;
 
-const normalizeAssetUrl = (value) => {
+const normalizeAssetUrl = (value: unknown): string => {
   if (!value) return '';
+  if (typeof value !== 'string') return '';
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith('/') && isRemoteData) {
     return apiOrigin ? `${apiOrigin}${value}` : value;
@@ -20,7 +25,15 @@ let data = collectionsPage;
 
 if (useApi && apiUrl) {
   try {
-    const response = await fetch(apiUrl);
+    let localizedApiUrl = apiUrl;
+
+    if (apiUrl.startsWith('http')) {
+      const url = new URL(apiUrl);
+      url.searchParams.set('locale', requestedLang);
+      localizedApiUrl = url.toString();
+    }
+
+    const response = await fetch(localizedApiUrl);
     if (response.ok) {
       const payload = await response.json();
       if (payload && typeof payload === 'object') {
@@ -34,9 +47,9 @@ if (useApi && apiUrl) {
 }
 
 const resolvedData = data ?? collectionsPage;
-const resolvedFields = resolvedData.fields ?? collectionsPage.fields ?? {};
+const resolvedFields = (resolvedData.fields ?? collectionsPage.fields ?? {}) as AnyRecord;
 const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
-const fallbackFields = collectionsPage.fields ?? {};
+const fallbackFields = (collectionsPage.fields ?? {}) as AnyRecord;
 
 // Mirrors index.astro: ?lang= wins, otherwise the payload's locale decides.
 const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
@@ -141,7 +154,13 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
 </PageLayout>
 
 <script>
+  // @ts-nocheck
   const carousel = document.getElementById('collection-carousel');
+  const sourcePanel = document.querySelector('.collections-section');
+  const sourceMode = sourcePanel?.dataset?.collectionsSource || 'mock';
+  const apiUrl = sourcePanel?.dataset?.apiUrl || '';
+  const clientApiUrl = sourcePanel?.dataset?.clientApiUrl || apiUrl;
+  const apiOrigin = sourcePanel?.dataset?.apiOrigin || '';
   const buttons = document.querySelectorAll('.carousel-btn');
   const initialCards = carousel ? Array.from(carousel.querySelectorAll('.collection-card')) : [];
   const baseCount = initialCards.length;
@@ -315,12 +334,18 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   }
 
   .carousel-shell {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
   }
 
   .carousel-viewport {
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .carousel-controls {
@@ -329,7 +354,7 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 0.5rem;
     pointer-events: none;
     z-index: 2;
   }
@@ -354,9 +379,12 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
   }
 
   .collection-carousel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(460px, 48vw);
+    grid-auto-columns: minmax(320px, 48%);
     gap: 0;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
