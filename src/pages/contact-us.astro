@@ -1,0 +1,1052 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import CatalogsCarousel from '../components/CatalogsCarousel.astro';
+import { loadCatalogs } from '../lib/catalogs';
+
+// Same shared endpoint the homepage renders; both languages ship so the carousel
+// can switch without a reload.
+const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
+
+// Contact details. Kept in sync with Footer.astro, which declares the same three
+// values for its own contact block. `tel:` must be punctuation-free E.164 to dial.
+const contactPhoneDisplay = '+1 (813) 812-0650';
+const contactPhoneHref = `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const contactEmail = 'info@policrafters.com';
+
+// Where the form POSTs. Unset in local/mock mode, exactly like the CMS URLs:
+// the form then tells the visitor to email us instead of failing silently.
+const contactApiUrl = import.meta.env.PUBLIC_CONTACT_API_URL || '';
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default.
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (en: string, es: string) => (isEs ? es : en);
+
+// Both languages ship in the markup as data-copy-es/-en, data-placeholder-es/-en
+// and data-aria-es/-en, so Header's language toggle can switch without a reload.
+const copy = {
+  heading: { en: 'CONTACT US!', es: '¡CONTÁCTANOS!' },
+  intro: {
+    en: "If you have any questions, concerns, or comments regarding Policrafters, please fill out the contact form below. We'd be happy to help you.",
+    es: 'Si tienes preguntas, inquietudes o comentarios sobre Policrafters, completa el formulario de contacto a continuación. Con gusto te ayudaremos.'
+  },
+  phoneLabel: { en: 'CALL CENTER PHONE', es: 'TELÉFONO DEL CENTRO DE ATENCIÓN' },
+  emailLabel: { en: 'EMAIL', es: 'CORREO ELECTRÓNICO' },
+  name: { en: 'Name', es: 'Nombre' },
+  phone: { en: 'Phone', es: 'Teléfono' },
+  email: { en: 'Email', es: 'Correo electrónico' },
+  company: { en: 'Company Name', es: 'Nombre de la empresa' },
+  message: { en: 'Message', es: 'Mensaje' },
+  submit: { en: 'Submit', es: 'Enviar' },
+  countryAria: { en: 'Select country calling code', es: 'Seleccionar código de país' },
+  formAria: { en: 'Contact form', es: 'Formulario de contacto' },
+  locationsHeading: { en: 'OUR LOCATIONS', es: 'NUESTRAS UBICACIONES' },
+  locationsAria: { en: 'Policrafters locations', es: 'Ubicaciones de Policrafters' },
+  learnMore: { en: 'Learn more', es: 'Conoce más' }
+};
+
+// Placeholder locations, mirroring the design comp. Real names/addresses land here
+// (or come from the CMS) once they exist; `url` should point at the location's own
+// page when those are built — for now it opens the address in Google Maps.
+const locations = [
+  { name: { en: 'LOCATION 1', es: 'UBICACIÓN 1' }, label: { en: 'ADDRESS 1', es: 'DIRECCIÓN 1' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
+  { name: { en: 'LOCATION 2', es: 'UBICACIÓN 2' }, label: { en: 'ADDRESS 2', es: 'DIRECCIÓN 2' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
+  { name: { en: 'LOCATION 3', es: 'UBICACIÓN 3' }, label: { en: 'ADDRESS 3', es: 'DIRECCIÓN 3' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
+  { name: { en: 'LOCATION 4', es: 'UBICACIÓN 4' }, label: { en: 'ADDRESS 4', es: 'DIRECCIÓN 4' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' }
+].map((location) => ({
+  ...location,
+  url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.street} ${location.city}`)}`,
+  alt: {
+    en: `Policrafters ${location.name.en} building`,
+    es: `Edificio de Policrafters ${location.name.es}`
+  }
+}));
+
+const countries = [
+  {
+    iso: 'US',
+    dial: '+1',
+    name: { en: 'United States', es: 'Estados Unidos' },
+    svg: '<svg viewBox="0 0 20 14" aria-hidden="true"><rect width="20" height="14" fill="#fff"/><g fill="#b22234"><rect width="20" height="2"/><rect y="4" width="20" height="2"/><rect y="8" width="20" height="2"/><rect y="12" width="20" height="2"/></g><rect width="9" height="8" fill="#3c3b6e"/></svg>'
+  },
+  {
+    iso: 'CA',
+    dial: '+1',
+    name: { en: 'Canada', es: 'Canadá' },
+    svg: '<svg viewBox="0 0 20 14" aria-hidden="true"><rect width="20" height="14" fill="#fff"/><rect width="5" height="14" fill="#d52b1e"/><rect x="15" width="5" height="14" fill="#d52b1e"/><path d="M10 3l.6 1.5 1.5-.4-.5 1.5 1.4.2-1.1.9.3.7-1.6-.2.2 1.8-.8-.8-.8.8.2-1.8-1.6.2.3-.7-1.1-.9 1.4-.2-.5-1.5 1.5.4z" fill="#d52b1e"/></svg>'
+  },
+  {
+    iso: 'MX',
+    dial: '+52',
+    name: { en: 'Mexico', es: 'México' },
+    svg: '<svg viewBox="0 0 20 14" aria-hidden="true"><rect width="20" height="14" fill="#fff"/><rect width="6.7" height="14" fill="#006847"/><rect x="13.3" width="6.7" height="14" fill="#ce1126"/><circle cx="10" cy="7" r="1.6" fill="#8c6239"/></svg>'
+  },
+  {
+    iso: 'CO',
+    dial: '+57',
+    name: { en: 'Colombia', es: 'Colombia' },
+    svg: '<svg viewBox="0 0 20 14" aria-hidden="true"><rect width="20" height="7" fill="#fcd116"/><rect y="7" width="20" height="3.5" fill="#003893"/><rect y="10.5" width="20" height="3.5" fill="#ce1126"/></svg>'
+  },
+  {
+    iso: 'ES',
+    dial: '+34',
+    name: { en: 'Spain', es: 'España' },
+    svg: '<svg viewBox="0 0 20 14" aria-hidden="true"><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg>'
+  }
+];
+---
+
+<PageLayout
+  title={pick('Contact Us | Policrafters', 'Contáctanos | Policrafters')}
+  description={pick('Get in touch with Policrafters', 'Ponte en contacto con Policrafters')}
+  showHero={false}
+>
+  <section class="contact-page">
+    <header class="contact-intro">
+      <h1 data-copy-en={copy.heading.en} data-copy-es={copy.heading.es}>
+        {pick(copy.heading.en, copy.heading.es)}
+      </h1>
+      <p data-copy-en={copy.intro.en} data-copy-es={copy.intro.es}>
+        {pick(copy.intro.en, copy.intro.es)}
+      </p>
+    </header>
+
+    <div class="contact-highlight">
+      <h2 class="contact-highlight__label" data-copy-en={copy.phoneLabel.en} data-copy-es={copy.phoneLabel.es}>
+        {pick(copy.phoneLabel.en, copy.phoneLabel.es)}
+      </h2>
+      <a class="contact-highlight__value" href={contactPhoneHref}>{contactPhoneDisplay}</a>
+    </div>
+
+    <form
+      class="contact-form"
+      novalidate
+      data-contact-api={contactApiUrl}
+      data-contact-email={contactEmail}
+      data-aria-en={copy.formAria.en}
+      data-aria-es={copy.formAria.es}
+      aria-label={pick(copy.formAria.en, copy.formAria.es)}
+    >
+      <div class="field">
+        <label class="sr-only" for="contact-name" data-copy-en={copy.name.en} data-copy-es={copy.name.es}>
+          {pick(copy.name.en, copy.name.es)}
+        </label>
+        <input
+          id="contact-name"
+          name="name"
+          type="text"
+          autocomplete="name"
+          required
+          maxlength="100"
+          aria-describedby="contact-name-error"
+          placeholder={pick(copy.name.en, copy.name.es)}
+          data-placeholder-en={copy.name.en}
+          data-placeholder-es={copy.name.es}
+        />
+        <p class="field-error" id="contact-name-error" hidden></p>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="sr-only" for="contact-phone" data-copy-en={copy.phone.en} data-copy-es={copy.phone.es}>
+            {pick(copy.phone.en, copy.phone.es)}
+          </label>
+          <div class="phone-group">
+            <div class="country-picker">
+              <button
+                type="button"
+                class="country-toggle"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-label={pick(copy.countryAria.en, copy.countryAria.es)}
+                data-aria-en={copy.countryAria.en}
+                data-aria-es={copy.countryAria.es}
+              >
+                <span class="flag" data-current-flag set:html={countries[0].svg} />
+                <svg class="caret" viewBox="0 0 10 6" width="9" height="6" aria-hidden="true">
+                  <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                </svg>
+              </button>
+              <ul class="country-list" role="listbox" hidden>
+                {countries.map((country, index) => (
+                  <li
+                    role="option"
+                    tabindex="-1"
+                    data-iso={country.iso}
+                    data-dial={country.dial}
+                    aria-selected={index === 0 ? 'true' : 'false'}
+                  >
+                    <span class="flag" set:html={country.svg} />
+                    <span data-copy-en={country.name.en} data-copy-es={country.name.es}>
+                      {pick(country.name.en, country.name.es)}
+                    </span>
+                    <span class="dial">{country.dial}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <input
+              id="contact-phone"
+              name="phone"
+              type="tel"
+              autocomplete="tel"
+              maxlength="25"
+              placeholder={pick(copy.phone.en, copy.phone.es)}
+              data-placeholder-en={copy.phone.en}
+              data-placeholder-es={copy.phone.es}
+            />
+            <input type="hidden" name="phone_country" value={countries[0].iso} />
+            <input type="hidden" name="phone_dial_code" value={countries[0].dial} />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="sr-only" for="contact-email" data-copy-en={copy.email.en} data-copy-es={copy.email.es}>
+            {pick(copy.email.en, copy.email.es)}
+          </label>
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            maxlength="254"
+            aria-describedby="contact-email-error"
+            placeholder={pick(copy.email.en, copy.email.es)}
+            data-placeholder-en={copy.email.en}
+            data-placeholder-es={copy.email.es}
+          />
+          <p class="field-error" id="contact-email-error" hidden></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="sr-only" for="contact-company" data-copy-en={copy.company.en} data-copy-es={copy.company.es}>
+          {pick(copy.company.en, copy.company.es)}
+        </label>
+        <input
+          id="contact-company"
+          name="company"
+          type="text"
+          autocomplete="organization"
+          maxlength="120"
+          placeholder={pick(copy.company.en, copy.company.es)}
+          data-placeholder-en={copy.company.en}
+          data-placeholder-es={copy.company.es}
+        />
+      </div>
+
+      <div class="field">
+        <label class="sr-only" for="contact-message" data-copy-en={copy.message.en} data-copy-es={copy.message.es}>
+          {pick(copy.message.en, copy.message.es)}
+        </label>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows="5"
+          required
+          maxlength="2000"
+          aria-describedby="contact-message-error"
+          placeholder={pick(copy.message.en, copy.message.es)}
+          data-placeholder-en={copy.message.en}
+          data-placeholder-es={copy.message.es}
+        ></textarea>
+        <p class="field-error" id="contact-message-error" hidden></p>
+      </div>
+
+      {/* Honeypot. Off-screen rather than display:none, which crawlers skip; hidden
+          from assistive tech and the tab order, so only a bot ever fills it. */}
+      <div class="hp-field" aria-hidden="true">
+        <label for="contact-website">Website</label>
+        <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="submit-btn" data-copy-en={copy.submit.en} data-copy-es={copy.submit.es}>
+          {pick(copy.submit.en, copy.submit.es)}
+        </button>
+      </div>
+
+      <p class="form-status" role="status" aria-live="polite" hidden></p>
+    </form>
+
+    <div class="contact-highlight">
+      <p class="contact-highlight__label" data-copy-en={copy.emailLabel.en} data-copy-es={copy.emailLabel.es}>
+        {pick(copy.emailLabel.en, copy.emailLabel.es)}
+      </p>
+      <a class="contact-highlight__value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+    </div>
+
+    <section
+      class="locations"
+      data-aria-en={copy.locationsAria.en}
+      data-aria-es={copy.locationsAria.es}
+      aria-label={pick(copy.locationsAria.en, copy.locationsAria.es)}
+    >
+      <h2 class="locations__heading" data-copy-en={copy.locationsHeading.en} data-copy-es={copy.locationsHeading.es}>
+        {pick(copy.locationsHeading.en, copy.locationsHeading.es)}
+      </h2>
+
+      <ul class="locations__grid">
+        {locations.map((location) => (
+          <li class="location-card">
+            <img
+              class="location-card__image"
+              src="/images/pages/location.png"
+              width="252"
+              height="200"
+              loading="lazy"
+              decoding="async"
+              alt={pick(location.alt.en, location.alt.es)}
+              data-alt-en={location.alt.en}
+              data-alt-es={location.alt.es}
+            />
+            <h3 class="location-card__name" data-copy-en={location.name.en} data-copy-es={location.name.es}>
+              {pick(location.name.en, location.name.es)}
+            </h3>
+            <p class="location-card__address">
+              <span data-copy-en={location.label.en} data-copy-es={location.label.es}>
+                {pick(location.label.en, location.label.es)}
+              </span>
+              <span>{location.street}</span>
+              <span>{location.city}</span>
+            </p>
+            <a
+              class="location-card__cta"
+              href={location.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-copy-en={copy.learnMore.en}
+              data-copy-es={copy.learnMore.es}
+            >{pick(copy.learnMore.en, copy.learnMore.es)}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </section>
+
+  {/* Outside .contact-page on purpose: the carousel owns its own language
+      switching, so keeping it out of this page's subscriber leaves one owner. */}
+  <hr class="section-rule" />
+
+  <CatalogsCarousel lang={selectedLang} en={catalogsEn} es={catalogsEs} />
+</PageLayout>
+
+<script>
+  // Language subscriber. Header.astro owns `siteLang` and is the sole dispatcher of
+  // `sitelangchange` — this file only reads and listens, never re-dispatches.
+  const MESSAGES = {
+    en: {
+      required: 'This field is required.',
+      email: 'Enter a valid email address.',
+      sending: 'Sending…',
+      success: "Thanks for reaching out. We'll be in touch shortly.",
+      error: 'Something went wrong. Please try again, or email us at ',
+      unconfigured: 'The contact form is not connected yet. Please email us at '
+    },
+    es: {
+      required: 'Este campo es obligatorio.',
+      email: 'Introduce un correo electrónico válido.',
+      sending: 'Enviando…',
+      success: 'Gracias por escribirnos. Nos pondremos en contacto contigo muy pronto.',
+      error: 'Algo salió mal. Inténtalo de nuevo o escríbenos a ',
+      unconfigured: 'El formulario aún no está conectado. Escríbenos a ',
+    }
+  };
+
+  const root = document.querySelector('.contact-page');
+  const form = document.querySelector('.contact-form');
+  if (root && form instanceof HTMLFormElement) {
+    const apiUrl = form.dataset.contactApi || '';
+    const fallbackEmail = form.dataset.contactEmail || '';
+    const status = form.querySelector('.form-status');
+    const submitBtn = form.querySelector('.submit-btn');
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    const resolveActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    let activeLang = resolveActiveLang();
+
+    // Nobody reads the form and types a real message in under two seconds.
+    const MIN_FILL_MS = 2000;
+    const renderedAt = Date.now();
+
+    const applyContactLanguage = (lang) => {
+      activeLang = lang === 'es' ? 'es' : 'en';
+      const key = activeLang;
+
+      // Scoped to this page: Header and Footer run their own resolvers.
+      root.querySelectorAll('[data-copy-en]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      root.querySelectorAll('[data-placeholder-en]').forEach((el) => {
+        const value = el.getAttribute('data-placeholder-' + key);
+        if (value !== null) el.setAttribute('placeholder', value);
+      });
+
+      root.querySelectorAll('[data-aria-en]').forEach((el) => {
+        const value = el.getAttribute('data-aria-' + key);
+        if (value !== null) el.setAttribute('aria-label', value);
+      });
+
+      root.querySelectorAll('[data-alt-en]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      // Re-render any error/status text that is already on screen.
+      form.querySelectorAll('.field-error').forEach((el) => {
+        if (el.hidden) return;
+        const rule = el.dataset.rule;
+        if (rule) el.textContent = MESSAGES[activeLang][rule];
+      });
+      if (status && !status.hidden && status.dataset.rule) {
+        renderStatus(status.dataset.rule, status.dataset.tone || 'error');
+      }
+    };
+
+    const renderStatus = (rule, tone) => {
+      if (!status) return;
+      status.dataset.rule = rule;
+      status.dataset.tone = tone;
+      status.classList.toggle('is-error', tone === 'error');
+      status.classList.toggle('is-success', tone === 'success');
+      const text = MESSAGES[activeLang][rule];
+      status.replaceChildren(text);
+      // The failure paths end in an email address, which should stay clickable.
+      if ((rule === 'error' || rule === 'unconfigured') && fallbackEmail) {
+        const link = document.createElement('a');
+        link.href = `mailto:${fallbackEmail}`;
+        link.textContent = fallbackEmail;
+        status.append(link, '.');
+      }
+      status.hidden = false;
+    };
+
+    const setFieldError = (field, rule) => {
+      const holder = field.closest('.field');
+      const error = holder?.querySelector('.field-error');
+      field.setAttribute('aria-invalid', 'true');
+      field.classList.add('has-error');
+      if (error) {
+        error.dataset.rule = rule;
+        error.textContent = MESSAGES[activeLang][rule];
+        error.hidden = false;
+      }
+    };
+
+    const clearFieldError = (field) => {
+      const holder = field.closest('.field');
+      const error = holder?.querySelector('.field-error');
+      field.removeAttribute('aria-invalid');
+      field.classList.remove('has-error');
+      if (error) {
+        error.hidden = true;
+        delete error.dataset.rule;
+      }
+    };
+
+    // Deliberately permissive: the server is the real validator. This only catches
+    // the obvious typos so a visitor is not bounced by a round trip.
+    const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    const validate = () => {
+      let firstInvalid = null;
+      ['contact-name', 'contact-email', 'contact-message'].forEach((id) => {
+        const field = form.querySelector('#' + id);
+        if (!field) return;
+        const value = field.value.trim();
+        clearFieldError(field);
+        if (!value) {
+          setFieldError(field, 'required');
+          firstInvalid = firstInvalid || field;
+        } else if (field.type === 'email' && !isEmail(value)) {
+          setFieldError(field, 'email');
+          firstInvalid = firstInvalid || field;
+        }
+      });
+      return firstInvalid;
+    };
+
+    // Payload built field by field rather than from raw FormData, so the honeypot
+    // never ships, values are trimmed, and the phone reaches the CRM in one shape.
+    // This is data hygiene, not security: the server must re-validate all of it.
+    const buildPayload = () => {
+      const raw = Object.fromEntries(new FormData(form).entries());
+      const trim = (value) => (typeof value === 'string' ? value.trim() : '');
+      const rawPhone = trim(raw.phone);
+      const digits = rawPhone.replace(/\D/g, '');
+      // A visitor who typed their own "+" already carries a country code; otherwise
+      // prepend the one the picker is set to.
+      const phone = digits
+        ? (rawPhone.startsWith('+') ? `+${digits}` : `${raw.phone_dial_code || ''}${digits}`)
+        : '';
+
+      return {
+        name: trim(raw.name),
+        email: trim(raw.email),
+        company: trim(raw.company),
+        message: trim(raw.message),
+        phone,
+        phone_country: trim(raw.phone_country),
+        locale: activeLang
+      };
+    };
+
+    form.querySelectorAll('input, textarea').forEach((field) => {
+      field.addEventListener('input', () => {
+        if (field.classList.contains('has-error')) clearFieldError(field);
+      });
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const firstInvalid = validate();
+      if (firstInvalid) {
+        firstInvalid.focus();
+        return;
+      }
+
+      // Spam gates. Both report success rather than an error: telling a bot which
+      // check caught it just helps whoever wrote it. Neither is a substitute for
+      // server-side rate limiting — they only cut the drive-by volume.
+      const honeypot = form.querySelector('input[name="website"]');
+      const tooFast = Date.now() - renderedAt < MIN_FILL_MS;
+      if ((honeypot && honeypot.value) || tooFast) {
+        console.warn('Contact form submission rejected locally (honeypot or timing).');
+        form.reset();
+        renderStatus('success', 'success');
+        return;
+      }
+
+      if (!apiUrl) {
+        renderStatus('unconfigured', 'error');
+        return;
+      }
+
+      const originalLabel = submitBtn?.textContent;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = MESSAGES[activeLang].sending;
+      }
+      if (status) status.hidden = true;
+
+      try {
+        const payload = buildPayload();
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        form.reset();
+        renderStatus('success', 'success');
+      } catch (error) {
+        console.warn(`No se pudo enviar el formulario a ${apiUrl}.`, error);
+        renderStatus('error', 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          // Re-read the label so a language switch mid-send is not overwritten.
+          submitBtn.textContent = submitBtn.getAttribute('data-copy-' + activeLang) || originalLabel;
+        }
+      }
+    });
+
+    // Country picker: a listbox rather than a <select> because the options carry flags.
+    const picker = form.querySelector('.country-picker');
+    if (picker) {
+      const toggle = picker.querySelector('.country-toggle');
+      const list = picker.querySelector('.country-list');
+      const options = Array.from(picker.querySelectorAll('[role="option"]'));
+      const currentFlag = picker.querySelector('[data-current-flag]');
+      const isoInput = form.querySelector('input[name="phone_country"]');
+      const dialInput = form.querySelector('input[name="phone_dial_code"]');
+
+      const closeList = ({ focusToggle = false } = {}) => {
+        list.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+        if (focusToggle) toggle.focus();
+      };
+
+      const openList = () => {
+        list.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+        const selected = options.find((option) => option.getAttribute('aria-selected') === 'true');
+        (selected || options[0])?.focus();
+      };
+
+      const selectOption = (option) => {
+        options.forEach((item) => item.setAttribute('aria-selected', String(item === option)));
+        const flag = option.querySelector('.flag');
+        if (currentFlag && flag) currentFlag.replaceChildren(...Array.from(flag.childNodes).map((n) => n.cloneNode(true)));
+        if (isoInput) isoInput.value = option.dataset.iso || '';
+        if (dialInput) dialInput.value = option.dataset.dial || '';
+      };
+
+      toggle.addEventListener('click', () => {
+        if (list.hidden) openList();
+        else closeList();
+      });
+
+      options.forEach((option) => {
+        option.addEventListener('click', () => {
+          selectOption(option);
+          closeList({ focusToggle: true });
+        });
+        option.addEventListener('keydown', (event) => {
+          const index = options.indexOf(option);
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectOption(option);
+            closeList({ focusToggle: true });
+          } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            options[(index + 1) % options.length].focus();
+          } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            options[(index - 1 + options.length) % options.length].focus();
+          }
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !list.hidden) closeList({ focusToggle: true });
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!list.hidden && !picker.contains(event.target)) closeList();
+      });
+    }
+
+    applyContactLanguage(activeLang);
+    document.addEventListener('sitelangchange', (event) => applyContactLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .contact-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* The rule down the left edge of the heading block, as in the design. */
+  .contact-intro {
+    border-left: 3px solid #2f3437;
+    padding-left: 1.15rem;
+  }
+
+  .contact-intro h1 {
+    margin: 0 0 0.55rem;
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #111;
+  }
+
+  .contact-intro p {
+    margin: 0;
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #3f4447;
+    max-width: 68ch;
+  }
+
+  .contact-highlight {
+    text-align: center;
+  }
+
+  .contact-highlight__label {
+    margin: 0 0 0.35rem;
+    color: #b6ae99;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .contact-highlight__value {
+    color: #2f3437;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    text-decoration: none;
+  }
+
+  .contact-highlight__value:hover,
+  .contact-highlight__value:focus-visible {
+    text-decoration: underline;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .contact-form input[type="text"],
+  .contact-form input[type="tel"],
+  .contact-form input[type="email"],
+  .contact-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.95rem 1.4rem;
+    border: 1px solid #e2e2e2;
+    border-radius: 999px;
+    background: #fff;
+    color: #2f3437;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .contact-form textarea {
+    border-radius: 28px;
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.55;
+  }
+
+  .contact-form ::placeholder {
+    color: #a9a9a9;
+  }
+
+  .contact-form input:focus-visible,
+  .contact-form textarea:focus-visible {
+    outline: none;
+    border-color: #b6ae99;
+  }
+
+  .contact-form .has-error {
+    border-color: #c0392b;
+  }
+
+  .field-error {
+    margin: 0.4rem 0 0;
+    padding-left: 1.4rem;
+    color: #c0392b;
+    font-size: 0.8rem;
+  }
+
+  /* Country picker plus the tel input read as one pill, so the border lives here
+     and the input inside it is stripped bare. */
+  .phone-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding-left: 1rem;
+    border: 1px solid #e2e2e2;
+    border-radius: 999px;
+    background: #fff;
+    transition: border-color 0.2s ease;
+  }
+
+  .phone-group:focus-within {
+    border-color: #b6ae99;
+  }
+
+  .phone-group:has(.has-error) {
+    border-color: #c0392b;
+  }
+
+  .phone-group input[type="tel"] {
+    border: none;
+    border-radius: 0;
+    padding-left: 0.5rem;
+    background: transparent;
+  }
+
+  .phone-group input[type="tel"]:focus-visible {
+    border-color: transparent;
+  }
+
+  .country-picker {
+    position: relative;
+    flex: none;
+  }
+
+  .country-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.1rem;
+    border: none;
+    background: none;
+    color: #6c7276;
+    cursor: pointer;
+  }
+
+  .flag {
+    display: block;
+    width: 20px;
+    height: 14px;
+    flex: none;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  .flag svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .country-list {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 5;
+    min-width: 210px;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .country-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 9px;
+    font-size: 0.88rem;
+    color: #2f3437;
+    cursor: pointer;
+  }
+
+  .country-list li:hover,
+  .country-list li:focus-visible {
+    background: #f4f2ed;
+    outline: none;
+  }
+
+  .country-list li[aria-selected="true"] {
+    background: #f4f2ed;
+    font-weight: 600;
+  }
+
+  .country-list .dial {
+    margin-left: auto;
+    color: #8d9296;
+  }
+
+  /* Honeypot: off-screen, never focusable, never announced. */
+  .hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .submit-btn {
+    padding: 0.7rem 2.4rem;
+    border: none;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .submit-btn:hover:not(:disabled),
+  .submit-btn:focus-visible {
+    background: #b6ae99;
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .form-status {
+    margin: 0.25rem 0 0;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .form-status.is-success {
+    color: #2f6f4f;
+  }
+
+  .form-status.is-error {
+    color: #c0392b;
+  }
+
+  .form-status a {
+    color: inherit;
+  }
+
+  .locations {
+    margin-top: 0.75rem;
+  }
+
+  /* Matches index.astro's divider; .contact-page's flex gap does not reach here,
+     so the spacing around the rule is set explicitly. */
+  .section-rule {
+    margin: 3.5rem 0 3rem;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  .locations__heading {
+    margin: 0 0 1.75rem;
+    text-align: center;
+    color: #b6ae99;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .locations__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .location-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    text-align: center;
+  }
+
+  .location-card__image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* The short rule under the name, as in the design: narrower than the card. */
+  .location-card__name {
+    width: 78%;
+    margin: 0;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #d8d8d8;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #2f3437;
+  }
+
+  .location-card__address {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #3f4447;
+  }
+
+  .location-card__cta {
+    margin-top: 0.3rem;
+    padding: 0.4rem 1.1rem;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .location-card__cta:hover,
+  .location-card__cta:focus-visible {
+    background: #b6ae99;
+  }
+
+  @media (max-width: 860px) {
+    .locations__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 1.5rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .field-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 460px) {
+    .locations__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .location-card__image {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-form input,
+    .contact-form textarea,
+    .phone-group,
+    .submit-btn,
+    .location-card__cta {
+      transition: none;
+    }
+  }
+</style>
