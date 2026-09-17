@@ -1,0 +1,19 @@
+services:
+  astro:
+    build: .
+    container_name: policrafters_astro
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_proxy
+      - traefik.http.routers.policrafters.rule=Host(`astro.novatierra.cloud`)
+      - traefik.http.routers.policrafters.entrypoints=websecure
+      - traefik.http.routers.policrafters.tls=true
+      - traefik.http.routers.policrafters.tls.certresolver=mytlschallenge
+      - traefik.http.services.policrafters.loadbalancer.server.port=80
+
+networks:
+  traefik_proxy:
+    external: true
