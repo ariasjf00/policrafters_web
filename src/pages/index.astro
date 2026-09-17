@@ -1,10 +1,11 @@
 ---
 import homeEn from "../mocks/home.en.json";
 import homeEs from "../mocks/home.es.json";
+import { loadCatalogs } from "../lib/catalogs";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ScrollToTop from "../components/ScrollToTop.astro";
-import { Icon } from 'astro-icon/components';
+import CatalogsCarousel from "../components/CatalogsCarousel.astro";
 import "../styles/links.css";
 
 type AnyRecord = Record<string, any>;
@@ -84,16 +85,10 @@ const valuesSlides = valuesSlidesRaw.map((slide) => ({
 		alt: slide.image?.alt || ""
 	}
 }));
-const catalogsRaw = Array.isArray(resolvedFields.catalogs) && resolvedFields.catalogs.length
-	? resolvedFields.catalogs
-	: (fallbackFields.catalogs ?? []);
-const catalogs = catalogsRaw.map((item) => ({
-	...item,
-	image: {
-		url: heroAsset(item.image?.url, item.image?.url),
-		alt: item.image?.alt || ""
-	}
-}));
+// Catalogs moved to their own endpoint so the contact page can render the same
+// slider; see Docs/API_CONTRACT.md. The loader brings back both languages, which
+// CatalogsCarousel needs in order to switch without a reload.
+const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
 const contactLinks = Array.isArray(resolvedFields.contact_links) && resolvedFields.contact_links.length
 	? resolvedFields.contact_links
 	: (fallbackFields.contact_links ?? []);
@@ -135,8 +130,6 @@ const localizedTeamEyebrow = getCopyText("team_eyebrow", "");
 const localizedTeamHeading = getCopyText("team_heading", "");
 const localizedValuesEyebrow = getCopyText("values_eyebrow", "");
 const localizedValuesHeading = getCopyText("values_heading", "");
-const localizedCatalogsEyebrow = getCopyText("catalogs_eyebrow", "");
-const localizedCatalogsHeading = getCopyText("catalogs_heading", "");
 const localizedContactHeading = getCopyText("contact_heading", "");
 const localizedContactCta = getCopyText("contact_cta", "");
 const localizedAboutBody1 = getCopyText("about_body_1", "");
@@ -151,10 +144,7 @@ const localizedValuesPrevAria = getCopyText("values_prev_aria", "");
 const localizedValuesNextAria = getCopyText("values_next_aria", "");
 const localizedValuesCarouselAria = getCopyText("values_carousel_aria", "");
 const localizedValuesDotAria = getCopyText("values_dot_aria", "");
-const localizedCatalogsPrevAria = getCopyText("catalogs_prev_aria", "");
-const localizedCatalogsNextAria = getCopyText("catalogs_next_aria", "");
-const localizedCatalogsDotAria = getCopyText("catalogs_dot_aria", "");
-const heroCtaUrl = '/contacto';
+const heroCtaUrl = '/contact-us';
 ---
 
 <html lang={isEs ? "es" : "en"}>
@@ -363,39 +353,7 @@ const heroCtaUrl = '/contacto';
 			<hr class="section-rule" />
 
 			<section class="container catalogs-section">
-				<p id="catalogs-eyebrow" class="section-eyebrow">{localizedCatalogsEyebrow}</p>
-				<h2 id="catalogs-heading" class="section-heading">{localizedCatalogsHeading}</h2>
-
-				<div class="catalogs-track" id="catalogs-track">
-					{catalogs.map((item, index) => (
-						<a class="catalog-card" href={item.file_url || "#"} data-catalog-index={index}>
-							<img class="catalog-card__image" src={item.image.url} alt={item.image.alt} loading="lazy" />
-							<span class="catalog-card__label">
-								<span class="catalog-card__title">{item.title}</span>
-								<Icon name="mdi:download" class="catalog-card__icon" />
-							</span>
-						</a>
-					))}
-				</div>
-
-				<div class="catalogs-indicator" id="catalogs-indicator" role="tablist" aria-label={localizedCatalogsEyebrow}>
-					<button type="button" id="catalogs-prev" class="catalogs-indicator-arrow" data-action="prev" disabled aria-label={localizedCatalogsPrevAria}>
-						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
-					</button>
-					<div class="catalogs-dots" id="catalogs-dots">
-						{Array.from({ length: Math.ceil(catalogs.length / 4) }, (_, index) => (
-							<button
-								type="button"
-								class:list={["catalogs-dot", index === 0 && "is-active"]}
-								data-dot-index={index}
-								aria-label={localizedCatalogsDotAria + ' ' + (index + 1)}
-							></button>
-						))}
-					</div>
-					<button type="button" id="catalogs-next" class="catalogs-indicator-arrow" data-action="next" aria-label={localizedCatalogsNextAria}>
-						<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
-					</button>
-				</div>
+				<CatalogsCarousel lang={selectedLang} en={catalogsEn} es={catalogsEs} />
 
 				<h2 id="contact-heading" class="contact-heading">{localizedContactHeading}</h2>
 
@@ -495,7 +453,6 @@ const heroCtaUrl = '/contacto';
 				const featuredProjects = Array.isArray(fields.featured_projects) ? fields.featured_projects : [];
 				const teamMembers = Array.isArray(fields.team_members) ? fields.team_members : [];
 				const valuesSlides = Array.isArray(fields.values_slides) ? fields.values_slides : [];
-				const catalogs = Array.isArray(fields.catalogs) ? fields.catalogs : [];
 				const contactLinks = Array.isArray(fields.contact_links) ? fields.contact_links : [];
 
 				window.__SITE_LANG__ = activeLang;
@@ -523,8 +480,8 @@ const heroCtaUrl = '/contacto';
 				applyText('#team-heading', copy.team_heading || '');
 				applyText('#values-eyebrow', copy.values_eyebrow || '');
 				applyText('#values-heading', copy.values_heading || '');
-				applyText('#catalogs-eyebrow', copy.catalogs_eyebrow || '');
-				applyText('#catalogs-heading', copy.catalogs_heading || '');
+				// The catalogs slider is a component now and switches itself from its own
+				// data-copy-es/-en attributes; nothing here should touch it.
 				applyText('#contact-heading', copy.contact_heading || '');
 
 				applyAttr('#projects-carousel', 'aria-label', copy.projects_carousel_aria || '');
@@ -535,9 +492,6 @@ const heroCtaUrl = '/contacto';
 				applyAttr('#values-indicator', 'aria-label', copy.values_carousel_aria || '');
 				applyAttr('#values-prev', 'aria-label', copy.values_prev_aria || '');
 				applyAttr('#values-next', 'aria-label', copy.values_next_aria || '');
-				applyAttr('#catalogs-indicator', 'aria-label', copy.catalogs_heading || '');
-				applyAttr('#catalogs-prev', 'aria-label', copy.catalogs_prev_aria || '');
-				applyAttr('#catalogs-next', 'aria-label', copy.catalogs_next_aria || '');
 
 				document.querySelectorAll('.projects-card').forEach((card, index) => {
 					const item = featuredProjects[index];
@@ -566,16 +520,6 @@ const heroCtaUrl = '/contacto';
 
 				document.querySelectorAll('.values-dot').forEach((dot, index) => {
 					dot.setAttribute('aria-label', `${copy.values_dot_aria || ''} ${index + 1}`.trim());
-				});
-
-				document.querySelectorAll('.catalog-card').forEach((card, index) => {
-					const item = catalogs[index];
-					if (!item) return;
-					card.querySelector('.catalog-card__title')?.replaceChildren(item.title ?? '');
-				});
-
-				document.querySelectorAll('.catalogs-dot').forEach((dot, index) => {
-					dot.setAttribute('aria-label', `${copy.catalogs_dot_aria || ''} ${index + 1}`.trim());
 				});
 
 				document.querySelectorAll('.contact-col').forEach((column, index) => {
@@ -860,70 +804,7 @@ const heroCtaUrl = '/contacto';
 
 			setupValuesSlider();
 
-			const catalogsTrack = document.getElementById('catalogs-track');
-			const catalogsButtons = document.querySelectorAll('#catalogs-prev, #catalogs-next');
-			const catalogsDots = document.querySelectorAll('.catalogs-dot');
-			const catalogsPageCount = catalogsDots.length;
-			let catalogsCurrentPage = 0;
-			let catalogsScrollRaf = null;
-
-			const updateCatalogsIndicator = () => {
-				catalogsDots.forEach((dot) => {
-					const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-					dot.classList.toggle('is-active', dotIndex === catalogsCurrentPage);
-				});
-				catalogsButtons.forEach((button) => {
-					const action = button.getAttribute('data-action');
-					if (action === 'prev') button.disabled = catalogsCurrentPage === 0;
-					if (action === 'next') button.disabled = catalogsCurrentPage === catalogsPageCount - 1;
-				});
-			};
-
-			const scrollCatalogsToPage = (page) => {
-				if (!catalogsTrack) return;
-				const clamped = Math.max(0, Math.min(page, catalogsPageCount - 1));
-				catalogsCurrentPage = clamped;
-				catalogsTrack.scrollTo({ left: clamped * catalogsTrack.clientWidth, behavior: 'smooth' });
-				updateCatalogsIndicator();
-			};
-
-			const handleCatalogsScroll = () => {
-				if (catalogsScrollRaf) return;
-				catalogsScrollRaf = requestAnimationFrame(() => {
-					catalogsScrollRaf = null;
-					if (!catalogsTrack) return;
-					const maxScroll = catalogsTrack.scrollWidth - catalogsTrack.clientWidth;
-					const atEnd = maxScroll - catalogsTrack.scrollLeft < 2;
-					catalogsCurrentPage = atEnd
-						? catalogsPageCount - 1
-						: Math.min(Math.round(catalogsTrack.scrollLeft / catalogsTrack.clientWidth), catalogsPageCount - 1);
-					updateCatalogsIndicator();
-				});
-			};
-
-			const setupCatalogsSlider = () => {
-				if (!catalogsTrack || !catalogsPageCount) return;
-
-				requestAnimationFrame(updateCatalogsIndicator);
-
-				catalogsTrack.addEventListener('scroll', handleCatalogsScroll, { passive: true });
-
-				catalogsButtons.forEach((button) => {
-					button.addEventListener('click', () => {
-						const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
-						scrollCatalogsToPage(catalogsCurrentPage + direction);
-					});
-				});
-
-				catalogsDots.forEach((dot) => {
-					dot.addEventListener('click', () => {
-						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-						scrollCatalogsToPage(targetIndex);
-					});
-				});
-			};
-
-			setupCatalogsSlider();
+			// The catalogs slider lives in CatalogsCarousel.astro and wires itself up.
 		</script>
 	</body>
 </html>
@@ -1571,105 +1452,6 @@ const heroCtaUrl = '/contacto';
 		text-align: center;
 	}
 
-	.catalogs-track {
-		--catalogs-gap: 1.5rem;
-		display: grid;
-		grid-auto-flow: column;
-		grid-auto-columns: calc((100% - (3 * var(--catalogs-gap))) / 4);
-		gap: var(--catalogs-gap);
-		overflow-x: auto;
-		scroll-snap-type: x mandatory;
-		scrollbar-width: none;
-	}
-
-	.catalogs-track::-webkit-scrollbar {
-		display: none;
-	}
-
-	.catalog-card {
-		scroll-snap-align: start;
-		display: block;
-		text-decoration: none;
-		color: inherit;
-		transition: opacity .2s ease;
-	}
-
-	.catalog-card:hover {
-		opacity: .85;
-	}
-
-	.catalog-card__image {
-		width: 100%;
-		aspect-ratio: 3 / 4;
-		object-fit: cover;
-		display: block;
-	}
-
-	.catalog-card__label {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: .4rem;
-		margin-top: .9rem;
-	}
-
-	.catalog-card__title {
-		text-transform: uppercase;
-		letter-spacing: .06em;
-		font-size: .8rem;
-		color: var(--text);
-	}
-
-	.catalog-card__icon {
-		width: 1rem;
-		height: 1rem;
-		color: var(--text);
-	}
-
-	.catalogs-indicator {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: .6rem;
-		margin: 1.75rem 0 2.5rem;
-	}
-
-	.catalogs-indicator-arrow {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: none;
-		padding: .3rem;
-		cursor: pointer;
-	}
-
-	.catalogs-indicator-arrow:disabled {
-		opacity: .35;
-		cursor: default;
-	}
-
-	.catalogs-dots {
-		display: flex;
-		align-items: center;
-		gap: .5rem;
-	}
-
-	.catalogs-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		border: 1px solid #2f3437;
-		background: transparent;
-		padding: 0;
-		cursor: pointer;
-		transition: background-color .2s ease;
-	}
-
-	.catalogs-dot.is-active {
-		background: #2f3437;
-	}
-
 	.contact-heading {
 		margin: 3.5rem 0 2.5rem;
 		font-size: clamp(1.3rem, 2.2vw, 1.8rem);
@@ -1778,10 +1560,6 @@ const heroCtaUrl = '/contacto';
 			font-size: 1.9rem;
 		}
 
-		.catalogs-track {
-			grid-auto-columns: calc((100% - var(--catalogs-gap)) / 2);
-		}
-
 		.contact-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
@@ -1803,10 +1581,6 @@ const heroCtaUrl = '/contacto';
 
 		.values-slide__caption {
 			bottom: 8%;
-		}
-
-		.catalogs-track {
-			grid-auto-columns: 100%;
 		}
 
 		.contact-grid {

@@ -32,7 +32,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "VENTANAS",
@@ -45,7 +45,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "PERGOLAS",
@@ -58,7 +58,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "COCINAS",
@@ -71,7 +71,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "TERRAZAS",
@@ -84,7 +84,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "BAÑOS",
@@ -97,7 +97,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       },
       {
         "type": "COCINAS",
@@ -110,7 +110,7 @@
         },
         "cta_text": "Descubre más",
         "cta_text_en": "Discover more",
-        "cta_url": "/contacto"
+        "cta_url": "/contact-us"
       }
     ]
   }

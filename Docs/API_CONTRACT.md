@@ -23,7 +23,8 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
 Este contrato refleja el diseño real de la home y compatibiliza con [src/mocks/home.json](../src/mocks/home.json) y [src/pages/index.astro](../src/pages/index.astro).
 
 Importante:
-- `featured_projects`, `team_members`, `values_slides`, `catalogs` y `contact_links` son arrays dinámicos con múltiples registros.
+- `featured_projects`, `team_members`, `values_slides` y `contact_links` son arrays dinámicos con múltiples registros.
+- Los catálogos **ya no viven en este payload**: se movieron a su propio endpoint (ver [CatalogIndex](#catalogindex--catálogos)) porque la home y la página de contacto renderizan el mismo carrusel. `fields.catalogs` y las claves `copy.catalogs_*` quedan obsoletas aquí; el backend puede dejar de serializarlas.
 - La API devuelve un solo idioma por respuesta: `locale` indica el idioma resuelto y el backend debe devolver inglés por defecto cuando `lang` no venga o no sea válido.
 - `fields.copy` contiene strings ya localizados; el frontend no espera objetos bilingües dentro de la misma respuesta.
 - Los arrays también vienen ya localizados, sin pares base + `_en`.
@@ -63,11 +64,6 @@ Importante:
       "values_next_aria": "string",
       "values_carousel_aria": "string",
       "values_dot_aria": "string",
-      "catalogs_eyebrow": "string",
-      "catalogs_heading": "string",
-      "catalogs_prev_aria": "string",
-      "catalogs_next_aria": "string",
-      "catalogs_dot_aria": "string",
       "contact_heading": "string",
       "contact_cta": "string"
     },
@@ -119,17 +115,6 @@ Importante:
           "alt": "string"
         },
         "description": "string"
-      }
-    ],
-
-    "catalogs": [
-      {
-        "title": "string",
-        "image": {
-          "url": "string",
-          "alt": "string"
-        },
-        "file_url": "string | null"
       }
     ],
 
@@ -194,6 +179,53 @@ Importante:
 }
 ```
 
+## CatalogIndex — Catálogos
+
+Fuente única de la lista de catálogos descargables. La renderizan tanto [index.astro](../src/pages/index.astro) como [contact-us.astro](../src/pages/contact-us.astro) a través del componente compartido [CatalogsCarousel.astro](../src/components/CatalogsCarousel.astro), por eso vive en su propio endpoint en lugar de repetirse dentro de cada página.
+
+Mocks: [src/mocks/catalogs.en.json](../src/mocks/catalogs.en.json) y [src/mocks/catalogs.es.json](../src/mocks/catalogs.es.json).
+
+Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang=en` y `?lang=es`) y deja ambos en el markup, porque el selector de idioma cambia el contenido sin recargar. Cada respuesta sigue siendo de un solo idioma, como el resto del contrato.
+
+```json
+{
+  "type": "catalogs_cms.CatalogIndexPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "copy": {
+      "catalogs_eyebrow": "string",
+      "catalogs_heading": "string",
+      "catalogs_prev_aria": "string",
+      "catalogs_next_aria": "string",
+      "catalogs_dot_aria": "string"
+    },
+
+    "catalogs": [
+      {
+        "title": "string",
+        "image": {
+          "url": "string",
+          "alt": "string"
+        },
+        "file_url": "string | null"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `catalogs` es un array dinámico; el carrusel pagina según el ancho de pantalla y no asume un número fijo de registros.
+- `catalogs_dot_aria` es un prefijo: el frontend le agrega el número de página (`"Go to page" → "Go to page 3"`).
+- `file_url` es el PDF descargable. Si viene `null` o vacío, la tarjeta se renderiza igual pero sin destino útil.
+- El orden del array es el orden de presentación; el frontend no reordena.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -243,6 +275,73 @@ Página de un modelo/producto individual dentro de una colección (referencia: f
 
 ---
 
+## Formulario de contacto (leads)
+
+A diferencia del resto de este documento, este contrato es de **escritura**: el sitio
+envía datos al backend, no los recibe. Lo consume [src/pages/contact-us.astro](../src/pages/contact-us.astro),
+que hace `POST` a la URL definida en `PUBLIC_CONTACT_API_URL`. Si esa variable está
+vacía, el formulario valida pero no envía y le pide al visitante que escriba a
+`info@policrafters.com`.
+
+**Estado: borrador propuesto por el frontend.** Debe acordarse con el backend antes de
+desplegarse; la ruta final (`POST /api/leads/from-web/`) sigue pendiente.
+
+### Request
+
+`POST` con `Content-Type: application/json`:
+
+```json
+{
+  "name": "string",
+  "email": "string",
+  "company": "string",
+  "message": "string",
+  "phone": "string",
+  "phone_country": "US | CA | MX | CO | ES",
+  "locale": "en | es"
+}
+```
+
+- `company` y `phone` son opcionales y llegan como `""` cuando el visitante no los completa.
+- `phone` llega normalizado a dígitos con prefijo internacional (`+18138120650`) o `""`.
+  `phone_country` es el ISO elegido en el selector de país.
+- `locale` es el idioma activo en el sitio al momento del envío — sirve para responderle
+  al lead en su idioma.
+- Todos los strings llegan con espacios recortados (`trim`).
+
+### Response
+
+- `2xx` — el frontend limpia el formulario y muestra el mensaje de éxito. El cuerpo no se lee.
+- Cualquier otro código o fallo de red — el frontend conserva lo escrito y muestra un
+  error con el correo de contacto como alternativa.
+
+### Validación y seguridad (responsabilidad del backend)
+
+El frontend valida y normaliza **solo para la experiencia de usuario**. Cualquiera puede
+saltarse la página y hacer `POST` directo al endpoint, así que el backend debe asumir que
+no existe validación previa:
+
+- [ ] **Revalidar todo**: tipos, obligatoriedad (`name`, `email`, `message`) y formato de correo.
+- [ ] **Límites de longitud** propios. El formulario aplica `maxlength` de 100 (name),
+      254 (email), 120 (company), 25 (phone) y 2000 (message); el backend debe imponer
+      los mismos por su cuenta, más un tope de tamaño del cuerpo.
+- [ ] **Inyección de cabeceras de correo**: si algún campo termina en `From`, `Reply-To` o
+      `Subject`, eliminar CR/LF. Usar `EmailMessage` de Django (lanza `BadHeaderError`) en
+      lugar de concatenar cabeceras a mano.
+- [ ] **Rate limiting por IP** — es la defensa real contra spam.
+- [ ] **CORS**: permitir solo el origen del sitio. Al ser un frontend estático y separado,
+      el flujo de CSRF por cookie de Django no aplica; la lista de orígenes más el rate
+      limiting ocupan su lugar.
+- [ ] **No sanitizar en escritura.** Guardar el texto tal cual y escapar en el punto de
+      uso (las plantillas de Django y el admin de Wagtail ya lo hacen). Escapar antes de
+      guardar corrompe nombres legítimos como `O'Brien` o `Muñoz`.
+
+El formulario ya incluye un honeypot (campo `website`, oculto fuera de pantalla) y un
+descarte por envío en menos de 2 segundos. Ambos se resuelven en el cliente y **no** viajan
+en el payload, así que no reemplazan al rate limiting del servidor.
+
+---
+
 ## Cómo lo usa cada lado
 
 **Frontend (Astro):**
@@ -262,4 +361,4 @@ Página de un modelo/producto individual dentro de una colección (referencia: f
 - [ ] `RenovationPage`
 - [ ] `ServicePage`
 - [ ] `BrandPage`
-- [ ] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — payload de envío desde los formularios del sitio
+- [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

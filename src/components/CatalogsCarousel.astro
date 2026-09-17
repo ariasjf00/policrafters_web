@@ -1,0 +1,447 @@
+---
+import { Icon } from 'astro-icon/components';
+
+// Shared "Our Catalogs" slider, used by index.astro and contact-us.astro.
+//
+// Two rules shape this component:
+//  - It must NOT import global.css. index.astro deliberately ships no Tailwind,
+//    and preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
+//    <style> below carries everything it needs; `--text` is declared by both
+//    index.astro and PageLayout.astro, so `var(--text)` resolves on either page.
+//  - It owns its own language switching. Both languages ship in the markup as
+//    data-copy-es/-en and data-aria-es/-en, and the script subscribes to
+//    `sitelangchange` — Header.astro remains the sole dispatcher.
+
+export interface CatalogsCopy {
+  catalogs_eyebrow?: string;
+  catalogs_heading?: string;
+  catalogs_prev_aria?: string;
+  catalogs_next_aria?: string;
+  catalogs_dot_aria?: string;
+}
+
+export interface CatalogItem {
+  title?: string;
+  image?: { url?: string; alt?: string };
+  file_url?: string;
+}
+
+interface CatalogsPayload {
+  copy?: CatalogsCopy;
+  items?: CatalogItem[];
+}
+
+interface Props {
+  lang?: 'en' | 'es';
+  en: CatalogsPayload;
+  es: CatalogsPayload;
+  /* Cards visible per page in the widest layout. Only decides how many dots are
+     server-rendered; the script re-measures and rebuilds them after hydration. */
+  perPage?: number;
+}
+
+const { lang = 'en', en, es, perPage = 4 } = Astro.props;
+const isEs = lang === 'es';
+const pick = (enValue = '', esValue = '') => (isEs ? esValue : enValue);
+
+const enCopy = en.copy ?? {};
+const esCopy = es.copy ?? {};
+const enItems = en.items ?? [];
+const esItems = es.items ?? [];
+
+// English is the spine: images and file URLs are language-neutral, so only the
+// title and alt are looked up per language (matching index.astro's re-render,
+// which also pairs the arrays by index).
+const items = enItems.map((item, index) => {
+  const esItem = esItems[index] ?? item;
+  return {
+    url: item.image?.url ?? '',
+    href: item.file_url || '#',
+    title: { en: item.title ?? '', es: esItem.title ?? item.title ?? '' },
+    alt: { en: item.image?.alt ?? '', es: esItem.image?.alt ?? item.image?.alt ?? '' }
+  };
+});
+
+const dotCount = Math.max(1, Math.ceil(items.length / perPage));
+const dotAria = (index: number) => ({
+  en: `${enCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim(),
+  es: `${esCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim()
+});
+---
+
+<section class="catalogs-carousel">
+  <p
+    id="catalogs-eyebrow"
+    class="catalogs-eyebrow"
+    data-copy-en={enCopy.catalogs_eyebrow ?? ''}
+    data-copy-es={esCopy.catalogs_eyebrow ?? ''}
+  >{pick(enCopy.catalogs_eyebrow, esCopy.catalogs_eyebrow)}</p>
+
+  <h2
+    id="catalogs-heading"
+    class="catalogs-heading"
+    data-copy-en={enCopy.catalogs_heading ?? ''}
+    data-copy-es={esCopy.catalogs_heading ?? ''}
+  >{pick(enCopy.catalogs_heading, esCopy.catalogs_heading)}</h2>
+
+  <div class="catalogs-track" id="catalogs-track">
+    {items.map((item, index) => (
+      <a class="catalog-card" href={item.href} data-catalog-index={index}>
+        <img
+          class="catalog-card__image"
+          src={item.url}
+          alt={pick(item.alt.en, item.alt.es)}
+          data-alt-en={item.alt.en}
+          data-alt-es={item.alt.es}
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="catalog-card__label">
+          <span
+            class="catalog-card__title"
+            data-copy-en={item.title.en}
+            data-copy-es={item.title.es}
+          >{pick(item.title.en, item.title.es)}</span>
+          <Icon name="mdi:download" class="catalog-card__icon" />
+        </span>
+      </a>
+    ))}
+  </div>
+
+  <div
+    class="catalogs-indicator"
+    id="catalogs-indicator"
+    role="tablist"
+    data-aria-en={enCopy.catalogs_heading ?? ''}
+    data-aria-es={esCopy.catalogs_heading ?? ''}
+    aria-label={pick(enCopy.catalogs_heading, esCopy.catalogs_heading)}
+  >
+    <button
+      type="button"
+      id="catalogs-prev"
+      class="catalogs-indicator-arrow"
+      data-action="prev"
+      disabled
+      data-aria-en={enCopy.catalogs_prev_aria ?? ''}
+      data-aria-es={esCopy.catalogs_prev_aria ?? ''}
+      aria-label={pick(enCopy.catalogs_prev_aria, esCopy.catalogs_prev_aria)}
+    >
+      <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+    </button>
+
+    {/* Server-rendered for the widest layout and for no-JS; the script rebuilds
+        this list to match the pages actually measured at the current width. */}
+    <div
+      class="catalogs-dots"
+      id="catalogs-dots"
+      data-dot-aria-en={enCopy.catalogs_dot_aria ?? ''}
+      data-dot-aria-es={esCopy.catalogs_dot_aria ?? ''}
+    >
+      {Array.from({ length: dotCount }, (_, index) => (
+        <button
+          type="button"
+          class:list={['catalogs-dot', index === 0 && 'is-active']}
+          data-dot-index={index}
+          data-aria-en={dotAria(index).en}
+          data-aria-es={dotAria(index).es}
+          aria-label={pick(dotAria(index).en, dotAria(index).es)}
+        ></button>
+      ))}
+    </div>
+
+    <button
+      type="button"
+      id="catalogs-next"
+      class="catalogs-indicator-arrow"
+      data-action="next"
+      data-aria-en={enCopy.catalogs_next_aria ?? ''}
+      data-aria-es={esCopy.catalogs_next_aria ?? ''}
+      aria-label={pick(enCopy.catalogs_next_aria, esCopy.catalogs_next_aria)}
+    >
+      <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+    </button>
+  </div>
+</section>
+
+<script>
+  // @ts-nocheck
+  const section = document.querySelector('.catalogs-carousel');
+  const track = document.getElementById('catalogs-track');
+  const dotsHolder = document.getElementById('catalogs-dots');
+
+  if (section && track && dotsHolder) {
+    const arrows = section.querySelectorAll('#catalogs-prev, #catalogs-next');
+    let currentPage = 0;
+    let pageCount = dotsHolder.querySelectorAll('.catalogs-dot').length || 1;
+    let scrollRaf = null;
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    const resolveActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    let activeLang = resolveActiveLang();
+
+    const applyCatalogsLanguage = (lang) => {
+      activeLang = lang === 'es' ? 'es' : 'en';
+      const key = activeLang;
+
+      // Scoped to this section so the host page's own subscriber stays in charge
+      // of everything around it.
+      section.querySelectorAll('[data-copy-en]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      section.querySelectorAll('[data-aria-en]').forEach((el) => {
+        const value = el.getAttribute('data-aria-' + key);
+        if (value !== null) el.setAttribute('aria-label', value);
+      });
+
+      section.querySelectorAll('[data-alt-en]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+    };
+
+    const updateIndicator = () => {
+      dotsHolder.querySelectorAll('.catalogs-dot').forEach((dot) => {
+        const dotIndex = Number(dot.dataset.dotIndex);
+        dot.classList.toggle('is-active', dotIndex === currentPage);
+      });
+      arrows.forEach((button) => {
+        const action = button.dataset.action;
+        if (action === 'prev') button.disabled = currentPage === 0;
+        if (action === 'next') button.disabled = currentPage === pageCount - 1;
+      });
+    };
+
+    const scrollToPage = (page) => {
+      const clamped = Math.max(0, Math.min(page, pageCount - 1));
+      currentPage = clamped;
+      track.scrollTo({ left: clamped * track.clientWidth, behavior: 'smooth' });
+      updateIndicator();
+    };
+
+    // The track shows 4 cards per page at full width, 2 then 1 at the breakpoints,
+    // so the number of pages is a function of the current width — measure it rather
+    // than assuming, or the arrows stop short of the last cards on small screens.
+    const measurePages = () => {
+      if (!track.clientWidth) return;
+      const measured = Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
+      if (measured === pageCount) return;
+
+      pageCount = measured;
+      const prefix = dotsHolder.dataset['dotAria' + (activeLang === 'es' ? 'Es' : 'En')] || '';
+      const enPrefix = dotsHolder.dataset.dotAriaEn || '';
+      const esPrefix = dotsHolder.dataset.dotAriaEs || '';
+
+      dotsHolder.replaceChildren(...Array.from({ length: pageCount }, (_, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'catalogs-dot';
+        dot.dataset.dotIndex = String(index);
+        dot.setAttribute('data-aria-en', `${enPrefix} ${index + 1}`.trim());
+        dot.setAttribute('data-aria-es', `${esPrefix} ${index + 1}`.trim());
+        dot.setAttribute('aria-label', `${prefix} ${index + 1}`.trim());
+        dot.addEventListener('click', () => scrollToPage(index));
+        return dot;
+      }));
+
+      currentPage = Math.min(currentPage, pageCount - 1);
+      updateIndicator();
+    };
+
+    const handleScroll = () => {
+      if (scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null;
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        const atEnd = maxScroll - track.scrollLeft < 2;
+        currentPage = atEnd
+          ? pageCount - 1
+          : Math.min(Math.round(track.scrollLeft / track.clientWidth), pageCount - 1);
+        updateIndicator();
+      });
+    };
+
+    dotsHolder.querySelectorAll('.catalogs-dot').forEach((dot) => {
+      dot.addEventListener('click', () => scrollToPage(Number(dot.dataset.dotIndex)));
+    });
+
+    arrows.forEach((button) => {
+      button.addEventListener('click', () => {
+        const direction = button.dataset.action === 'next' ? 1 : -1;
+        scrollToPage(currentPage + direction);
+      });
+    });
+
+    track.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', () => requestAnimationFrame(measurePages));
+    requestAnimationFrame(() => {
+      measurePages();
+      updateIndicator();
+    });
+
+    // Subscriber only: self-boot first, since Header's boot dispatch fires before
+    // this script runs (same pattern as Footer.astro and colecciones.astro).
+    applyCatalogsLanguage(activeLang);
+    document.addEventListener('sitelangchange', (event) => applyCatalogsLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .catalogs-carousel {
+    text-align: center;
+  }
+
+  .catalogs-carousel * {
+    box-sizing: border-box;
+  }
+
+  /* Values copied from index.astro's page-wide .section-eyebrow/.section-heading:
+     Astro scopes styles per component, so the page's rules do not reach in here. */
+  .catalogs-eyebrow {
+    margin: 0 0 .4rem;
+    font-style: italic;
+    font-size: .95rem;
+    color: #555;
+  }
+
+  .catalogs-heading {
+    margin: 0 0 2.5rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #B6AE99;
+  }
+
+  .catalogs-track {
+    --catalogs-gap: 1.5rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - (3 * var(--catalogs-gap))) / 4);
+    gap: var(--catalogs-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .catalogs-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .catalog-card {
+    scroll-snap-align: start;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity .2s ease;
+  }
+
+  .catalog-card:hover {
+    opacity: .85;
+  }
+
+  .catalog-card__image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+  }
+
+  .catalog-card__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-top: .9rem;
+  }
+
+  .catalog-card__title {
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: .8rem;
+    color: var(--text, #111);
+  }
+
+  .catalog-card__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--text, #111);
+  }
+
+  .catalogs-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    margin: 1.75rem 0 0;
+  }
+
+  .catalogs-indicator-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: .3rem;
+    cursor: pointer;
+  }
+
+  .catalogs-indicator-arrow:disabled {
+    opacity: .35;
+    cursor: default;
+  }
+
+  .catalogs-dots {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .catalogs-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid #2f3437;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color .2s ease;
+  }
+
+  .catalogs-dot.is-active {
+    background: #2f3437;
+  }
+
+  @media (max-width: 900px) {
+    .catalogs-track {
+      grid-auto-columns: calc((100% - var(--catalogs-gap)) / 2);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .catalogs-track {
+      grid-auto-columns: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .catalog-card,
+    .catalogs-dot {
+      transition: none;
+    }
+  }
+</style>

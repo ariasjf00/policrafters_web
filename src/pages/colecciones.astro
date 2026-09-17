@@ -54,7 +54,6 @@ const fallbackFields = (collectionsPage.fields ?? {}) as AnyRecord;
 // Mirrors index.astro: ?lang= wins, otherwise the payload's locale decides.
 const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
 const isEsLocale = normalizedLocale.includes('es');
-const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
 const selectedLang = langParam === 'en' || langParam === 'es'
   ? langParam
   : (isEsLocale ? 'es' : 'en');
@@ -139,7 +138,7 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
                   data-copy-en={item.description_en || item.description}
                 >{pick(item.description, item.description_en)}</p>
                 <a
-                  href={item.cta_url || '/contacto'}
+                  href={item.cta_url || '/contact-us'}
                   class="discover-btn"
                   data-copy-es={item.cta_text || 'Descubre más'}
                   data-copy-en={item.cta_text_en || item.cta_text || 'Discover more'}
@@ -211,7 +210,7 @@ const collectionItems = Array.isArray(resolvedFields.collection_items)
     });
 
     document.querySelectorAll('.discover-btn').forEach((cta) => {
-      cta.setAttribute('href', appendLang(cta.getAttribute('href') || '/contacto', activeLang));
+      cta.setAttribute('href', appendLang(cta.getAttribute('href') || '/contact-us', activeLang));
     });
   };
 

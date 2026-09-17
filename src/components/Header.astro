@@ -30,14 +30,14 @@ const navItems = isEs
 			{ key: 'renovations', label: 'Renovaciones', href: '/renovaciones' },
 			{ key: 'services', label: 'Servicios', href: '/servicios' },
 			{ key: 'brands', label: 'Marcas', href: '/marcas' },
-			{ key: 'contact', label: 'Contáctanos', href: '/contacto' },
+			{ key: 'contact', label: 'Contáctanos', href: '/contact-us' },
 		]
 	: [
 			{ key: 'collections', label: 'Collections', href: '/colecciones' },
 			{ key: 'renovations', label: 'Renovations', href: '/renovaciones' },
 			{ key: 'services', label: 'Services', href: '/servicios' },
 			{ key: 'brands', label: 'Brands', href: '/marcas' },
-			{ key: 'contact', label: 'Contact Us', href: '/contacto' },
+			{ key: 'contact', label: 'Contact Us', href: '/contact-us' },
 		];
 
 // English is the default, so it is never stamped into a URL; Spanish always is.
@@ -116,14 +116,14 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			renovations: { label: 'Renovaciones', href: '/renovaciones' },
 			services: { label: 'Servicios', href: '/servicios' },
 			brands: { label: 'Marcas', href: '/marcas' },
-			contact: { label: 'Contáctanos', href: '/contacto' }
+			contact: { label: 'Contáctanos', href: '/contact-us' }
 		},
 		en: {
 			collections: { label: 'Collections', href: '/colecciones' },
 			renovations: { label: 'Renovations', href: '/renovaciones' },
 			services: { label: 'Services', href: '/servicios' },
 			brands: { label: 'Brands', href: '/marcas' },
-			contact: { label: 'Contact Us', href: '/contacto' }
+			contact: { label: 'Contact Us', href: '/contact-us' }
 		}
 	};
 
