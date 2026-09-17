@@ -2,16 +2,12 @@
 import PageLayout from '../layouts/PageLayout.astro';
 import CatalogsCarousel from '../components/CatalogsCarousel.astro';
 import { loadCatalogs } from '../lib/catalogs';
+import { loadContactPageContent } from '../lib/contact-content';
 
 // Same shared endpoint the homepage renders; both languages ship so the carousel
 // can switch without a reload.
 const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
-
-// Contact details. Kept in sync with Footer.astro, which declares the same three
-// values for its own contact block. `tel:` must be punctuation-free E.164 to dial.
-const contactPhoneDisplay = '+1 (813) 812-0650';
-const contactPhoneHref = `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
-const contactEmail = 'info@policrafters.com';
+const { en: contactEn, es: contactEs } = await loadContactPageContent();
 
 // Where the form POSTs. Unset in local/mock mode, exactly like the CMS URLs:
 // the form then tells the visitor to email us instead of failing silently.
@@ -23,16 +19,32 @@ const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en'
 const isEs = selectedLang === 'es';
 const pick = (en: string, es: string) => (isEs ? es : en);
 
+const activeContent = isEs ? contactEs : contactEn;
+const pageTitle = activeContent.meta?.seo_title || pick('Contact Us | Policrafters', 'Contáctanos | Policrafters');
+const pageDescription = activeContent.meta?.search_description || pick('Get in touch with Policrafters', 'Ponte en contacto con Policrafters');
+
+// Contact details are editable from CMS with mock fallback; phone href still falls
+// back to sanitized E.164 when only a display string exists.
+const contactPhoneDisplay = activeContent.contact?.phone_display || contactEn.contact?.phone_display || '+1 (813) 812-0650';
+const contactPhoneHref = activeContent.contact?.phone_href || `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const contactEmail = activeContent.contact?.email || contactEn.contact?.email || 'info@policrafters.com';
+
 // Both languages ship in the markup as data-copy-es/-en, data-placeholder-es/-en
 // and data-aria-es/-en, so Header's language toggle can switch without a reload.
-const copy = {
-  heading: { en: 'CONTACT US!', es: '¡CONTÁCTANOS!' },
+const contentCopy = {
+  heading: { en: contactEn.copy?.heading || 'CONTACT US!', es: contactEs.copy?.heading || '¡CONTÁCTANOS!' },
   intro: {
-    en: "If you have any questions, concerns, or comments regarding Policrafters, please fill out the contact form below. We'd be happy to help you.",
-    es: 'Si tienes preguntas, inquietudes o comentarios sobre Policrafters, completa el formulario de contacto a continuación. Con gusto te ayudaremos.'
+    en: contactEn.copy?.intro || "If you have any questions, concerns, or comments regarding Policrafters, please fill out the contact form below. We'd be happy to help you.",
+    es: contactEs.copy?.intro || 'Si tienes preguntas, inquietudes o comentarios sobre Policrafters, completa el formulario de contacto a continuación. Con gusto te ayudaremos.'
   },
-  phoneLabel: { en: 'CALL CENTER PHONE', es: 'TELÉFONO DEL CENTRO DE ATENCIÓN' },
-  emailLabel: { en: 'EMAIL', es: 'CORREO ELECTRÓNICO' },
+  phoneLabel: { en: contactEn.copy?.phone_label || 'CALL CENTER PHONE', es: contactEs.copy?.phone_label || 'TELÉFONO DEL CENTRO DE ATENCIÓN' },
+  emailLabel: { en: contactEn.copy?.email_label || 'EMAIL', es: contactEs.copy?.email_label || 'CORREO ELECTRÓNICO' },
+  locationsHeading: { en: contactEn.copy?.locations_heading || 'OUR LOCATIONS', es: contactEs.copy?.locations_heading || 'NUESTRAS UBICACIONES' },
+  locationsAria: { en: contactEn.copy?.locations_aria || 'Policrafters locations', es: contactEs.copy?.locations_aria || 'Ubicaciones de Policrafters' },
+  learnMore: { en: contactEn.copy?.learn_more || 'Learn more', es: contactEs.copy?.learn_more || 'Conoce más' }
+};
+
+const formCopy = {
   name: { en: 'Name', es: 'Nombre' },
   phone: { en: 'Phone', es: 'Teléfono' },
   email: { en: 'Email', es: 'Correo electrónico' },
@@ -40,28 +52,44 @@ const copy = {
   message: { en: 'Message', es: 'Mensaje' },
   submit: { en: 'Submit', es: 'Enviar' },
   countryAria: { en: 'Select country calling code', es: 'Seleccionar código de país' },
-  formAria: { en: 'Contact form', es: 'Formulario de contacto' },
-  locationsHeading: { en: 'OUR LOCATIONS', es: 'NUESTRAS UBICACIONES' },
-  locationsAria: { en: 'Policrafters locations', es: 'Ubicaciones de Policrafters' },
-  learnMore: { en: 'Learn more', es: 'Conoce más' }
+  formAria: { en: 'Contact form', es: 'Formulario de contacto' }
 };
 
-// Placeholder locations, mirroring the design comp. Real names/addresses land here
-// (or come from the CMS) once they exist; `url` should point at the location's own
-// page when those are built — for now it opens the address in Google Maps.
-const locations = [
-  { name: { en: 'LOCATION 1', es: 'UBICACIÓN 1' }, label: { en: 'ADDRESS 1', es: 'DIRECCIÓN 1' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
-  { name: { en: 'LOCATION 2', es: 'UBICACIÓN 2' }, label: { en: 'ADDRESS 2', es: 'DIRECCIÓN 2' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
-  { name: { en: 'LOCATION 3', es: 'UBICACIÓN 3' }, label: { en: 'ADDRESS 3', es: 'DIRECCIÓN 3' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' },
-  { name: { en: 'LOCATION 4', es: 'UBICACIÓN 4' }, label: { en: 'ADDRESS 4', es: 'DIRECCIÓN 4' }, street: '7735 NW 75th Ave.', city: 'Medley, FL. 33166' }
-].map((location) => ({
-  ...location,
-  url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.street} ${location.city}`)}`,
-  alt: {
-    en: `Policrafters ${location.name.en} building`,
-    es: `Edificio de Policrafters ${location.name.es}`
-  }
-}));
+const enLocations = Array.isArray(contactEn.locations) ? contactEn.locations : [];
+const esLocations = Array.isArray(contactEs.locations) ? contactEs.locations : [];
+const baseLocations = enLocations.length ? enLocations : esLocations;
+const locations = baseLocations.map((enLocation, index) => {
+  const esLocation = esLocations[index] ?? enLocation;
+  const enStreet = enLocation?.street || '';
+  const esStreet = esLocation?.street || enStreet;
+  const enCity = enLocation?.city || '';
+  const esCity = esLocation?.city || enCity;
+  const query = encodeURIComponent(`${enStreet} ${enCity}`.trim());
+  return {
+    name: {
+      en: enLocation?.name || `LOCATION ${index + 1}`,
+      es: esLocation?.name || enLocation?.name || `UBICACIÓN ${index + 1}`
+    },
+    label: {
+      en: enLocation?.address_label || `ADDRESS ${index + 1}`,
+      es: esLocation?.address_label || enLocation?.address_label || `DIRECCIÓN ${index + 1}`
+    },
+    street: {
+      en: enStreet,
+      es: esStreet
+    },
+    city: {
+      en: enCity,
+      es: esCity
+    },
+    url: enLocation?.url || esLocation?.url || (query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '#'),
+    imageUrl: enLocation?.image?.url || esLocation?.image?.url || '/images/pages/location.png',
+    alt: {
+      en: enLocation?.image?.alt || `Policrafters ${enLocation?.name || `LOCATION ${index + 1}`} building`,
+      es: esLocation?.image?.alt || `Edificio de Policrafters ${esLocation?.name || enLocation?.name || `UBICACIÓN ${index + 1}`}`
+    }
+  };
+});
 
 const countries = [
   {
@@ -98,23 +126,23 @@ const countries = [
 ---
 
 <PageLayout
-  title={pick('Contact Us | Policrafters', 'Contáctanos | Policrafters')}
-  description={pick('Get in touch with Policrafters', 'Ponte en contacto con Policrafters')}
+  title={pageTitle}
+  description={pageDescription}
   showHero={false}
 >
   <section class="contact-page">
     <header class="contact-intro">
-      <h1 data-copy-en={copy.heading.en} data-copy-es={copy.heading.es}>
-        {pick(copy.heading.en, copy.heading.es)}
+      <h1 data-copy-en={contentCopy.heading.en} data-copy-es={contentCopy.heading.es}>
+        {pick(contentCopy.heading.en, contentCopy.heading.es)}
       </h1>
-      <p data-copy-en={copy.intro.en} data-copy-es={copy.intro.es}>
-        {pick(copy.intro.en, copy.intro.es)}
+      <p data-copy-en={contentCopy.intro.en} data-copy-es={contentCopy.intro.es}>
+        {pick(contentCopy.intro.en, contentCopy.intro.es)}
       </p>
     </header>
 
     <div class="contact-highlight">
-      <h2 class="contact-highlight__label" data-copy-en={copy.phoneLabel.en} data-copy-es={copy.phoneLabel.es}>
-        {pick(copy.phoneLabel.en, copy.phoneLabel.es)}
+      <h2 class="contact-highlight__label" data-copy-en={contentCopy.phoneLabel.en} data-copy-es={contentCopy.phoneLabel.es}>
+        {pick(contentCopy.phoneLabel.en, contentCopy.phoneLabel.es)}
       </h2>
       <a class="contact-highlight__value" href={contactPhoneHref}>{contactPhoneDisplay}</a>
     </div>
@@ -124,13 +152,13 @@ const countries = [
       novalidate
       data-contact-api={contactApiUrl}
       data-contact-email={contactEmail}
-      data-aria-en={copy.formAria.en}
-      data-aria-es={copy.formAria.es}
-      aria-label={pick(copy.formAria.en, copy.formAria.es)}
+      data-aria-en={formCopy.formAria.en}
+      data-aria-es={formCopy.formAria.es}
+      aria-label={pick(formCopy.formAria.en, formCopy.formAria.es)}
     >
       <div class="field">
-        <label class="sr-only" for="contact-name" data-copy-en={copy.name.en} data-copy-es={copy.name.es}>
-          {pick(copy.name.en, copy.name.es)}
+        <label class="sr-only" for="contact-name" data-copy-en={formCopy.name.en} data-copy-es={formCopy.name.es}>
+          {pick(formCopy.name.en, formCopy.name.es)}
         </label>
         <input
           id="contact-name"
@@ -140,17 +168,17 @@ const countries = [
           required
           maxlength="100"
           aria-describedby="contact-name-error"
-          placeholder={pick(copy.name.en, copy.name.es)}
-          data-placeholder-en={copy.name.en}
-          data-placeholder-es={copy.name.es}
+          placeholder={pick(formCopy.name.en, formCopy.name.es)}
+          data-placeholder-en={formCopy.name.en}
+          data-placeholder-es={formCopy.name.es}
         />
         <p class="field-error" id="contact-name-error" hidden></p>
       </div>
 
       <div class="field-row">
         <div class="field">
-          <label class="sr-only" for="contact-phone" data-copy-en={copy.phone.en} data-copy-es={copy.phone.es}>
-            {pick(copy.phone.en, copy.phone.es)}
+          <label class="sr-only" for="contact-phone" data-copy-en={formCopy.phone.en} data-copy-es={formCopy.phone.es}>
+            {pick(formCopy.phone.en, formCopy.phone.es)}
           </label>
           <div class="phone-group">
             <div class="country-picker">
@@ -159,9 +187,9 @@ const countries = [
                 class="country-toggle"
                 aria-haspopup="listbox"
                 aria-expanded="false"
-                aria-label={pick(copy.countryAria.en, copy.countryAria.es)}
-                data-aria-en={copy.countryAria.en}
-                data-aria-es={copy.countryAria.es}
+                aria-label={pick(formCopy.countryAria.en, formCopy.countryAria.es)}
+                data-aria-en={formCopy.countryAria.en}
+                data-aria-es={formCopy.countryAria.es}
               >
                 <span class="flag" data-current-flag set:html={countries[0].svg} />
                 <svg class="caret" viewBox="0 0 10 6" width="9" height="6" aria-hidden="true">
@@ -192,9 +220,9 @@ const countries = [
               type="tel"
               autocomplete="tel"
               maxlength="25"
-              placeholder={pick(copy.phone.en, copy.phone.es)}
-              data-placeholder-en={copy.phone.en}
-              data-placeholder-es={copy.phone.es}
+              placeholder={pick(formCopy.phone.en, formCopy.phone.es)}
+              data-placeholder-en={formCopy.phone.en}
+              data-placeholder-es={formCopy.phone.es}
             />
             <input type="hidden" name="phone_country" value={countries[0].iso} />
             <input type="hidden" name="phone_dial_code" value={countries[0].dial} />
@@ -202,8 +230,8 @@ const countries = [
         </div>
 
         <div class="field">
-          <label class="sr-only" for="contact-email" data-copy-en={copy.email.en} data-copy-es={copy.email.es}>
-            {pick(copy.email.en, copy.email.es)}
+          <label class="sr-only" for="contact-email" data-copy-en={formCopy.email.en} data-copy-es={formCopy.email.es}>
+            {pick(formCopy.email.en, formCopy.email.es)}
           </label>
           <input
             id="contact-email"
@@ -213,17 +241,17 @@ const countries = [
             required
             maxlength="254"
             aria-describedby="contact-email-error"
-            placeholder={pick(copy.email.en, copy.email.es)}
-            data-placeholder-en={copy.email.en}
-            data-placeholder-es={copy.email.es}
+            placeholder={pick(formCopy.email.en, formCopy.email.es)}
+            data-placeholder-en={formCopy.email.en}
+            data-placeholder-es={formCopy.email.es}
           />
           <p class="field-error" id="contact-email-error" hidden></p>
         </div>
       </div>
 
       <div class="field">
-        <label class="sr-only" for="contact-company" data-copy-en={copy.company.en} data-copy-es={copy.company.es}>
-          {pick(copy.company.en, copy.company.es)}
+        <label class="sr-only" for="contact-company" data-copy-en={formCopy.company.en} data-copy-es={formCopy.company.es}>
+          {pick(formCopy.company.en, formCopy.company.es)}
         </label>
         <input
           id="contact-company"
@@ -231,15 +259,15 @@ const countries = [
           type="text"
           autocomplete="organization"
           maxlength="120"
-          placeholder={pick(copy.company.en, copy.company.es)}
-          data-placeholder-en={copy.company.en}
-          data-placeholder-es={copy.company.es}
+          placeholder={pick(formCopy.company.en, formCopy.company.es)}
+          data-placeholder-en={formCopy.company.en}
+          data-placeholder-es={formCopy.company.es}
         />
       </div>
 
       <div class="field">
-        <label class="sr-only" for="contact-message" data-copy-en={copy.message.en} data-copy-es={copy.message.es}>
-          {pick(copy.message.en, copy.message.es)}
+        <label class="sr-only" for="contact-message" data-copy-en={formCopy.message.en} data-copy-es={formCopy.message.es}>
+          {pick(formCopy.message.en, formCopy.message.es)}
         </label>
         <textarea
           id="contact-message"
@@ -248,9 +276,9 @@ const countries = [
           required
           maxlength="2000"
           aria-describedby="contact-message-error"
-          placeholder={pick(copy.message.en, copy.message.es)}
-          data-placeholder-en={copy.message.en}
-          data-placeholder-es={copy.message.es}
+          placeholder={pick(formCopy.message.en, formCopy.message.es)}
+          data-placeholder-en={formCopy.message.en}
+          data-placeholder-es={formCopy.message.es}
         ></textarea>
         <p class="field-error" id="contact-message-error" hidden></p>
       </div>
@@ -263,8 +291,8 @@ const countries = [
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="submit-btn" data-copy-en={copy.submit.en} data-copy-es={copy.submit.es}>
-          {pick(copy.submit.en, copy.submit.es)}
+        <button type="submit" class="submit-btn" data-copy-en={formCopy.submit.en} data-copy-es={formCopy.submit.es}>
+          {pick(formCopy.submit.en, formCopy.submit.es)}
         </button>
       </div>
 
@@ -272,20 +300,20 @@ const countries = [
     </form>
 
     <div class="contact-highlight">
-      <p class="contact-highlight__label" data-copy-en={copy.emailLabel.en} data-copy-es={copy.emailLabel.es}>
-        {pick(copy.emailLabel.en, copy.emailLabel.es)}
+      <p class="contact-highlight__label" data-copy-en={contentCopy.emailLabel.en} data-copy-es={contentCopy.emailLabel.es}>
+        {pick(contentCopy.emailLabel.en, contentCopy.emailLabel.es)}
       </p>
       <a class="contact-highlight__value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
     </div>
 
     <section
       class="locations"
-      data-aria-en={copy.locationsAria.en}
-      data-aria-es={copy.locationsAria.es}
-      aria-label={pick(copy.locationsAria.en, copy.locationsAria.es)}
+      data-aria-en={contentCopy.locationsAria.en}
+      data-aria-es={contentCopy.locationsAria.es}
+      aria-label={pick(contentCopy.locationsAria.en, contentCopy.locationsAria.es)}
     >
-      <h2 class="locations__heading" data-copy-en={copy.locationsHeading.en} data-copy-es={copy.locationsHeading.es}>
-        {pick(copy.locationsHeading.en, copy.locationsHeading.es)}
+      <h2 class="locations__heading" data-copy-en={contentCopy.locationsHeading.en} data-copy-es={contentCopy.locationsHeading.es}>
+        {pick(contentCopy.locationsHeading.en, contentCopy.locationsHeading.es)}
       </h2>
 
       <ul class="locations__grid">
@@ -293,7 +321,7 @@ const countries = [
           <li class="location-card">
             <img
               class="location-card__image"
-              src="/images/pages/location.png"
+              src={location.imageUrl}
               width="252"
               height="200"
               loading="lazy"
@@ -309,17 +337,17 @@ const countries = [
               <span data-copy-en={location.label.en} data-copy-es={location.label.es}>
                 {pick(location.label.en, location.label.es)}
               </span>
-              <span>{location.street}</span>
-              <span>{location.city}</span>
+              <span data-copy-en={location.street.en} data-copy-es={location.street.es}>{pick(location.street.en, location.street.es)}</span>
+              <span data-copy-en={location.city.en} data-copy-es={location.city.es}>{pick(location.city.en, location.city.es)}</span>
             </p>
             <a
               class="location-card__cta"
               href={location.url}
               target="_blank"
               rel="noopener noreferrer"
-              data-copy-en={copy.learnMore.en}
-              data-copy-es={copy.learnMore.es}
-            >{pick(copy.learnMore.en, copy.learnMore.es)}</a>
+              data-copy-en={contentCopy.learnMore.en}
+              data-copy-es={contentCopy.learnMore.es}
+            >{pick(contentCopy.learnMore.en, contentCopy.learnMore.es)}</a>
           </li>
         ))}
       </ul>

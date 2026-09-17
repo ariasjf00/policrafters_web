@@ -1,0 +1,71 @@
+{
+  "type": "contact_cms.ContactPage",
+  "title": "Contact Us",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Contact Us | Policrafters",
+    "search_description": "Get in touch with Policrafters"
+  },
+  "fields": {
+    "copy": {
+      "heading": "CONTACT US!",
+      "intro": "If you have any questions, concerns, or comments regarding Policrafters, please fill out the contact form below. We'd be happy to help you.",
+      "phone_label": "CALL CENTER PHONE",
+      "email_label": "EMAIL",
+      "locations_heading": "OUR LOCATIONS",
+      "locations_aria": "Policrafters locations",
+      "learn_more": "Learn more"
+    },
+    "contact": {
+      "phone_display": "+1 (813) 812-0650",
+      "phone_href": "tel:+18138120650",
+      "email": "info@policrafters.com"
+    },
+    "locations": [
+      {
+        "name": "LOCATION 1",
+        "address_label": "ADDRESS 1",
+        "street": "7735 NW 75th Ave.",
+        "city": "Medley, FL. 33166",
+        "url": "https://www.google.com/maps/search/?api=1&query=7735%20NW%2075th%20Ave.%20Medley%2C%20FL.%2033166",
+        "image": {
+          "url": "/images/pages/location.png",
+          "alt": "Policrafters LOCATION 1 building"
+        }
+      },
+      {
+        "name": "LOCATION 2",
+        "address_label": "ADDRESS 2",
+        "street": "7735 NW 75th Ave.",
+        "city": "Medley, FL. 33166",
+        "url": "https://www.google.com/maps/search/?api=1&query=7735%20NW%2075th%20Ave.%20Medley%2C%20FL.%2033166",
+        "image": {
+          "url": "/images/pages/location.png",
+          "alt": "Policrafters LOCATION 2 building"
+        }
+      },
+      {
+        "name": "LOCATION 3",
+        "address_label": "ADDRESS 3",
+        "street": "7735 NW 75th Ave.",
+        "city": "Medley, FL. 33166",
+        "url": "https://www.google.com/maps/search/?api=1&query=7735%20NW%2075th%20Ave.%20Medley%2C%20FL.%2033166",
+        "image": {
+          "url": "/images/pages/location.png",
+          "alt": "Policrafters LOCATION 3 building"
+        }
+      },
+      {
+        "name": "LOCATION 4",
+        "address_label": "ADDRESS 4",
+        "street": "7735 NW 75th Ave.",
+        "city": "Medley, FL. 33166",
+        "url": "https://www.google.com/maps/search/?api=1&query=7735%20NW%2075th%20Ave.%20Medley%2C%20FL.%2033166",
+        "image": {
+          "url": "/images/pages/location.png",
+          "alt": "Policrafters LOCATION 4 building"
+        }
+      }
+    ]
+  }
+}

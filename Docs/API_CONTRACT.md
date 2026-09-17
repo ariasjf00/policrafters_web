@@ -273,6 +273,71 @@ Página de un modelo/producto individual dentro de una colección (referencia: f
 }
 ```
 
+## ContactPage (contenido de página)
+
+Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),
+exclusivo para textos y bloques visibles fuera del formulario. El formulario
+mantiene sus labels/placeholders hardcodeados en frontend por ahora; este endpoint
+no reemplaza el contrato de leads.
+
+Endpoint sugerido para este payload: `PUBLIC_CONTACT_PAGE_API_URL`.
+
+Mocks de referencia:
+- [src/mocks/contact-page.en.json](../src/mocks/contact-page.en.json)
+- [src/mocks/contact-page.es.json](../src/mocks/contact-page.es.json)
+
+```json
+{
+  "type": "contact_cms.ContactPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "copy": {
+      "heading": "string",
+      "intro": "string",
+      "phone_label": "string",
+      "email_label": "string",
+      "locations_heading": "string",
+      "locations_aria": "string",
+      "learn_more": "string"
+    },
+    "contact": {
+      "phone_display": "string",
+      "phone_href": "string | null",
+      "email": "string"
+    },
+    "locations": [
+      {
+        "name": "string",
+        "address_label": "string",
+        "street": "string",
+        "city": "string",
+        "url": "string",
+        "image": {
+          "url": "string",
+          "alt": "string"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- La API devuelve un solo idioma por request (`?lang=en` o `?lang=es`) y el
+  frontend solicita ambos en build time para permitir cambio de idioma sin recarga.
+- `locations` es dinámico y ordenado: el frontend respeta el orden recibido y no
+  asume cantidad fija de tarjetas.
+- `contact.phone_href` puede venir nulo o vacío; en ese caso el frontend calcula
+  `tel:` desde `phone_display` como fallback.
+- `meta.seo_title` y `meta.search_description` alimentan el `title` y `description`
+  de la página de contacto.
+
 ---
 
 ## Formulario de contacto (leads)
@@ -361,4 +426,5 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 - [ ] `RenovationPage`
 - [ ] `ServicePage`
 - [ ] `BrandPage`
+- [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

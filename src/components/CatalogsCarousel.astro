@@ -67,6 +67,7 @@ const dotAria = (index: number) => ({
   en: `${enCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim(),
   es: `${esCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim()
 });
+const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
 ---
 
 <section class="catalogs-carousel">
@@ -86,7 +87,13 @@ const dotAria = (index: number) => ({
 
   <div class="catalogs-track" id="catalogs-track">
     {items.map((item, index) => (
-      <a class="catalog-card" href={item.href} data-catalog-index={index}>
+      <a
+        class="catalog-card"
+        href={item.href}
+        data-catalog-index={index}
+        target={shouldOpenInNewTab(item.href) ? '_blank' : undefined}
+        rel={shouldOpenInNewTab(item.href) ? 'noopener noreferrer' : undefined}
+      >
         <img
           class="catalog-card__image"
           src={item.url}
