@@ -167,7 +167,10 @@ const heroCtaUrl = '/contact-us';
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
 	</head>
-		<body data-api-url={apiUrl}>
+		<body
+ 		   data-api-url={apiUrl}
+    		data-use-api={useApi ? "true" : "false"}
+		>
 		<Header lang={selectedLang} logo={siteLogo} position="fixed" scrollShadow />
 
 		<section class="hero">
@@ -375,8 +378,8 @@ const heroCtaUrl = '/contact-us';
 
 		<script type="module" define:vars={{ homeEn, homeEs }}>
 			const body = document.body;
-			const apiUrl = body?.dataset?.apiUrl;
-			const shouldUseCms = Boolean(apiUrl);
+			const apiUrl = body?.dataset?.apiUrl || '';
+			const shouldUseCms = body?.dataset?.useApi === 'true' && Boolean(apiUrl);
 			const apiOrigin = (() => {
 				try {
 					return apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
