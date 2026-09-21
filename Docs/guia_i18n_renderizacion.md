@@ -1,6 +1,6 @@
-# Guía de i18n y renderización (caso colecciones)
+# Guía de i18n y renderización (caso collections)
 
-Este documento resume el cambio efectivo que resolvió el problema de traducciones EN/ES en la página de colecciones y define el patrón a replicar en nuevas páginas.
+Este documento resume el cambio efectivo que resolvió el problema de traducciones EN/ES en la página de collections y define el patrón a replicar en nuevas páginas.
 
 ## 1. Cambio clave: evitar CORS en fetch del cliente
 
@@ -13,7 +13,7 @@ Solución aplicada:
 - En producción, sigue usando la URL real del backend.
 
 Implementación aplicada:
-- En [src/pages/colecciones.astro](src/pages/colecciones.astro):
+- En [src/pages/collections.astro](src/pages/collections.astro):
   - Se define apiUrl para servidor.
   - Se define clientApiUrl con ruta relativa en DEV.
 - En [astro.config.mjs](astro.config.mjs):
@@ -36,7 +36,7 @@ Solución aplicada:
 - Se actualiza el contenido visible con la respuesta localizada.
 
 Implementación aplicada:
-- En [src/pages/colecciones.astro](src/pages/colecciones.astro):
+- En [src/pages/collections.astro](src/pages/collections.astro):
   - fetchCollectionsPayload(lang)
   - applyApiPayload(payload, lang)
 
@@ -55,7 +55,7 @@ Solución aplicada:
 - El contenido traducido debe venir del backend o mantener contenido actual sin falsos positivos.
 
 Implementación aplicada:
-- En [src/pages/colecciones.astro](src/pages/colecciones.astro):
+- En [src/pages/collections.astro](src/pages/collections.astro):
   - Se retiró bloque de traducción hardcodeada para EN.
 
 ## 4. Ajuste importante: actualizar también hero de layout
@@ -70,7 +70,7 @@ Solución aplicada:
 Implementación aplicada:
 - En [src/layouts/PageLayout.astro](src/layouts/PageLayout.astro):
   - IDs para título y subtítulo de hero.
-- En [src/pages/colecciones.astro](src/pages/colecciones.astro):
+- En [src/pages/collections.astro](src/pages/collections.astro):
   - applyApiPayload actualiza hero + contenido de sección.
 
 ## 5. Checklist para nuevas páginas

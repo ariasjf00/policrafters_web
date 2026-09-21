@@ -26,17 +26,17 @@ const isEs = lang === 'es';
 // here is what prevents the 4-way drift this component exists to fix.
 const navItems = isEs
 	? [
-			{ key: 'collections', label: 'Colecciones', href: '/colecciones' },
-			{ key: 'renovations', label: 'Renovaciones', href: '/renovaciones' },
-			{ key: 'services', label: 'Servicios', href: '/servicios' },
-			{ key: 'brands', label: 'Marcas', href: '/marcas' },
+			{ key: 'collections', label: 'Colecciones', href: '/collections' },
+			{ key: 'renovations', label: 'Renovaciones', href: '/renovations' },
+			{ key: 'services', label: 'Servicios', href: '/services' },
+			{ key: 'brands', label: 'Marcas', href: '/brands' },
 			{ key: 'contact', label: 'Contáctanos', href: '/contact-us' },
 		]
 	: [
-			{ key: 'collections', label: 'Collections', href: '/colecciones' },
-			{ key: 'renovations', label: 'Renovations', href: '/renovaciones' },
-			{ key: 'services', label: 'Services', href: '/servicios' },
-			{ key: 'brands', label: 'Brands', href: '/marcas' },
+			{ key: 'collections', label: 'Collections', href: '/collections' },
+			{ key: 'renovations', label: 'Renovations', href: '/renovations' },
+			{ key: 'services', label: 'Services', href: '/services' },
+			{ key: 'brands', label: 'Brands', href: '/brands' },
 			{ key: 'contact', label: 'Contact Us', href: '/contact-us' },
 		];
 
@@ -50,7 +50,7 @@ const appendLang = (href: string, value: string) => {
 	return queryString ? `${path}?${queryString}` : path;
 };
 
-// Tolerate a trailing slash so /colecciones/ keeps its active-page highlight.
+// Tolerate a trailing slash so /collections/ keeps its active-page highlight.
 const normalizedPath = currentPath.replace(/\/+$/, '') || '/';
 const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
 const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
@@ -108,21 +108,21 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 <script>
 	// This component owns the site's language state.
 	// INVARIANT: only this file dispatches `sitelangchange`. Subscribers (Footer,
-	// index, colecciones) self-boot then listen — they must never re-dispatch, or
+	// index, collections) self-boot then listen — they must never re-dispatch, or
 	// Header's boot -> subscriber -> re-dispatch becomes a feedback loop.
 	const MENU_BY_LANG = {
 		es: {
-			collections: { label: 'Colecciones', href: '/colecciones' },
-			renovations: { label: 'Renovaciones', href: '/renovaciones' },
-			services: { label: 'Servicios', href: '/servicios' },
-			brands: { label: 'Marcas', href: '/marcas' },
+			collections: { label: 'Colecciones', href: '/collections' },
+			renovations: { label: 'Renovaciones', href: '/renovations' },
+			services: { label: 'Servicios', href: '/services' },
+			brands: { label: 'Marcas', href: '/brands' },
 			contact: { label: 'Contáctanos', href: '/contact-us' }
 		},
 		en: {
-			collections: { label: 'Collections', href: '/colecciones' },
-			renovations: { label: 'Renovations', href: '/renovaciones' },
-			services: { label: 'Services', href: '/servicios' },
-			brands: { label: 'Brands', href: '/marcas' },
+			collections: { label: 'Collections', href: '/collections' },
+			renovations: { label: 'Renovations', href: '/renovations' },
+			services: { label: 'Services', href: '/services' },
+			brands: { label: 'Brands', href: '/brands' },
 			contact: { label: 'Contact Us', href: '/contact-us' }
 		}
 	};
@@ -146,7 +146,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	};
 
 	// url -> localStorage -> 'en'. Seeds `siteLang` on first visit so subscribers
-	// (Footer, ScrollToTop, colecciones) all read the same stored value.
+	// (Footer, ScrollToTop, collections) all read the same stored value.
 	const resolveActiveLang = () => {
 		const langInUrl = getLangFromUrl();
 		if (langInUrl) return langInUrl;

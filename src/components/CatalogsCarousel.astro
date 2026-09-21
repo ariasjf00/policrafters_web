@@ -301,7 +301,7 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
     });
 
     // Subscriber only: self-boot first, since Header's boot dispatch fires before
-    // this script runs (same pattern as Footer.astro and colecciones.astro).
+    // this script runs (same pattern as Footer.astro and collections.astro).
     applyCatalogsLanguage(activeLang);
     document.addEventListener('sitelangchange', (event) => applyCatalogsLanguage(event.detail));
   }
