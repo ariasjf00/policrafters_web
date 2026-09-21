@@ -212,6 +212,23 @@ const heroCtaUrl = '/contact-us';
 								<svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
 							</button>
 						</div>
+						<template id="projects-card-template">
+							<a
+								href="#"
+								class="projects-card"
+								data-project-index=""
+							>
+								<img
+									src=""
+									alt=""
+									loading="lazy"
+								/>
+								<div class="projects-card__body">
+									<h3 class="projects-card__title"></h3>
+									<p class="projects-card__description"></p>
+								</div>
+							</a>
+						</template>
 
 						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria}>
 							{featuredProjects.map((p, index) => (
@@ -385,16 +402,17 @@ const heroCtaUrl = '/contact-us';
 
 			const renderPreviewProjects = (featuredProjects = []) => {
 				const carousel = document.getElementById('projects-carousel');
+				const projectsCardTemplate = document.getElementById('projects-card-template');
 
-				if (!carousel) return;
+				const templateCard =
+					projectsCardTemplate instanceof HTMLTemplateElement
+						? projectsCardTemplate.content.querySelector('.projects-card')
+						: null;
 
-				// Guardamos una tarjeta existente como plantilla.
-				// Al clonarla conservamos los data-astro-cid-* y por tanto los estilos.
-				const existingCard = carousel.querySelector('.projects-card');
+				if (!carousel || !templateCard) return;
 
-				if (!existingCard) return;
-
-				const template = existingCard.cloneNode(true);
+				const template = templateCard.cloneNode(true);
+				
 
 				carousel.replaceChildren();
 
