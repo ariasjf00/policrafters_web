@@ -380,6 +380,285 @@ const heroCtaUrl = '/contact-us';
 			const body = document.body;
 			const apiUrl = body?.dataset?.apiUrl || '';
 			const shouldUseCms = body?.dataset?.useApi === 'true' && Boolean(apiUrl);
+
+			let isWagtailPreview = false;
+
+			const renderPreviewProjects = (featuredProjects = []) => {
+				const carousel = document.getElementById('projects-carousel');
+
+				if (!carousel) return;
+
+				// Guardamos una tarjeta existente como plantilla.
+				// Al clonarla conservamos los data-astro-cid-* y por tanto los estilos.
+				const existingCard = carousel.querySelector('.projects-card');
+
+				if (!existingCard) return;
+
+				const template = existingCard.cloneNode(true);
+
+				carousel.replaceChildren();
+
+				featuredProjects.forEach((project, index) => {
+					const card = template.cloneNode(true);
+
+					card.setAttribute('data-project-index', String(index));
+
+					const image = card.querySelector('img');
+
+					if (image) {
+						let imageUrl = project.thumbnail?.url || '';
+
+						// Ajuste temporal para desarrollo local
+						if (
+							window.location.hostname === 'localhost' &&
+							imageUrl.startsWith('http://localhost/media/')
+						) {
+							imageUrl = imageUrl.replace(
+								'http://localhost/media/',
+								'http://localhost:8000/media/'
+							);
+						}
+
+						image.setAttribute('src', imageUrl);
+						image.setAttribute(
+							'alt',
+							project.thumbnail?.alt || project.title || ''
+						);
+					}
+
+					card
+						.querySelector('.projects-card__title')
+						?.replaceChildren(project.title ?? '');
+
+					card
+						.querySelector('.projects-card__description')
+						?.replaceChildren(project.description ?? '');
+
+					carousel.appendChild(card);
+				});
+			};
+
+			const renderPreviewValues = (values = []) => {
+				const slider = document.getElementById('values-slider');
+				const controls = slider?.querySelector('.values-slider-controls');
+
+				if (!slider || !controls) return;
+
+				const existingSlide = slider.querySelector('.values-slide');
+				if (!existingSlide) return;
+
+				// Conservamos una plantilla antes de eliminar los slides actuales.
+				// Al clonarla mantenemos los atributos data-astro-cid-*.
+				const template = existingSlide.cloneNode(true);
+
+				// Eliminamos solamente los slides, no los controles.
+				slider.querySelectorAll('.values-slide').forEach((slide) => {
+					slide.remove();
+				});
+
+				values.forEach((value, index) => {
+					const slide = template.cloneNode(true);
+
+					slide.dataset.slideIndex = String(index);
+					slide.classList.toggle('is-active', index === 0);
+					slide.setAttribute(
+						'aria-hidden',
+						index === 0 ? 'false' : 'true'
+					);
+
+					const image = slide.querySelector('.values-slide__image');
+
+					if (image) {
+						let imageUrl = value.image?.url || '';
+
+						if (
+							window.location.hostname === 'localhost' &&
+							imageUrl.startsWith('http://localhost/media/')
+						) {
+							imageUrl = imageUrl.replace(
+								'http://localhost/media/',
+								'http://localhost:8000/media/'
+							);
+						}
+
+						image.src = imageUrl;
+						image.alt = value.image?.alt || '';
+						image.loading = index === 0 ? 'eager' : 'lazy';
+					}
+
+					const title = slide.querySelector('.values-slide__title');
+					if (title) {
+						title.textContent = value.title || '';
+					}
+
+					const description = slide.querySelector(
+						'.values-slide__description'
+					);
+
+					if (description) {
+						description.textContent = value.description || '';
+					}
+
+					// Los controles deben permanecer al final del slider.
+					slider.insertBefore(slide, controls);
+				});
+			};
+
+			const renderTeamMembers = (teamMembers = []) => {
+				const teamGrid = document.querySelector('.team-grid');
+
+				if (!teamGrid) return;
+
+				// Astro agrega atributos data-astro-cid-* para sus estilos scoped.
+				// Tomamos esos atributos del contenedor generado originalmente.
+				const astroScopeAttrs = Array.from(teamGrid.attributes)
+					.filter((attr) => attr.name.startsWith('data-astro-cid-'));
+
+				const applyAstroScope = (element) => {
+					astroScopeAttrs.forEach((attr) => {
+						element.setAttribute(attr.name, attr.value);
+					});
+				};
+
+				teamGrid.replaceChildren();
+
+				teamMembers.forEach((member) => {
+					const card = document.createElement('div');
+					card.className = 'team-card';
+					applyAstroScope(card);
+
+					const photo = document.createElement('img');
+					photo.className = 'team-card__photo';
+					applyAstroScope(photo);
+
+					let photoUrl = member.photo?.url || '';
+
+					// Ajuste temporal para desarrollo local.
+					if (
+						window.location.hostname === 'localhost' &&
+						photoUrl.startsWith('http://localhost/media/')
+					) {
+						photoUrl = photoUrl.replace(
+							'http://localhost/media/',
+							'http://localhost:8000/media/'
+						);
+					}
+
+					photo.src = photoUrl;
+					photo.alt =
+						member.photo?.alt ||
+						'Policrafters team member';
+					photo.loading = 'lazy';
+
+					const meta = document.createElement('div');
+					meta.className = 'team-card__meta';
+					applyAstroScope(meta);
+
+					const role = document.createElement('p');
+					role.className = 'team-card__role';
+					role.textContent = member.role || '';
+					applyAstroScope(role);
+
+					const name = document.createElement('p');
+					name.className = 'team-card__name';
+					name.textContent = member.name || '';
+					applyAstroScope(name);
+
+					const bio = document.createElement('p');
+					bio.className = 'team-card__bio';
+					bio.textContent = member.bio || '';
+					applyAstroScope(bio);
+
+					meta.append(role, name);
+					card.append(photo, meta, bio);
+					teamGrid.appendChild(card);
+				});
+			};
+
+			const renderContactLinks = (contactLinks = []) => {
+				const contactGrid = document.querySelector('.contact-grid');
+				if (!contactGrid) return;
+
+				const existingColumn = contactGrid.querySelector('.contact-col');
+				if (!existingColumn) return;
+
+				// Usamos una columna existente como plantilla para conservar
+				// los atributos data-astro-cid-* y los estilos de Astro.
+				const template = existingColumn.cloneNode(true);
+
+				contactGrid.replaceChildren();
+
+				const copy = currentHomeData?.fields?.copy ?? {};
+				const buttonText = copy.contact_cta || '';
+
+				contactLinks.forEach((link) => {
+					const column = template.cloneNode(true);
+
+					const title = column.querySelector('.contact-col__title');
+					const description = column.querySelector(
+						'.contact-col__description'
+					);
+					const button = column.querySelector('.contact-col__btn');
+
+					if (title) {
+						title.textContent = link.title || '';
+					}
+
+					if (description) {
+						description.textContent = link.description || '';
+					}
+
+					if (button) {
+						button.textContent = buttonText;
+						button.setAttribute('href', link.url || '#');
+					}
+
+					contactGrid.appendChild(column);
+				});
+			};
+
+			window.addEventListener('message', (event) => {
+				if (event.data?.type !== 'policrafters-preview') {
+					return;
+				}
+
+				const previewData = event.data?.payload;
+
+				if (!previewData || typeof previewData !== 'object') {
+					return;
+				}
+
+				isWagtailPreview = true;
+
+				const previewLang =
+					previewData.locale === 'es' ? 'es' : 'en';
+
+				applyHomeLanguage(previewData, previewLang);
+
+				const previewProjects = Array.isArray(
+					previewData?.fields?.featured_projects
+				)
+					? previewData.fields.featured_projects
+					: [];
+			
+				renderPreviewProjects(previewProjects);
+				refreshProjectsCarousel();
+
+				const previewValues = Array.isArray(
+					previewData?.fields?.values_slides
+				)
+					? previewData.fields.values_slides
+					: [];
+
+				renderPreviewValues(previewValues);
+				refreshValuesSlider();
+
+				console.log(
+					'PROJECT CARDS AFTER RENDER:',
+					document.querySelectorAll('.projects-card').length
+				);
+			});
+
 			const apiOrigin = (() => {
 				try {
 					return apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
@@ -507,12 +786,7 @@ const heroCtaUrl = '/contact-us';
 					dot.setAttribute('aria-label', `${copy.projects_dot_aria || ''} ${index + 1}`.trim());
 				});
 
-				document.querySelectorAll('.team-card').forEach((card, index) => {
-					const item = teamMembers[index];
-					if (!item) return;
-					card.querySelector('.team-card__role')?.replaceChildren(item.role ?? '');
-					card.querySelector('.team-card__bio')?.replaceChildren(item.bio ?? '');
-				});
+				renderTeamMembers(teamMembers);
 
 				document.querySelectorAll('.values-slide').forEach((slide, index) => {
 					const item = valuesSlides[index];
@@ -525,13 +799,7 @@ const heroCtaUrl = '/contact-us';
 					dot.setAttribute('aria-label', `${copy.values_dot_aria || ''} ${index + 1}`.trim());
 				});
 
-				document.querySelectorAll('.contact-col').forEach((column, index) => {
-					const item = contactLinks[index];
-					if (!item) return;
-					column.querySelector('.contact-col__title')?.replaceChildren(item.title ?? '');
-					column.querySelector('.contact-col__description')?.replaceChildren(item.description ?? '');
-					column.querySelector('.contact-col__btn')?.replaceChildren(copy.contact_cta || '');
-				});
+				renderContactLinks(contactLinks);
 
 				const heroImage = document.querySelector('.hero-image');
 				if (heroImage && fields.hero_image_horizontal?.url) {
@@ -610,12 +878,38 @@ const heroCtaUrl = '/contact-us';
 			const projectsCarousel = document.getElementById('projects-carousel');
 			const projectsButtons = document.querySelectorAll('#projects-prev, #projects-next, .projects-indicator-arrow');
 			const projectsDotsContainer = document.getElementById('projects-dots');
-			const projectsCards = projectsCarousel ? Array.from(projectsCarousel.querySelectorAll('.projects-card')) : [];
-			const projectsCount = projectsCards.length;
+			let projectsCards = projectsCarousel
+				? Array.from(projectsCarousel.querySelectorAll('.projects-card'))
+				: [];
+
+			let projectsCount = projectsCards.length;
 			let projectsCurrentIndex = 0;
 			let projectsStepSize = 0;
 			let projectsPageCount = projectsCount;
 			let projectsScrollRaf = null;
+
+			const refreshProjectsCarousel = () => {
+				if (!projectsCarousel) return;
+
+				projectsCards = Array.from(
+					projectsCarousel.querySelectorAll('.projects-card')
+				);
+
+				projectsCount = projectsCards.length;
+				projectsCurrentIndex = 0;
+				projectsStepSize = 0;
+				projectsPageCount = projectsCount;
+
+				projectsCarousel.scrollTo({
+					left: 0,
+					behavior: 'auto'
+				});
+
+				requestAnimationFrame(() => {
+					measureProjectsStep();
+					updateProjectsIndicator();
+				});
+			};
 
 			const getCardOffset = (index) => {
 				const safeIndex = Math.max(0, Math.min(index, projectsCards.length - 1));
@@ -736,13 +1030,96 @@ const heroCtaUrl = '/contact-us';
 			setupProjectsCarousel();
 
 			const valuesSlider = document.getElementById('values-slider');
-			const valuesSlides = valuesSlider ? Array.from(valuesSlider.querySelectorAll('.values-slide')) : [];
-			const valuesDots = document.querySelectorAll('.values-dot');
-			const valuesButtons = document.querySelectorAll('#values-prev, #values-next, .values-indicator-arrow');
-			const valuesCount = valuesSlides.length;
+
+			let valuesSlides = valuesSlider
+				? Array.from(valuesSlider.querySelectorAll('.values-slide'))
+				: [];
+
+			let valuesDots = Array.from(
+				document.querySelectorAll('.values-dot')
+			);
+
+			const valuesButtons = document.querySelectorAll(
+				'#values-prev, #values-next, .values-indicator-arrow'
+			);
+
+			let valuesCount = valuesSlides.length;
 			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 			let valuesCurrentIndex = 0;
 			let valuesIntervalId = null;
+
+			const renderValuesDots = () => {
+				const dotsContainer = document.getElementById('values-dots');
+				if (!dotsContainer) return;
+
+				// Conservamos los atributos scoped de Astro.
+				const astroScopeAttrs = Array.from(dotsContainer.attributes)
+					.filter((attr) => attr.name.startsWith('data-astro-cid-'));
+
+				const existingDot = dotsContainer.querySelector('.values-dot');
+
+				// Si existe un dot original, clonarlo conserva también
+				// cualquier atributo scoped aplicado directamente al botón.
+				const template = existingDot
+					? existingDot.cloneNode(true)
+					: null;
+
+				dotsContainer.replaceChildren();
+
+				for (let index = 0; index < valuesCount; index += 1) {
+					let dot;
+
+					if (template) {
+						dot = template.cloneNode(true);
+					} else {
+						dot = document.createElement('button');
+						dot.type = 'button';
+						dot.className = 'values-dot';
+
+						astroScopeAttrs.forEach((attr) => {
+							dot.setAttribute(attr.name, attr.value);
+						});
+					}
+
+					dot.type = 'button';
+					dot.classList.toggle('is-active', index === 0);
+					dot.dataset.dotIndex = String(index);
+
+					const copy = currentHomeData?.fields?.copy ?? {};
+					const ariaBase = copy.values_dot_aria || 'Go to value';
+
+					dot.setAttribute(
+						'aria-label',
+						`${ariaBase} ${index + 1}`
+					);
+
+					dotsContainer.appendChild(dot);
+				}
+
+				valuesDots = Array.from(
+					dotsContainer.querySelectorAll('.values-dot')
+				);
+			};
+
+			const refreshValuesSlider = () => {
+				if (!valuesSlider) return;
+
+				stopValuesAutoplay();
+
+				valuesSlides = Array.from(
+					valuesSlider.querySelectorAll('.values-slide')
+				);
+
+				valuesCount = valuesSlides.length;
+				valuesCurrentIndex = 0;
+
+				renderValuesDots();
+
+				if (valuesCount > 0) {
+					goToValuesSlide(0);
+					startValuesAutoplay();
+				}
+			};
 
 			const goToValuesSlide = (index) => {
 				valuesCurrentIndex = (index + valuesCount) % valuesCount;
@@ -783,12 +1160,19 @@ const heroCtaUrl = '/contact-us';
 					});
 				});
 
-				valuesDots.forEach((dot) => {
-					dot.addEventListener('click', () => {
-						const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-						goToValuesSlide(targetIndex);
-						startValuesAutoplay();
-					});
+				const valuesDotsContainer = document.getElementById('values-dots');
+
+				valuesDotsContainer?.addEventListener('click', (event) => {
+					const dot = event.target.closest('.values-dot');
+					if (!dot) return;
+
+					const targetIndex = Number.parseInt(
+						dot.getAttribute('data-dot-index') || '0',
+						10
+					);
+
+					goToValuesSlide(targetIndex);
+					startValuesAutoplay();
 				});
 
 				valuesSlider.addEventListener('mouseenter', stopValuesAutoplay);
