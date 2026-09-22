@@ -6,6 +6,7 @@ export interface ContactPageCopy {
   intro?: string;
   phone_label?: string;
   email_label?: string;
+  project_button_label?: string;
   locations_heading?: string;
   locations_aria?: string;
   learn_more?: string;
@@ -15,6 +16,7 @@ export interface ContactPageDetails {
   phone_display?: string;
   phone_href?: string;
   email?: string;
+  url_contact?: string;
 }
 
 export interface ContactLocation {
