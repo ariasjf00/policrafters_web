@@ -1,0 +1,204 @@
+---
+// Shared "direct contact" block: the heading plus the row of link columns that
+// closes the homepage. Built to drop into any page as-is.
+//
+// Two rules shape this component, the same two as CatalogsCarousel.astro:
+//  - It must NOT import global.css. index.astro deliberately ships no Tailwind,
+//    and preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
+//    <style> below carries everything it needs; `--text` and `--muted` are declared
+//    by both index.astro and PageLayout.astro, so the vars resolve on either page.
+//  - It owns its own language switching. Both languages ship in the markup as
+//    data-copy-es/-en and the script subscribes to `sitelangchange` —
+//    Header.astro remains the sole dispatcher.
+//
+// The host page supplies the container: this renders a bare <section>, so place it
+// inside whatever `.container`/wrapper that page already uses.
+
+import type { DirectContactPayload } from '../lib/direct-contact';
+
+interface Props {
+  lang?: 'en' | 'es';
+  en: DirectContactPayload;
+  es: DirectContactPayload;
+}
+
+const { lang = 'en', en, es } = Astro.props;
+const isEs = lang === 'es';
+const pick = (enValue = '', esValue = '') => (isEs ? esValue : enValue);
+
+const enCopy = en.copy ?? {};
+const esCopy = es.copy ?? {};
+const enItems = en.items ?? [];
+const esItems = es.items ?? [];
+
+// English is the spine: the destination URL is language-neutral, so only the title
+// and description are looked up per language (matching index.astro's previous
+// re-render, which also paired the two arrays by index).
+const items = enItems.map((item, index) => {
+  const esItem = esItems[index] ?? item;
+  return {
+    href: item.url || '#',
+    title: { en: item.title ?? '', es: esItem.title ?? item.title ?? '' },
+    description: { en: item.description ?? '', es: esItem.description ?? item.description ?? '' }
+  };
+});
+
+// One CTA label for every column, exactly as the page rendered it.
+const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
+---
+
+<section class="direct-contact">
+  <h2
+    id="contact-heading"
+    class="contact-heading"
+    data-copy-en={enCopy.contact_heading ?? ''}
+    data-copy-es={esCopy.contact_heading ?? ''}
+  >{pick(enCopy.contact_heading, esCopy.contact_heading)}</h2>
+
+  <div class="contact-grid">
+    {items.map((item) => (
+      <div class="contact-col">
+        <h3
+          class="contact-col__title"
+          data-copy-en={item.title.en}
+          data-copy-es={item.title.es}
+        >{pick(item.title.en, item.title.es)}</h3>
+        <p
+          class="contact-col__description"
+          data-copy-en={item.description.en}
+          data-copy-es={item.description.es}
+        >{pick(item.description.en, item.description.es)}</p>
+        <a
+          class="contact-col__btn"
+          href={item.href}
+          data-copy-en={cta.en}
+          data-copy-es={cta.es}
+        >{pick(cta.en, cta.es)}</a>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  // @ts-nocheck
+  const section = document.querySelector('.direct-contact');
+
+  if (section) {
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    const resolveActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    const applyDirectContactLanguage = (lang) => {
+      const key = lang === 'es' ? 'es' : 'en';
+
+      // Scoped to this section so the host page's own subscriber stays in charge
+      // of everything around it.
+      section.querySelectorAll('[data-copy-en]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+    };
+
+    // Subscriber only: self-boot first, since Header's boot dispatch fires before
+    // this script runs (same pattern as Footer.astro and CatalogsCarousel.astro).
+    applyDirectContactLanguage(resolveActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyDirectContactLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .direct-contact {
+    text-align: center;
+  }
+
+  .direct-contact * {
+    box-sizing: border-box;
+  }
+
+  .contact-heading {
+    margin: 3.5rem 0 2.5rem;
+    font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+    font-weight: 700;
+    text-transform: none;
+    color: #B6AE99;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+  }
+
+  .contact-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .contact-col__title {
+    margin: 0 0 .6rem;
+    padding-bottom: .6rem;
+    width: 100%;
+    border-bottom: 1px solid #2f3437;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .contact-col__description {
+    margin: 1rem 0 1.5rem;
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .contact-col__btn {
+    display: inline-block;
+    margin-top: auto;
+    padding: .6rem 1.5rem;
+    border: 1px solid #2f3437;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .72rem;
+    font-weight: 600;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  .contact-col__btn:hover,
+  .contact-col__btn:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .contact-col__btn:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .contact-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
