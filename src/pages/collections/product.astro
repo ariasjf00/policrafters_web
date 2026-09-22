@@ -244,9 +244,16 @@ const enBody = resolvedFields.product_body_en || fallbackFields.product_body_en 
     margin-right: calc(50% - 50vw);
   }
 
+  /* Capped rather than `height: auto`: the source photos are ~1.5:1
+     (2160x1440 / 2123x1440), which at full-bleed width runs 960-1280px tall
+     and exceeds most browser windows. clamp() holds the ~2:1 band the design
+     was drawn at (720px at the 1440px stage) and scales down on narrower
+     viewports instead of jumping straight to the floor. object-fit crops
+     each photo to fit rather than stretching or letterboxing it. */
   .product-bleed img {
     width: 100%;
-    height: auto;
+    height: clamp(320px, 45vw, 720px);
+    object-fit: cover;
     display: block;
   }
 
