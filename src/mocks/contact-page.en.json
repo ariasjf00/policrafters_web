@@ -12,6 +12,7 @@
       "intro": "If you have any questions or comments, please contact our Call Center, where our team will be happy to assist you. If you have a project, please complete the form by clicking the “My Project” button. One of our advisors will contact you as soon as possible.",
       "phone_label": "CALL CENTER PHONE",
       "email_label": "EMAIL",
+      "project_button_label": "My Project",
       "locations_heading": "OUR LOCATIONS",
       "locations_aria": "Policrafters locations",
       "learn_more": "Learn more"
@@ -19,7 +20,8 @@
     "contact": {
       "phone_display": "+1 (813) 812-0650",
       "phone_href": "tel:+18138120650",
-      "email": "info@policrafters.com"
+      "email": "info@policrafters.com",
+      "url_contact": "https://policrafters.ancous.tech/leads/quote/?lang=es&utm_source=astro.novatierra.cloud&utm_medium=my_project&utm_campaign=websiteastro"
     },
     "locations": [
       {

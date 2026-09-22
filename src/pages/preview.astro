@@ -1,0 +1,47 @@
+---
+const lang = Astro.url.searchParams.get("lang") || "en";
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Policrafters CMS Preview</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>Policrafters CMS Preview</h1>
+
+      <p>
+        Esperando datos de Wagtail...
+      </p>
+
+      <pre id="preview-data"></pre>
+    </main>
+
+    <script>
+      const output = document.getElementById("preview-data");
+
+      window.addEventListener("message", (event) => {
+        if (!event.data) return;
+
+        if (event.data.type !== "policrafters-preview") {
+          return;
+        }
+
+        if (output) {
+          output.textContent = JSON.stringify(
+            event.data.payload,
+            null,
+            2
+          );
+        }
+      });
+    </script>
+  </body>
+</html>
