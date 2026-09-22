@@ -62,17 +62,16 @@ const selectedLang = langParam === 'en' || langParam === 'es'
 const isEs = selectedLang === 'es';
 const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
 
+// Feeds the on-page <h2> below (there is no PageLayout hero on this page — see
+// showHero={false} — so these no longer need Es/En sibling props for a hero title).
 const esTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Colecciones';
 const enTitle = resolvedFields.hero_title_en || fallbackFields.hero_title_en || esTitle;
-const esSubtitle = resolvedFields.hero_subtitle || fallbackFields.hero_subtitle || '';
-const enSubtitle = resolvedFields.hero_subtitle_en || fallbackFields.hero_subtitle_en || esSubtitle;
 const esIntro = resolvedFields.intro_text || fallbackFields.intro_text || '';
 const enIntro = resolvedFields.intro_text_en || fallbackFields.intro_text_en || esIntro;
 const esEmptyState = resolvedFields.empty_state_text || fallbackFields.empty_state_text || 'Próximamente';
 const enEmptyState = resolvedFields.empty_state_text_en || fallbackFields.empty_state_text_en || esEmptyState;
 
 const pageTitle = pick(esTitle, enTitle);
-const pageSubtitle = pick(esSubtitle, enSubtitle);
 const introText = pick(esIntro, enIntro);
 
 // The taxonomy lives under fields.categories: Spanish base key + `_en` sibling, the
@@ -106,12 +105,7 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
 <PageLayout
   title={resolvedMeta.seo_title || 'Collections | Policrafters'}
   description={pick(resolvedMeta.search_description, resolvedMeta.search_description_en) || 'Featured Policrafters collections'}
-  heroTitle={pageTitle}
-  heroSubtitle={pageSubtitle}
-  heroTitleEs={esTitle}
-  heroTitleEn={enTitle}
-  heroSubtitleEs={esSubtitle}
-  heroSubtitleEn={enSubtitle}
+  showHero={false}
 >
   <section class="collections-shell">
     <h2 id="collections-title" data-copy-es={esTitle} data-copy-en={enTitle}>{pageTitle}</h2>
