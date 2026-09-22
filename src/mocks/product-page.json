@@ -1,0 +1,47 @@
+{
+  "type": "collections.ModelPage",
+  "title": "Nombre del Producto",
+  "title_en": "Name of the Product",
+  "slug": "product",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Producto | Policrafters",
+    "seo_title_en": "Product | Policrafters",
+    "search_description": "Conoce el modelo de puerta de ducha fija de Policrafters: materiales, acabados y detalles de instalación.",
+    "search_description_en": "Discover Policrafters' fixed shower door model: materials, finishes, and installation details."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/sd-fixed-product-1.jpg",
+      "alt": "Puerta de ducha fija de cristal templado en un baño moderno",
+      "alt_en": "Fixed tempered-glass shower door in a modern bathroom"
+    },
+    "intro_text_1": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "intro_text_1_en": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "secondary_image": {
+      "url": "/images/pages/sd-fixed-product-2.jpg",
+      "alt": "Detalle del sistema de puerta de ducha fija con herrajes en negro mate",
+      "alt_en": "Detail of the fixed shower door system with matte black hardware"
+    },
+    "intro_text_2": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "intro_text_2_en": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "gallery_pair": [
+      {
+        "url": "/images/pages/sd-fixed-product-3.jpg",
+        "alt": "Vista lateral de la ducha con puerta fija instalada junto a mueble de baño",
+        "alt_en": "Side view of the shower with the fixed door installed next to the bathroom vanity"
+      },
+      {
+        "url": "/images/pages/sd-fixed-product-4.jpg",
+        "alt": "Baño completo con puerta de ducha fija, bañera independiente y acabados en tonos cálidos",
+        "alt_en": "Full bathroom with fixed shower door, freestanding tub, and warm-toned finishes"
+      }
+    ],
+    "product_eyebrow": "Lorem Ipsum Dolor",
+    "product_eyebrow_en": "Lorem Ipsum Dolor",
+    "product_heading": "NOMBRE DEL PRODUCTO",
+    "product_heading_en": "NAME OF THE PRODUCT",
+    "product_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+    "product_body_en": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi."
+  }
+}

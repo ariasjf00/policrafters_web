@@ -273,6 +273,47 @@ Página de un modelo/producto individual dentro de una colección (referencia: f
 }
 ```
 
+### Bloque introductorio — `/collections/product`
+
+[src/pages/collections/product.astro](../src/pages/collections/product.astro) implementa la primera
+sección de un `ModelPage` (hero + dos imágenes de ancho completo intercaladas con texto +
+un par de imágenes + bloque de título). Mock de referencia:
+[src/mocks/product-page.json](../src/mocks/product-page.json). Estos campos se suman a
+`fields` arriba; el resto del contrato (`specs`, `gallery`, `brand`, `collection`,
+`related_models`, `breadcrumbs`) sigue pendiente de construirse en el frontend y no
+cambia:
+
+```json
+{
+  "fields": {
+    "hero_image": { "url": "string", "alt": "string", "alt_en": "string" },
+    "intro_text_1": "string",
+    "intro_text_1_en": "string",
+    "secondary_image": { "url": "string", "alt": "string", "alt_en": "string" },
+    "intro_text_2": "string",
+    "intro_text_2_en": "string",
+    "gallery_pair": [
+      { "url": "string", "alt": "string", "alt_en": "string" }
+    ],
+    "product_eyebrow": "string",
+    "product_eyebrow_en": "string",
+    "product_heading": "string",
+    "product_heading_en": "string",
+    "product_body": "string",
+    "product_body_en": "string"
+  }
+}
+```
+
+**Nota:** al igual que `fields.categories` en el mock de `collections.astro`, estos campos
+usan la convención base en español + hermano `_en` (`intro_text_1` / `intro_text_1_en`,
+`alt` / `alt_en`, etc.) en lugar de un solo idioma ya resuelto por respuesta. Esto
+diverge de la regla general de este documento ("la API devuelve un solo idioma por
+respuesta, sin pares `_en`") — se señala aquí en vez de corregirse, por paridad con el
+patrón que `collections.astro` ya trae. Si el backend prefiere seguir la regla general en
+cambio, avisar antes de implementar `PUBLIC_PRODUCT_API_URL` para acordar cuál convención
+usa este endpoint.
+
 ## ContactPage (contenido de página)
 
 Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),
