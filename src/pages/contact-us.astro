@@ -28,6 +28,7 @@ const pageDescription = activeContent.meta?.search_description || pick('Get in t
 const contactPhoneDisplay = activeContent.contact?.phone_display || contactEn.contact?.phone_display || '+1 (813) 812-0650';
 const contactPhoneHref = activeContent.contact?.phone_href || `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
 const contactEmail = activeContent.contact?.email || contactEn.contact?.email || 'info@policrafters.com';
+const contactUrl = activeContent.contact?.url_contact || contactEn.contact?.url_contact || '';
 
 // Both languages ship in the markup as data-copy-es/-en, data-placeholder-es/-en
 // and data-aria-es/-en, so Header's language toggle can switch without a reload.
@@ -39,6 +40,7 @@ const contentCopy = {
   },
   phoneLabel: { en: contactEn.copy?.phone_label || 'CALL CENTER PHONE', es: contactEs.copy?.phone_label || 'TELÉFONO DEL CENTRO DE ATENCIÓN' },
   emailLabel: { en: contactEn.copy?.email_label || 'EMAIL', es: contactEs.copy?.email_label || 'CORREO ELECTRÓNICO' },
+  projectButtonLabel: { en: contactEn.copy?.project_button_label || 'My Project', es: contactEs.copy?.project_button_label || 'Mi Proyecto' },
   locationsHeading: { en: contactEn.copy?.locations_heading || 'OUR LOCATIONS', es: contactEs.copy?.locations_heading || 'NUESTRAS UBICACIONES' },
   locationsAria: { en: contactEn.copy?.locations_aria || 'Policrafters locations', es: contactEs.copy?.locations_aria || 'Ubicaciones de Policrafters' },
   learnMore: { en: contactEn.copy?.learn_more || 'Learn more', es: contactEs.copy?.learn_more || 'Conoce más' }
@@ -304,6 +306,13 @@ const countries = [
         {pick(contentCopy.emailLabel.en, contentCopy.emailLabel.es)}
       </p>
       <a class="contact-highlight__value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      {contactUrl && (
+        <div class="contact-highlight__action">
+          <a class="submit-btn" href={contactUrl} data-copy-en={contentCopy.projectButtonLabel.en} data-copy-es={contentCopy.projectButtonLabel.es}>
+            {pick(contentCopy.projectButtonLabel.en, contentCopy.projectButtonLabel.es)}
+          </a>
+        </div>
+      )}
     </div>
 
     <section
@@ -731,6 +740,15 @@ const countries = [
   .contact-highlight__value:hover,
   .contact-highlight__value:focus-visible {
     text-decoration: underline;
+  }
+
+  .contact-highlight__action {
+    margin-top: 1rem;
+  }
+
+  .contact-highlight__action .submit-btn {
+    display: inline-block;
+    text-decoration: none;
   }
 
   .contact-form {
