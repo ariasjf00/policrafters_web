@@ -2,10 +2,12 @@
 import homeEn from "../mocks/home.en.json";
 import homeEs from "../mocks/home.es.json";
 import { loadCatalogs } from "../lib/catalogs";
+import { buildDirectContact } from "../lib/direct-contact";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ScrollToTop from "../components/ScrollToTop.astro";
 import CatalogsCarousel from "../components/CatalogsCarousel.astro";
+import DirectContact from "../components/DirectContact.astro";
 import "../styles/links.css";
 
 type AnyRecord = Record<string, any>;
@@ -89,9 +91,10 @@ const valuesSlides = valuesSlidesRaw.map((slide) => ({
 // slider; see Docs/API_CONTRACT.md. The loader brings back both languages, which
 // CatalogsCarousel needs in order to switch without a reload.
 const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
-const contactLinks = Array.isArray(resolvedFields.contact_links) && resolvedFields.contact_links.length
-	? resolvedFields.contact_links
-	: (fallbackFields.contact_links ?? []);
+// Direct contact is a component now and switches itself, so it needs both languages
+// up front. The active one comes from whatever this page already resolved (CMS or
+// mock); the other falls back to its mock, exactly as the old re-render did.
+const { en: directContactEn, es: directContactEs } = buildDirectContact(resolvedData, requestedLang);
 const heroVideoHorizontal = heroAsset(
 	resolvedFields.hero_video_horizontal,
 	fallbackFields.hero_video_horizontal || "/videos/horizontal_video_placeholder.mp4"
@@ -130,8 +133,6 @@ const localizedTeamEyebrow = getCopyText("team_eyebrow", "");
 const localizedTeamHeading = getCopyText("team_heading", "");
 const localizedValuesEyebrow = getCopyText("values_eyebrow", "");
 const localizedValuesHeading = getCopyText("values_heading", "");
-const localizedContactHeading = getCopyText("contact_heading", "");
-const localizedContactCta = getCopyText("contact_cta", "");
 const localizedAboutBody1 = getCopyText("about_body_1", "");
 const localizedAboutBody2 = getCopyText("about_body_2", "");
 const localizedAboutBrandsLabel = getCopyText("about_brands_label", "");
@@ -355,17 +356,7 @@ const heroCtaUrl = '/contact-us';
 			<section class="container catalogs-section">
 				<CatalogsCarousel lang={selectedLang} en={catalogsEn} es={catalogsEs} />
 
-				<h2 id="contact-heading" class="contact-heading">{localizedContactHeading}</h2>
-
-				<div class="contact-grid">
-					{contactLinks.map((link) => (
-						<div class="contact-col">
-							<h3 class="contact-col__title">{link.title}</h3>
-							<p class="contact-col__description">{link.description}</p>
-							<a class="contact-col__btn" href={link.url || "#"} data-lnbtn="1">{localizedContactCta}</a>
-						</div>
-					))}
-				</div>
+				<DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
 			</section>
 		</main>
 
@@ -453,7 +444,6 @@ const heroCtaUrl = '/contact-us';
 				const featuredProjects = Array.isArray(fields.featured_projects) ? fields.featured_projects : [];
 				const teamMembers = Array.isArray(fields.team_members) ? fields.team_members : [];
 				const valuesSlides = Array.isArray(fields.values_slides) ? fields.values_slides : [];
-				const contactLinks = Array.isArray(fields.contact_links) ? fields.contact_links : [];
 
 				window.__SITE_LANG__ = activeLang;
 				localStorage.setItem('siteLang', activeLang);
@@ -480,9 +470,9 @@ const heroCtaUrl = '/contact-us';
 				applyText('#team-heading', copy.team_heading || '');
 				applyText('#values-eyebrow', copy.values_eyebrow || '');
 				applyText('#values-heading', copy.values_heading || '');
-				// The catalogs slider is a component now and switches itself from its own
-				// data-copy-es/-en attributes; nothing here should touch it.
-				applyText('#contact-heading', copy.contact_heading || '');
+				// The catalogs slider and the direct-contact block are components now and
+				// switch themselves from their own data-copy-es/-en attributes; nothing
+				// here should touch either of them.
 
 				applyAttr('#projects-carousel', 'aria-label', copy.projects_carousel_aria || '');
 				applyAttr('#projects-indicator', 'aria-label', copy.projects_carousel_aria || '');
@@ -520,14 +510,6 @@ const heroCtaUrl = '/contact-us';
 
 				document.querySelectorAll('.values-dot').forEach((dot, index) => {
 					dot.setAttribute('aria-label', `${copy.values_dot_aria || ''} ${index + 1}`.trim());
-				});
-
-				document.querySelectorAll('.contact-col').forEach((column, index) => {
-					const item = contactLinks[index];
-					if (!item) return;
-					column.querySelector('.contact-col__title')?.replaceChildren(item.title ?? '');
-					column.querySelector('.contact-col__description')?.replaceChildren(item.description ?? '');
-					column.querySelector('.contact-col__btn')?.replaceChildren(copy.contact_cta || '');
 				});
 
 				const heroImage = document.querySelector('.hero-image');
@@ -1452,70 +1434,6 @@ const heroCtaUrl = '/contact-us';
 		text-align: center;
 	}
 
-	.contact-heading {
-		margin: 3.5rem 0 2.5rem;
-		font-size: clamp(1.3rem, 2.2vw, 1.8rem);
-		font-weight: 700;
-		text-transform: none;
-		color: #B6AE99;
-	}
-
-	.contact-grid {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: 2rem;
-	}
-
-	.contact-col {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.contact-col__title {
-		margin: 0 0 .6rem;
-		padding-bottom: .6rem;
-		width: 100%;
-		border-bottom: 1px solid #2f3437;
-		font-size: 1.05rem;
-		font-weight: 400;
-		color: var(--text);
-	}
-
-	.contact-col__description {
-		margin: 1rem 0 1.5rem;
-		font-size: .82rem;
-		line-height: 1.55;
-		color: var(--muted);
-	}
-
-	.contact-col__btn {
-		display: inline-block;
-		margin-top: auto;
-		padding: .6rem 1.5rem;
-		border: 1px solid #2f3437;
-		border-radius: 999px;
-		background: #2f3437;
-		color: #fff;
-		text-decoration: none;
-		text-transform: uppercase;
-		letter-spacing: .08em;
-		font-size: .72rem;
-		font-weight: 600;
-		transition: background-color .2s ease, color .2s ease;
-	}
-
-	.contact-col__btn:hover,
-	.contact-col__btn:focus-visible {
-		background: #fff;
-		color: #2f3437;
-	}
-
-	.contact-col__btn:focus-visible {
-		outline: 2px solid #2f3437;
-		outline-offset: 3px;
-	}
-
 	@media (max-width: 900px) {
 		.hero-content h1 { margin-bottom: 1.75rem; }
 
@@ -1560,10 +1478,6 @@ const heroCtaUrl = '/contact-us';
 			font-size: 1.9rem;
 		}
 
-		.contact-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-
 	}
 
 	@media (max-width: 560px) {
@@ -1581,10 +1495,6 @@ const heroCtaUrl = '/contact-us';
 
 		.values-slide__caption {
 			bottom: 8%;
-		}
-
-		.contact-grid {
-			grid-template-columns: 1fr;
 		}
 	}
 </style>
