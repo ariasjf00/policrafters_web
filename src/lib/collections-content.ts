@@ -108,7 +108,7 @@ const fetchLang = async (lang: Lang): Promise<CollectionPagePayload> => {
   let requestUrl = apiUrl;
   try {
     const url = new URL(apiUrl);
-    url.searchParams.set('lang', lang);
+    url.searchParams.set('locale', lang);
     requestUrl = url.toString();
   } catch {
     // Relative endpoint: send it as configured.
