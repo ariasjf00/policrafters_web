@@ -242,12 +242,12 @@ const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFi
           />
         </div>
 
-        <div class="technical-download">
-          <h3
-            class="technical-download__heading"
+        <div class="technical-title">
+          <h2
+            class="technical-heading"
             data-copy-es={esDownloadHeading}
             data-copy-en={enDownloadHeading}
-          >{pick(esDownloadHeading, enDownloadHeading)}</h3>
+          >{pick(esDownloadHeading, enDownloadHeading)}</h2>
           <ul>
             {downloadLinks.map((link: AnyRecord) => {
               const esLabel = link?.label || '';
@@ -481,9 +481,9 @@ const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFi
     border-left-color: rgba(255, 255, 255, 0.45);
     border-left-width: 1pt;
     padding-left: 7px;
-    font-size: 0.92rem;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: #fff;
   }
