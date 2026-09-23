@@ -345,6 +345,40 @@ la misma convención `_en` que el bloque anterior — ver la nota arriba.
   URLs reales de documentos de Wagtail (PDF, DWG, etc.). El array es dinámico y el
   frontend renderiza el orden tal como llega, sin reordenar.
 
+### Bloque de productos relacionados — `/collections/product`
+
+Última sección de `product.astro`: título de la colección + botón para volver al menú
+de categorías, y hasta 4 tarjetas de `related_models`, seguido del componente
+compartido `DirectContact` (ver [DirectContact.astro](../src/components/DirectContact.astro)
+y [direct-contact.ts](../src/lib/direct-contact.ts), que ya tienen su propio contrato
+vía el payload de home). `collection` y `related_models` ya estaban definidos arriba en
+`ModelPage` — aquí solo se documentan los hermanos `_en` que este frontend necesita,
+con la misma convención y la misma nota de divergencia señalada arriba:
+
+```json
+{
+  "fields": {
+    "collection": { "name": "string", "name_en": "string", "slug": "string" },
+    "related_models": [
+      { "title": "string", "title_en": "string", "slug": "string",
+        "thumbnail": { "url": "string", "alt": "string", "alt_en": "string" } }
+    ],
+    "back_to_menu_label": "string",
+    "back_to_menu_label_en": "string"
+  }
+}
+```
+
+- El frontend renderiza **como máximo 4** `related_models` (recorta el array si trae
+  más) — el backend no necesita limitarlo.
+- `back_to_menu_label` / `back_to_menu_label_en` es el único campo nuevo de esta
+  sección; el resto ya vivía en el contrato de `ModelPage`.
+- `collection.slug` arma el enlace de vuelta como `/collections?category=<slug>`, por lo
+  que debe coincidir con un `key` de categoría del mock
+  [collections-page.json](../src/mocks/collections-page.json)
+  (`fields.categories[].key`, p. ej. `shower-doors`). `CollectionIndexPage` en sí sigue
+  pendiente de contrato formal — ver "Pendiente de definir" al final de este documento.
+
 ## ContactPage (contenido de página)
 
 Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),

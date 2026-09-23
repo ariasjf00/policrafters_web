@@ -1,5 +1,7 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
+import DirectContact from '../../components/DirectContact.astro';
+import { buildDirectContact } from '../../lib/direct-contact';
 import productPage from '../../mocks/product-page.json';
 
 type AnyRecord = Record<string, any>;
@@ -107,6 +109,24 @@ const enDownloadHeading = resolvedFields.download_heading_en || fallbackFields.d
 const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFields.download_links.length
   ? resolvedFields.download_links
   : (fallbackFields.download_links ?? []);
+
+const esCollectionName = resolvedFields.collection?.name || fallbackFields.collection?.name || '';
+const enCollectionName = resolvedFields.collection?.name_en || fallbackFields.collection?.name_en || esCollectionName;
+const collectionSlug = resolvedFields.collection?.slug || fallbackFields.collection?.slug || '';
+const backToMenuHref = collectionSlug ? `/collections?category=${collectionSlug}` : '/collections';
+
+const esBackToMenuLabel = resolvedFields.back_to_menu_label || fallbackFields.back_to_menu_label || '';
+const enBackToMenuLabel = resolvedFields.back_to_menu_label_en || fallbackFields.back_to_menu_label_en || esBackToMenuLabel;
+
+// The CMS may return more than 4 related models; this strip only ever shows 4.
+const relatedModels = (Array.isArray(resolvedFields.related_models) && resolvedFields.related_models.length
+  ? resolvedFields.related_models
+  : (fallbackFields.related_models ?? [])
+).slice(0, 4);
+
+// This page has no home payload, so both languages fall back to the home mocks —
+// buildDirectContact is null-safe for exactly this case (see collections.astro).
+const { en: directContactEn, es: directContactEs } = buildDirectContact(null, selectedLang);
 ---
 
 <PageLayout
@@ -266,6 +286,54 @@ const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFi
         </div>
       </div>
     </div>
+
+    <!-- h. Related products — white section between the dark technical block
+         and the footer. Lives inside .product-shell, so the existing
+         applyProductLanguage script picks up every node here too. -->
+    <div class="related-products">
+      <div class="related-products__head">
+        <h2
+          class="related-products__title"
+          data-copy-es={esCollectionName}
+          data-copy-en={enCollectionName}
+        >{pick(esCollectionName, enCollectionName)}</h2>
+        <a
+          class="related-products__back"
+          href={backToMenuHref}
+          data-copy-es={esBackToMenuLabel}
+          data-copy-en={enBackToMenuLabel}
+        >{pick(esBackToMenuLabel, enBackToMenuLabel)}</a>
+      </div>
+      <div class="related-products__grid">
+        {relatedModels.map((model: AnyRecord) => {
+          const esTitle = model?.title || '';
+          const enTitle = model?.title_en || esTitle;
+          const esAlt = model?.thumbnail?.alt || '';
+          const enAlt = model?.thumbnail?.alt_en || esAlt;
+          return (
+            <a href="#" class="related-card">
+              <img
+                src={normalizeAssetUrl(model?.thumbnail?.url)}
+                alt={pick(esAlt, enAlt)}
+                data-alt-es={esAlt}
+                data-alt-en={enAlt}
+                width="2700"
+                height="1800"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                class="related-card__title"
+                data-copy-es={esTitle}
+                data-copy-en={enTitle}
+              >{pick(esTitle, enTitle)}</span>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+
+    <DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
   </section>
 </PageLayout>
 
@@ -526,6 +594,119 @@ const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFi
     .technical-download ul {
       grid-auto-flow: row;
       grid-template-rows: none;
+    }
+  }
+
+  /* Full-bleed, capped at 1440px — same rule collections.astro uses for its
+     own gallery + DirectContact (grep `.collections-shell > :global(.direct-contact)`).
+     :global() is required: `.direct-contact` is the component's own class,
+     not one Astro's scoping would otherwise match here. */
+  .related-products,
+  .product-shell > :global(.direct-contact) {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
+    box-sizing: border-box;
+  }
+
+  .related-products__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .related-products__title {
+    margin: 0;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .related-products__back {
+    display: inline-block;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid #2f3437;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .related-products__back:hover,
+  .related-products__back:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .related-products__back:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  .related-products__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+
+  .related-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .related-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+  }
+
+  .related-card__title {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  @media (max-width: 980px) {
+    .related-products__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .related-products,
+    .product-shell > :global(.direct-contact) {
+      padding-inline: 1.25rem;
+    }
+
+    .related-products__head {
+      flex-wrap: wrap;
+    }
+
+    .related-products__grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

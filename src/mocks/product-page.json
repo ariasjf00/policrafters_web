@@ -66,6 +66,55 @@
       { "label": "Imágenes", "label_en": "Images", "url": "#" },
       { "label": "Catálogo PDF", "label_en": "PDF Catalog", "url": "#" },
       { "label": "Acabados", "label_en": "Finishes", "url": "#" }
-    ]
+    ],
+    "collection": {
+      "name": "Puertas de Ducha",
+      "name_en": "Shower Doors",
+      "slug": "shower-doors"
+    },
+    "related_models": [
+      {
+        "title": "Producto 1",
+        "title_en": "Product 1",
+        "slug": "shower-doors/fixed/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-fixed.jpg",
+          "alt": "Puerta de ducha fija",
+          "alt_en": "Fixed shower door"
+        }
+      },
+      {
+        "title": "Producto 2",
+        "title_en": "Product 2",
+        "slug": "shower-doors/pivot/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-pivot.jpg",
+          "alt": "Puerta de ducha pivotante",
+          "alt_en": "Pivot shower door"
+        }
+      },
+      {
+        "title": "Producto 3",
+        "title_en": "Product 3",
+        "slug": "shower-doors/sliding-doors/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-sliding-door.jpg",
+          "alt": "Puerta de ducha corredera",
+          "alt_en": "Sliding shower door"
+        }
+      },
+      {
+        "title": "Producto 4",
+        "title_en": "Product 4",
+        "slug": "shower-doors/swing-hinges/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-swing-hinges.jpg",
+          "alt": "Puerta de ducha con bisagras abatibles",
+          "alt_en": "Swing hinge shower door"
+        }
+      }
+    ],
+    "back_to_menu_label": "Volver al menú de productos",
+    "back_to_menu_label_en": "Back to products menu"
   }
 }
