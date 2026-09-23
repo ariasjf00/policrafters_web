@@ -242,12 +242,12 @@ const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFi
           />
         </div>
 
-        <div class="technical-title">
-          <h2
-            class="technical-heading"
+        <div class="technical-download">
+          <h3
+            class="technical-download__heading"
             data-copy-es={esDownloadHeading}
             data-copy-en={enDownloadHeading}
-          >{pick(esDownloadHeading, enDownloadHeading)}</h2>
+          >{pick(esDownloadHeading, enDownloadHeading)}</h3>
           <ul>
             {downloadLinks.map((link: AnyRecord) => {
               const esLabel = link?.label || '';
