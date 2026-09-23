@@ -163,28 +163,6 @@
         },
         "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
       }
-    ],
-    "contact_links": [
-      {
-        "title": "Interior Design Service",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#"
-      },
-      {
-        "title": "Falper Contract",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#"
-      },
-      {
-        "title": "Retailers",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#"
-      },
-      {
-        "title": "Contact Us",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#"
-      }
     ]
   }
 }

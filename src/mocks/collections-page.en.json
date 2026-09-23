@@ -1,0 +1,225 @@
+{
+  "type": "collections.CollectionIndexPage",
+  "title": "Collections",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Collections | Policrafters",
+    "search_description": "Featured Policrafters collections for doors, windows, pergolas, kitchens, terraces, and bathrooms."
+  },
+  "fields": {
+    "hero_title": "Collections",
+    "intro_text": "Explore our shower door selection by type. The remaining categories are coming soon.",
+    "empty_state_text": "Coming soon",
+    "categories": [
+      {
+        "key": "shower-doors",
+        "label": "Shower Doors",
+        "has_products": true,
+        "types": [
+          {
+            "key": "fixed",
+            "label": "Fixed",
+            "products": [
+              {
+                "title": "Model 1",
+                "slug": "shower-doors/fixed/model-1",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Fixed shower door"
+                }
+              },
+              {
+                "title": "Model 2",
+                "slug": "shower-doors/fixed/model-2",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Fixed shower door"
+                }
+              },
+              {
+                "title": "Model 3",
+                "slug": "shower-doors/fixed/model-3",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Fixed shower door"
+                }
+              },
+              {
+                "title": "Model 4",
+                "slug": "shower-doors/fixed/model-4",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Fixed shower door"
+                }
+              },
+              {
+                "title": "Model 5",
+                "slug": "shower-doors/fixed/model-5",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Fixed shower door"
+                }
+              }
+            ]
+          },
+          {
+            "key": "pivot",
+            "label": "Pivot",
+            "products": [
+              {
+                "title": "Model 1",
+                "slug": "shower-doors/pivot/model-1",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Pivot shower door"
+                }
+              },
+              {
+                "title": "Model 2",
+                "slug": "shower-doors/pivot/model-2",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Pivot shower door"
+                }
+              },
+              {
+                "title": "Model 3",
+                "slug": "shower-doors/pivot/model-3",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Pivot shower door"
+                }
+              },
+              {
+                "title": "Model 4",
+                "slug": "shower-doors/pivot/model-4",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Pivot shower door"
+                }
+              }
+            ]
+          },
+          {
+            "key": "sliding-doors",
+            "label": "Sliding Doors",
+            "products": [
+              {
+                "title": "Model 1",
+                "slug": "shower-doors/sliding-doors/model-1",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Sliding shower door"
+                }
+              },
+              {
+                "title": "Model 2",
+                "slug": "shower-doors/sliding-doors/model-2",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Sliding shower door"
+                }
+              },
+              {
+                "title": "Model 3",
+                "slug": "shower-doors/sliding-doors/model-3",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Sliding shower door"
+                }
+              }
+            ]
+          },
+          {
+            "key": "swing-hinges",
+            "label": "Swing Hinges",
+            "products": [
+              {
+                "title": "Model 1",
+                "slug": "shower-doors/swing-hinges/model-1",
+                "image": {
+                  "url": "/images/pages/sd-swing-hinges.jpg",
+                  "alt": "Swing hinge shower door"
+                }
+              },
+              {
+                "title": "Model 2",
+                "slug": "shower-doors/swing-hinges/model-2",
+                "image": {
+                  "url": "/images/pages/sd-swing-hinges.jpg",
+                  "alt": "Swing hinge shower door"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "storage-systems",
+        "label": "Storage Systems",
+        "has_products": false,
+        "types": [
+          {
+            "key": "storage-lorem-1",
+            "label": "Lorem Ipsum Dolor",
+            "products": []
+          },
+          {
+            "key": "storage-lorem-2",
+            "label": "Sit Amet Consectetur",
+            "products": []
+          },
+          {
+            "key": "storage-lorem-3",
+            "label": "Adipiscing Elit Sed",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "complements",
+        "label": "Complements",
+        "has_products": false,
+        "types": [
+          {
+            "key": "complements-lorem-1",
+            "label": "Diam Nonummy Nibh",
+            "products": []
+          },
+          {
+            "key": "complements-lorem-2",
+            "label": "Euismod Tincidunt Ut",
+            "products": []
+          },
+          {
+            "key": "complements-lorem-3",
+            "label": "Laoreet Dolore Magna",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "modular-kitchens",
+        "label": "Modular Kitchens",
+        "has_products": false,
+        "types": [
+          {
+            "key": "kitchens-lorem-1",
+            "label": "Aliquam Erat Volutpat",
+            "products": []
+          },
+          {
+            "key": "kitchens-lorem-2",
+            "label": "Wisi Enim Minim",
+            "products": []
+          },
+          {
+            "key": "kitchens-lorem-3",
+            "label": "Veniam Quis Nostrud",
+            "products": []
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@
 
 **Endpoints:** `PUBLIC_API_URL` → `/api/home/` · `PUBLIC_COLLECTIONS_API_URL` → `/api/collections/`
 **Page types:** `home_cms.HomePage` · `collections.CollectionIndexPage`
-**Reference shapes:** `src/mocks/home.json` and `src/mocks/collections-page.json` (kept in sync with what the frontend actually reads — fastest way to confirm a field name)
+**Reference shapes:** `src/mocks/home.json` and `src/mocks/collections-page.en.json` / `src/mocks/collections-page.es.json` (kept in sync with what the frontend actually reads — fastest way to confirm a field name)
 
 Follow-on to `CMS_Potential_Changes_8_29.md`. Four new sections were added to the homepage, two were deleted, the site's default language flipped to English, and the Collections page became bilingual.
 

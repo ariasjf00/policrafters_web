@@ -2,7 +2,7 @@
 import homeEn from "../mocks/home.en.json";
 import homeEs from "../mocks/home.es.json";
 import { loadCatalogs } from "../lib/catalogs";
-import { buildDirectContact } from "../lib/direct-contact";
+import { loadDirectContact } from "../lib/direct-contact";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ScrollToTop from "../components/ScrollToTop.astro";
@@ -87,14 +87,12 @@ const valuesSlides = valuesSlidesRaw.map((slide) => ({
 		alt: slide.image?.alt || ""
 	}
 }));
-// Catalogs moved to their own endpoint so the contact page can render the same
-// slider; see Docs/API_CONTRACT.md. The loader brings back both languages, which
-// CatalogsCarousel needs in order to switch without a reload.
-const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
-// Direct contact is a component now and switches itself, so it needs both languages
-// up front. The active one comes from whatever this page already resolved (CMS or
-// mock); the other falls back to its mock, exactly as the old re-render did.
-const { en: directContactEn, es: directContactEs } = buildDirectContact(resolvedData, requestedLang);
+// Catalogs and direct contact are shared blocks, so both are resolved once and
+// rendered in both languages for client-side switching.
+const [{ en: catalogsEn, es: catalogsEs }, { en: directContactEn, es: directContactEs }] = await Promise.all([
+	loadCatalogs(),
+	loadDirectContact()
+]);
 const heroVideoHorizontal = heroAsset(
 	resolvedFields.hero_video_horizontal,
 	fallbackFields.hero_video_horizontal || "/videos/horizontal_video_placeholder.mp4"

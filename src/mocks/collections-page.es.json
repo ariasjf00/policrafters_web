@@ -1,0 +1,225 @@
+{
+  "type": "collections.CollectionIndexPage",
+  "title": "Colecciones",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Colecciones | Policrafters",
+    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños."
+  },
+  "fields": {
+    "hero_title": "Colecciones",
+    "intro_text": "Explora nuestra selección de puertas de ducha por tipo. El resto de las categorías estará disponible próximamente.",
+    "empty_state_text": "Próximamente",
+    "categories": [
+      {
+        "key": "shower-doors",
+        "label": "Puertas de Ducha",
+        "has_products": true,
+        "types": [
+          {
+            "key": "fixed",
+            "label": "Fijas",
+            "products": [
+              {
+                "title": "Modelo 1",
+                "slug": "shower-doors/fixed/model-1",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Puerta de ducha fija"
+                }
+              },
+              {
+                "title": "Modelo 2",
+                "slug": "shower-doors/fixed/model-2",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Puerta de ducha fija"
+                }
+              },
+              {
+                "title": "Modelo 3",
+                "slug": "shower-doors/fixed/model-3",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Puerta de ducha fija"
+                }
+              },
+              {
+                "title": "Modelo 4",
+                "slug": "shower-doors/fixed/model-4",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Puerta de ducha fija"
+                }
+              },
+              {
+                "title": "Modelo 5",
+                "slug": "shower-doors/fixed/model-5",
+                "image": {
+                  "url": "/images/pages/sd-fixed.jpg",
+                  "alt": "Puerta de ducha fija"
+                }
+              }
+            ]
+          },
+          {
+            "key": "pivot",
+            "label": "Pivotantes",
+            "products": [
+              {
+                "title": "Modelo 1",
+                "slug": "shower-doors/pivot/model-1",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Puerta de ducha pivotante"
+                }
+              },
+              {
+                "title": "Modelo 2",
+                "slug": "shower-doors/pivot/model-2",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Puerta de ducha pivotante"
+                }
+              },
+              {
+                "title": "Modelo 3",
+                "slug": "shower-doors/pivot/model-3",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Puerta de ducha pivotante"
+                }
+              },
+              {
+                "title": "Modelo 4",
+                "slug": "shower-doors/pivot/model-4",
+                "image": {
+                  "url": "/images/pages/sd-pivot.jpg",
+                  "alt": "Puerta de ducha pivotante"
+                }
+              }
+            ]
+          },
+          {
+            "key": "sliding-doors",
+            "label": "Correderas",
+            "products": [
+              {
+                "title": "Modelo 1",
+                "slug": "shower-doors/sliding-doors/model-1",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Puerta de ducha corredera"
+                }
+              },
+              {
+                "title": "Modelo 2",
+                "slug": "shower-doors/sliding-doors/model-2",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Puerta de ducha corredera"
+                }
+              },
+              {
+                "title": "Modelo 3",
+                "slug": "shower-doors/sliding-doors/model-3",
+                "image": {
+                  "url": "/images/pages/sd-sliding-door.jpg",
+                  "alt": "Puerta de ducha corredera"
+                }
+              }
+            ]
+          },
+          {
+            "key": "swing-hinges",
+            "label": "Bisagras Abatibles",
+            "products": [
+              {
+                "title": "Modelo 1",
+                "slug": "shower-doors/swing-hinges/model-1",
+                "image": {
+                  "url": "/images/pages/sd-swing-hinges.jpg",
+                  "alt": "Puerta de ducha con bisagras abatibles"
+                }
+              },
+              {
+                "title": "Modelo 2",
+                "slug": "shower-doors/swing-hinges/model-2",
+                "image": {
+                  "url": "/images/pages/sd-swing-hinges.jpg",
+                  "alt": "Puerta de ducha con bisagras abatibles"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "storage-systems",
+        "label": "Sistemas de Almacenamiento",
+        "has_products": false,
+        "types": [
+          {
+            "key": "storage-lorem-1",
+            "label": "Lorem Ipsum Dolor",
+            "products": []
+          },
+          {
+            "key": "storage-lorem-2",
+            "label": "Sit Amet Consectetur",
+            "products": []
+          },
+          {
+            "key": "storage-lorem-3",
+            "label": "Adipiscing Elit Sed",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "complements",
+        "label": "Complementos",
+        "has_products": false,
+        "types": [
+          {
+            "key": "complements-lorem-1",
+            "label": "Diam Nonummy Nibh",
+            "products": []
+          },
+          {
+            "key": "complements-lorem-2",
+            "label": "Euismod Tincidunt Ut",
+            "products": []
+          },
+          {
+            "key": "complements-lorem-3",
+            "label": "Laoreet Dolore Magna",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "modular-kitchens",
+        "label": "Cocinas Modulares",
+        "has_products": false,
+        "types": [
+          {
+            "key": "kitchens-lorem-1",
+            "label": "Aliquam Erat Volutpat",
+            "products": []
+          },
+          {
+            "key": "kitchens-lorem-2",
+            "label": "Wisi Enim Minim",
+            "products": []
+          },
+          {
+            "key": "kitchens-lorem-3",
+            "label": "Veniam Quis Nostrud",
+            "products": []
+          }
+        ]
+      }
+    ]
+  }
+}
