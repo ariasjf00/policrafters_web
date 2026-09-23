@@ -42,6 +42,30 @@
     "product_heading": "NOMBRE DEL PRODUCTO",
     "product_heading_en": "NAME OF THE PRODUCT",
     "product_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
-    "product_body_en": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi."
+    "product_body_en": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+    "technical_eyebrow": "Información Técnica",
+    "technical_eyebrow_en": "Technical Information",
+    "technical_image_product": {
+      "url": "/images/pages/fixed_door_shower_black_white.svg",
+      "alt": "Ilustración en blanco y negro de una puerta de ducha fija",
+      "alt_en": "Black and white illustration of a fixed shower door"
+    },
+    "technical_image_dimensions": {
+      "url": "/images/pages/shower_door_dimensions_white.svg",
+      "alt": "Plano técnico en blanco con las dimensiones de la puerta de ducha: vista isométrica, planta, lateral y frontal",
+      "alt_en": "White technical drawing of the shower door dimensions: isometric, plan, side and front views"
+    },
+    "download_heading": "DESCARGAS",
+    "download_heading_en": "DOWNLOAD",
+    "download_links": [
+      { "label": "Ficha Técnica PDF", "label_en": "Technical Sheet PDF", "url": "#" },
+      { "label": "Ficha Técnica DWG", "label_en": "Technical Sheet DWG", "url": "#" },
+      { "label": "Autocad 3D", "label_en": "Autocad 3D", "url": "#" },
+      { "label": "Autocad 2D", "label_en": "Autocad 2D", "url": "#" },
+      { "label": "Montaje", "label_en": "Assembly", "url": "#" },
+      { "label": "Imágenes", "label_en": "Images", "url": "#" },
+      { "label": "Catálogo PDF", "label_en": "PDF Catalog", "url": "#" },
+      { "label": "Acabados", "label_en": "Finishes", "url": "#" }
+    ]
   }
 }

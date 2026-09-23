@@ -314,6 +314,37 @@ patrón que `collections.astro` ya trae. Si el backend prefiere seguir la regla 
 cambio, avisar antes de implementar `PUBLIC_PRODUCT_API_URL` para acordar cuál convención
 usa este endpoint.
 
+### Bloque de información técnica — `/collections/product`
+
+Sección adicional de `product.astro`, inmediatamente después del bloque de título
+anterior: eyebrow + encabezado (reutiliza `product_heading`/`product_heading_en`, no
+un campo nuevo), dos ilustraciones técnicas, y una lista de enlaces de descarga. Mismo
+mock de referencia: [src/mocks/product-page.json](../src/mocks/product-page.json). Usa
+la misma convención `_en` que el bloque anterior — ver la nota arriba.
+
+```json
+{
+  "fields": {
+    "technical_eyebrow": "string",
+    "technical_eyebrow_en": "string",
+    "technical_image_product": { "url": "string", "alt": "string", "alt_en": "string" },
+    "technical_image_dimensions": { "url": "string", "alt": "string", "alt_en": "string" },
+    "download_heading": "string",
+    "download_heading_en": "string",
+    "download_links": [
+      { "label": "string", "label_en": "string", "url": "string" }
+    ]
+  }
+}
+```
+
+- `technical_image_product` y `technical_image_dimensions` son dos campos nombrados en
+  vez de un array, porque cada ilustración tiene un rol, proporción y ancho de columna
+  distintos en el layout — acceder por índice sería frágil.
+- `download_links[].url` es `"#"` en el mock; se espera que el backend lo alimente con
+  URLs reales de documentos de Wagtail (PDF, DWG, etc.). El array es dinámico y el
+  frontend renderiza el orden tal como llega, sin reordenar.
+
 ## ContactPage (contenido de página)
 
 Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),

@@ -89,6 +89,24 @@ const esHeading = resolvedFields.product_heading || fallbackFields.product_headi
 const enHeading = resolvedFields.product_heading_en || fallbackFields.product_heading_en || esHeading;
 const esBody = resolvedFields.product_body || fallbackFields.product_body || '';
 const enBody = resolvedFields.product_body_en || fallbackFields.product_body_en || esBody;
+
+const esTechnicalEyebrow = resolvedFields.technical_eyebrow || fallbackFields.technical_eyebrow || '';
+const enTechnicalEyebrow = resolvedFields.technical_eyebrow_en || fallbackFields.technical_eyebrow_en || esTechnicalEyebrow;
+
+const esTechnicalProductAlt = resolvedFields.technical_image_product?.alt || fallbackFields.technical_image_product?.alt || '';
+const enTechnicalProductAlt = resolvedFields.technical_image_product?.alt_en || fallbackFields.technical_image_product?.alt_en || esTechnicalProductAlt;
+const technicalProductImageUrl = normalizeAssetUrl(resolvedFields.technical_image_product?.url || fallbackFields.technical_image_product?.url);
+
+const esTechnicalDimensionsAlt = resolvedFields.technical_image_dimensions?.alt || fallbackFields.technical_image_dimensions?.alt || '';
+const enTechnicalDimensionsAlt = resolvedFields.technical_image_dimensions?.alt_en || fallbackFields.technical_image_dimensions?.alt_en || esTechnicalDimensionsAlt;
+const technicalDimensionsImageUrl = normalizeAssetUrl(resolvedFields.technical_image_dimensions?.url || fallbackFields.technical_image_dimensions?.url);
+
+const esDownloadHeading = resolvedFields.download_heading || fallbackFields.download_heading || '';
+const enDownloadHeading = resolvedFields.download_heading_en || fallbackFields.download_heading_en || esDownloadHeading;
+
+const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFields.download_links.length
+  ? resolvedFields.download_links
+  : (fallbackFields.download_links ?? []);
 ---
 
 <PageLayout
@@ -181,6 +199,73 @@ const enBody = resolvedFields.product_body_en || fallbackFields.product_body_en 
       data-copy-es={esBody}
       data-copy-en={enBody}
     >{pick(esBody, enBody)}</p>
+
+    <!-- g. Technical Information — full-bleed dark section. Lives inside
+         .product-shell, so the existing language-switch script (which
+         queries .product-shell for [data-copy-es]/[data-alt-es]) picks up
+         every node below automatically; no second script needed. -->
+    <div class="technical-section">
+      <div class="technical-inner">
+        <div class="technical-title">
+          <p
+            class="technical-eyebrow"
+            data-copy-es={esTechnicalEyebrow}
+            data-copy-en={enTechnicalEyebrow}
+          >{pick(esTechnicalEyebrow, enTechnicalEyebrow)}</p>
+          <h2
+            class="technical-heading"
+            data-copy-es={esHeading}
+            data-copy-en={enHeading}
+          >{pick(esHeading, enHeading)}</h2>
+        </div>
+
+        <div class="technical-figures">
+          <img
+            src={technicalProductImageUrl}
+            alt={pick(esTechnicalProductAlt, enTechnicalProductAlt)}
+            data-alt-es={esTechnicalProductAlt}
+            data-alt-en={enTechnicalProductAlt}
+            width="1448"
+            height="1086"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            src={technicalDimensionsImageUrl}
+            alt={pick(esTechnicalDimensionsAlt, enTechnicalDimensionsAlt)}
+            data-alt-es={esTechnicalDimensionsAlt}
+            data-alt-en={enTechnicalDimensionsAlt}
+            width="1200"
+            height="1450"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div class="technical-download">
+          <h3
+            class="technical-download__heading"
+            data-copy-es={esDownloadHeading}
+            data-copy-en={enDownloadHeading}
+          >{pick(esDownloadHeading, enDownloadHeading)}</h3>
+          <ul>
+            {downloadLinks.map((link: AnyRecord) => {
+              const esLabel = link?.label || '';
+              const enLabel = link?.label_en || esLabel;
+              return (
+                <li>
+                  <a
+                    href={link?.url || '#'}
+                    data-copy-es={esLabel}
+                    data-copy-en={enLabel}
+                  >{pick(esLabel, enLabel)}</a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
   </section>
 </PageLayout>
 
@@ -327,6 +412,120 @@ const enBody = resolvedFields.product_body_en || fallbackFields.product_body_en 
     .product-pair {
       grid-template-columns: 1fr;
       padding-inline: 1.25rem;
+    }
+  }
+
+  /* Full-bleed technique duplicated from .product-bleed rather than reused:
+     .product-bleed img sets height: clamp(...) + object-fit: cover, which
+     would crop these SVGs. Do not merge this into .product-bleed. */
+  .technical-section {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    background: #2f3437;
+    color: #fff;
+  }
+
+  .technical-inner {
+    /* Re-caps the content at 1440px, matching collections.astro's
+       .collections-layout (padding-inline: max(...)). */
+    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
+    padding-block: 4.5rem;
+    box-sizing: border-box;
+  }
+
+  .technical-title {
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .technical-eyebrow {
+    margin: 0 0 0.25rem;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .technical-heading {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-figures {
+    display: grid;
+    grid-template-columns: 0.63fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+    margin-top: 2.5rem;
+  }
+
+  .technical-figures img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .technical-download {
+    margin-top: 3.5rem;
+  }
+
+  .technical-download__heading {
+    margin: 0 0 1.25rem;
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-download ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, auto);
+    justify-content: start;
+    gap: 0.55rem 4rem;
+  }
+
+  .technical-download a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .technical-download a:hover {
+    text-decoration: underline;
+  }
+
+  .technical-download a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 680px) {
+    .technical-inner {
+      padding-inline: 1.25rem;
+    }
+
+    .technical-figures {
+      grid-template-columns: 1fr;
+    }
+
+    .technical-download ul {
+      grid-auto-flow: row;
+      grid-template-rows: none;
     }
   }
 </style>

@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1450" width="1200" height="1450">
+  <title>Shower door technical dimensions</title>
+  <desc>Six white technical line illustrations of a fixed-panel hinged shower door with measurements, for use on a dark background.</desc>
+  <defs>
+    <style>
+      .line { fill:none; stroke:#FFFFFF; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+      .thin { fill:none; stroke:#FFFFFF; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; }
+      .dim { fill:none; stroke:#FFFFFF; stroke-width:1.25; stroke-linecap:round; stroke-linejoin:round; }
+      .dash { fill:none; stroke:#FFFFFF; stroke-width:1.5; stroke-dasharray:7 7; }
+      .txt { fill:#FFFFFF; font-family:Arial, Helvetica, sans-serif; font-size:22px; }
+      .small { fill:#FFFFFF; font-family:Arial, Helvetica, sans-serif; font-size:20px; }
+    </style>
+  </defs>
+
+  <!-- 1: Plan view, closed -->
+  <g transform="translate(70,70)">
+    <rect class="line" x="40" y="40" width="410" height="190"/>
+    <line class="line" x1="275" y1="40" x2="275" y2="230"/>
+    <rect class="thin" x="425" y="130" width="10" height="48"/>
+    <line class="dim" x1="15" y1="40" x2="15" y2="230"/>
+    <circle cx="15" cy="40" r="3" fill="#FFFFFF"/><circle cx="15" cy="230" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="0" y="142">90</text>
+
+    <line class="dim" x1="40" y1="260" x2="275" y2="260"/>
+    <line class="dim" x1="275" y1="260" x2="450" y2="260"/>
+    <circle cx="40" cy="260" r="3" fill="#FFFFFF"/><circle cx="275" cy="260" r="3" fill="#FFFFFF"/><circle cx="450" cy="260" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="145" y="290">80</text>
+    <text class="txt" x="350" y="290">60</text>
+
+    <line class="dim" x1="40" y1="310" x2="450" y2="310"/>
+    <circle cx="40" cy="310" r="3" fill="#FFFFFF"/><circle cx="450" cy="310" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="225" y="340">140</text>
+  </g>
+
+  <!-- 2: Front elevation -->
+  <g transform="translate(650,55)">
+    <rect class="line" x="45" y="35" width="390" height="310"/>
+    <line class="line" x1="270" y1="35" x2="270" y2="345"/>
+    <rect class="thin" x="287" y="150" width="10" height="55"/>
+    <rect class="thin" x="420" y="70" width="12" height="26"/>
+    <rect class="thin" x="420" y="280" width="12" height="26"/>
+    <line class="thin" x1="115" y1="130" x2="165" y2="80"/>
+    <line class="thin" x1="335" y1="150" x2="385" y2="100"/>
+
+    <line class="dim" x1="15" y1="35" x2="15" y2="345"/>
+    <circle cx="15" cy="35" r="3" fill="#FFFFFF"/><circle cx="15" cy="345" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="-2" y="200">200</text>
+
+    <line class="dim" x1="45" y1="375" x2="270" y2="375"/>
+    <line class="dim" x1="270" y1="375" x2="435" y2="375"/>
+    <circle cx="45" cy="375" r="3" fill="#FFFFFF"/><circle cx="270" cy="375" r="3" fill="#FFFFFF"/><circle cx="435" cy="375" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="145" y="405">80</text>
+    <text class="txt" x="345" y="405">60</text>
+
+    <line class="dim" x1="45" y1="425" x2="435" y2="425"/>
+    <circle cx="45" cy="425" r="3" fill="#FFFFFF"/><circle cx="435" cy="425" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="220" y="455">140</text>
+  </g>
+
+  <!-- 3: Side elevation -->
+  <g transform="translate(105,520)">
+    <rect class="line" x="80" y="30" width="220" height="300"/>
+    <rect class="thin" x="282" y="65" width="12" height="26"/>
+    <rect class="thin" x="282" y="255" width="12" height="26"/>
+    <rect class="thin" x="278" y="150" width="9" height="55"/>
+    <line class="thin" x1="135" y1="185" x2="190" y2="130"/>
+
+    <line class="dim" x1="48" y1="30" x2="48" y2="330"/>
+    <circle cx="48" cy="30" r="3" fill="#FFFFFF"/><circle cx="48" cy="330" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="20" y="190">200</text>
+
+    <line class="dim" x1="80" y1="360" x2="300" y2="360"/>
+    <circle cx="80" cy="360" r="3" fill="#FFFFFF"/><circle cx="300" cy="360" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="180" y="390">90</text>
+  </g>
+
+  <!-- 4: Plan view, door open 90 degrees -->
+  <g transform="translate(650,520)">
+    <rect class="line" x="40" y="35" width="230" height="190"/>
+    <line class="line" x1="270" y1="35" x2="430" y2="35"/>
+    <line class="line" x1="430" y1="35" x2="430" y2="225"/>
+    <rect class="thin" x="440" y="125" width="9" height="50"/>
+    <rect class="thin" x="416" y="30" width="20" height="16"/>
+    <path class="dash" d="M270 225 A160 160 0 0 0 430 65"/>
+    <text class="txt" x="335" y="175">90°</text>
+
+    <line class="dim" x1="15" y1="35" x2="15" y2="225"/>
+    <circle cx="15" cy="35" r="3" fill="#FFFFFF"/><circle cx="15" cy="225" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="-2" y="140">90</text>
+
+    <line class="dim" x1="40" y1="255" x2="270" y2="255"/>
+    <line class="dim" x1="270" y1="255" x2="430" y2="255"/>
+    <circle cx="40" cy="255" r="3" fill="#FFFFFF"/><circle cx="270" cy="255" r="3" fill="#FFFFFF"/><circle cx="430" cy="255" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="140" y="285">80</text>
+    <text class="txt" x="345" y="285">60</text>
+
+    <line class="dim" x1="40" y1="305" x2="430" y2="305"/>
+    <circle cx="40" cy="305" r="3" fill="#FFFFFF"/><circle cx="430" cy="305" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="215" y="335">140</text>
+  </g>
+
+  <!-- 5: Plan view, door open 45 degrees -->
+  <g transform="translate(70,985)">
+    <rect class="line" x="40" y="35" width="230" height="185"/>
+    <line class="line" x1="270" y1="35" x2="420" y2="35"/>
+    <line class="line" x1="420" y1="35" x2="335" y2="200"/>
+    <rect class="thin" x="360" y="110" width="9" height="48" transform="rotate(28 364 134)"/>
+    <rect class="thin" x="409" y="29" width="20" height="16"/>
+    <path class="dash" d="M270 220 A160 160 0 0 0 382 175"/>
+    <text class="txt" x="365" y="205">45°</text>
+
+    <line class="dim" x1="15" y1="35" x2="15" y2="220"/>
+    <circle cx="15" cy="35" r="3" fill="#FFFFFF"/><circle cx="15" cy="220" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="-2" y="138">90</text>
+
+    <line class="dim" x1="40" y1="250" x2="270" y2="250"/>
+    <line class="dim" x1="270" y1="250" x2="420" y2="250"/>
+    <circle cx="40" cy="250" r="3" fill="#FFFFFF"/><circle cx="270" cy="250" r="3" fill="#FFFFFF"/><circle cx="420" cy="250" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="140" y="280">80</text>
+    <text class="txt" x="335" y="280">60</text>
+
+    <line class="dim" x1="40" y1="300" x2="420" y2="300"/>
+    <circle cx="40" cy="300" r="3" fill="#FFFFFF"/><circle cx="420" cy="300" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="210" y="330">140</text>
+  </g>
+
+  <!-- 6: Interior elevation -->
+  <g transform="translate(650,950)">
+    <rect class="line" x="45" y="35" width="390" height="310"/>
+    <line class="line" x1="270" y1="35" x2="270" y2="345"/>
+    <rect class="thin" x="287" y="150" width="10" height="55"/>
+    <rect class="thin" x="420" y="70" width="12" height="26"/>
+    <rect class="thin" x="420" y="280" width="12" height="26"/>
+    <line class="thin" x1="115" y1="150" x2="165" y2="100"/>
+    <line class="thin" x1="335" y1="170" x2="385" y2="120"/>
+
+    <line class="dim" x1="15" y1="35" x2="15" y2="345"/>
+    <circle cx="15" cy="35" r="3" fill="#FFFFFF"/><circle cx="15" cy="345" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="-2" y="200">200</text>
+
+    <line class="dim" x1="45" y1="375" x2="270" y2="375"/>
+    <line class="dim" x1="270" y1="375" x2="435" y2="375"/>
+    <circle cx="45" cy="375" r="3" fill="#FFFFFF"/><circle cx="270" cy="375" r="3" fill="#FFFFFF"/><circle cx="435" cy="375" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="145" y="405">80</text>
+    <text class="txt" x="345" y="405">60</text>
+
+    <line class="dim" x1="45" y1="425" x2="435" y2="425"/>
+    <circle cx="45" cy="425" r="3" fill="#FFFFFF"/><circle cx="435" cy="425" r="3" fill="#FFFFFF"/>
+    <text class="txt" x="220" y="455">140</text>
+  </g>
+</svg>
