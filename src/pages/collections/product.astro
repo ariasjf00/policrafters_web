@@ -425,14 +425,15 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
   }
 
   .product-pair {
+    /* Truly edge-to-edge, same as .product-bleed above it — no side padding,
+       no 1440px cap. The 1.75rem gap between the two columns is the only
+       "visible white space between the images" the design calls for. */
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.75rem;
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
-    box-sizing: border-box;
   }
 
   .product-pair img {
@@ -473,7 +474,6 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
   @media (max-width: 680px) {
     .product-pair {
       grid-template-columns: 1fr;
-      padding-inline: 1.25rem;
     }
   }
 
@@ -489,9 +489,9 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
   }
 
   .technical-inner {
-    /* Re-caps the content at 1440px, matching collections.astro's
-       .collections-layout (padding-inline: max(...)). */
-    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
+    /* Capped at 1100px — PageLayout.astro's --max — so .technical-title's
+       border lines up with .product-title's above it. */
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
     padding-block: 4.5rem;
     box-sizing: border-box;
   }
@@ -591,8 +591,13 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
     }
   }
 
-  /* Full-bleed, capped at 1440px — same rule collections.astro uses for its
-     own gallery + DirectContact (grep `.collections-shell > :global(.direct-contact)`).
+  /* Full-bleed, capped at 1100px — PageLayout.astro's --max — so
+     .related-products__title lines up with .product-title above it, and
+     the whole page reads as one consistent left edge instead of two
+     different stage widths. (collections.astro caps its own equivalent
+     full-bleed content at 1440px instead; that page has no bordered title
+     sitting in the narrower .page-shell to align against, so the wider
+     stage doesn't create the same mismatch there.)
      :global() is required: `.direct-contact` is the component's own class,
      not one Astro's scoping would otherwise match here. */
   .related-products,
@@ -600,7 +605,7 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
     box-sizing: border-box;
   }
 
