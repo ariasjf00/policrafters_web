@@ -1,0 +1,37 @@
+{
+  "type": "direct_contact_cms.DirectContact",
+  "title": "Contacto directo",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Contacto directo | Policrafters",
+    "search_description": "Opciones de contacto directo con Policrafters."
+  },
+  "fields": {
+    "copy": {
+      "contact_heading": "¿Te gustaría contactar directamente con Policrafters?",
+      "contact_cta": "Saber más"
+    },
+    "contact_links": [
+      {
+        "title": "Servicio de Diseño de Interiores",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Contrato Falper",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Distribuidores",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      },
+      {
+        "title": "Contáctanos",
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
+        "url": "#"
+      }
+    ]
+  }
+}

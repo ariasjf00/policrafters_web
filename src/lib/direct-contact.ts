@@ -1,13 +1,9 @@
-import homeEnMock from '../mocks/home.en.json';
-import homeEsMock from '../mocks/home.es.json';
+import directContactEnMock from '../mocks/direct-contact.en.json';
+import directContactEsMock from '../mocks/direct-contact.es.json';
 
 // Shared shaping for the "direct contact" block, so any page can feed DirectContact.astro.
-//
-// Unlike catalogs, this content has no endpoint of its own: it rides along in the
-// home payload (fields.contact_links plus copy.contact_heading / copy.contact_cta).
-// The component ships every string in the markup twice (data-copy-es/-en) so
-// Header's toggle can switch it without a reload, which means a page has to hand it
-// BOTH languages — one localized response is not enough.
+// The section is treated as a standalone content source: pages ask for it once and
+// render the returned English and Spanish payloads without depending on page data.
 
 export interface DirectContactCopy {
   contact_heading?: string;
@@ -27,7 +23,34 @@ export interface DirectContactPayload {
 
 type Lang = 'en' | 'es';
 
-const mocks: Record<Lang, any> = { en: homeEnMock, es: homeEsMock };
+const mocks: Record<Lang, DirectContactPayload> = {
+  en: {
+    copy: {
+      contact_heading: directContactEnMock?.fields?.copy?.contact_heading ?? '',
+      contact_cta: directContactEnMock?.fields?.copy?.contact_cta ?? ''
+    },
+    items: Array.isArray(directContactEnMock?.fields?.contact_links)
+      ? directContactEnMock.fields.contact_links.map((item: any) => ({
+          title: item?.title ?? '',
+          description: item?.description ?? '',
+          url: item?.url || '#'
+        }))
+      : []
+  },
+  es: {
+    copy: {
+      contact_heading: directContactEsMock?.fields?.copy?.contact_heading ?? '',
+      contact_cta: directContactEsMock?.fields?.copy?.contact_cta ?? ''
+    },
+    items: Array.isArray(directContactEsMock?.fields?.contact_links)
+      ? directContactEsMock.fields.contact_links.map((item: any) => ({
+          title: item?.title ?? '',
+          description: item?.description ?? '',
+          url: item?.url || '#'
+        }))
+      : []
+  }
+};
 
 /* Shapes a home-style payload ({ fields: { copy, contact_links } }) into the
    component's props. `fallback` fills per key, matching the per-key fallback the
@@ -64,3 +87,37 @@ export const buildDirectContact = (
   en: toDirectContactPayload(resolvedLang === 'en' ? resolved : mocks.en, mocks.en),
   es: toDirectContactPayload(resolvedLang === 'es' ? resolved : mocks.es, mocks.es)
 });
+
+export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; es: DirectContactPayload }> => {
+  const useApi = import.meta.env.PUBLIC_USE_API === 'true';
+  const apiUrl = import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '';
+
+  if (!useApi || !apiUrl) {
+    return { en: mocks.en, es: mocks.es };
+  }
+
+  const fetchLocalized = async (lang: Lang): Promise<DirectContactPayload> => {
+    try {
+      const url = new URL(apiUrl);
+      url.searchParams.set('lang', lang);
+      const response = await fetch(url.toString());
+
+      if (!response.ok) {
+        return mocks[lang];
+      }
+
+      const payload = await response.json();
+      if (payload && typeof payload === 'object') {
+        return toDirectContactPayload(payload, mocks[lang]);
+      }
+    } catch {
+      // Keep the section functional when the dedicated endpoint is missing.
+    }
+
+    return mocks[lang];
+  };
+
+  const [en, es] = await Promise.all([fetchLocalized('en'), fetchLocalized('es')]);
+
+  return { en, es };
+};

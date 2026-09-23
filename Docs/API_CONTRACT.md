@@ -23,7 +23,7 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
 Este contrato refleja el diseño real de la home y compatibiliza con [src/mocks/home.json](../src/mocks/home.json) y [src/pages/index.astro](../src/pages/index.astro).
 
 Importante:
-- `featured_projects`, `team_members`, `values_slides` y `contact_links` son arrays dinámicos con múltiples registros.
+- `featured_projects`, `team_members` y `values_slides` son arrays dinámicos con múltiples registros.
 - Los catálogos **ya no viven en este payload**: se movieron a su propio endpoint (ver [CatalogIndex](#catalogindex--catálogos)) porque la home y la página de contacto renderizan el mismo carrusel. `fields.catalogs` y las claves `copy.catalogs_*` quedan obsoletas aquí; el backend puede dejar de serializarlas.
 - La API devuelve un solo idioma por respuesta: `locale` indica el idioma resuelto y el backend debe devolver inglés por defecto cuando `lang` no venga o no sea válido.
 - `fields.copy` contiene strings ya localizados; el frontend no espera objetos bilingües dentro de la misma respuesta.
@@ -117,14 +117,6 @@ Importante:
         "description": "string"
       }
     ],
-
-    "contact_links": [
-      {
-        "title": "string",
-        "description": "string",
-        "url": "string"
-      }
-    ]
   }
 }
 ```
@@ -134,6 +126,7 @@ Importante:
 - `featured_projects` es un array dinámico. Puede tener 1, 5, 12 o N registros; el frontend itera sobre el array sin asumir un número fijo.
 - `team_members` es otro array dinámico. Cada elemento sigue el mismo esquema y puede tener varios miembros.
 - `copy` debe ser un objeto con strings ya resueltos para el idioma solicitado. No se espera `copy.hero_heading` como objeto bilingüe.
+- `contact_links` ya no forma parte de HomePage; vive en el bloque compartido de DirectContact.
 - El backend debe resolver el idioma antes de serializar la respuesta; el frontend no hace merge de `es` y `en`.
 - Cuando el frontend recibe una respuesta, debe poder renderizar `featured_projects` y `team_members` sin cambios en la estructura, solo con nuevos datos.
 
@@ -225,6 +218,109 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
 - `catalogs_dot_aria` es un prefijo: el frontend le agrega el número de página (`"Go to page" → "Go to page 3"`).
 - `file_url` es el PDF descargable. Si viene `null` o vacío, la tarjeta se renderiza igual pero sin destino útil.
 - El orden del array es el orden de presentación; el frontend no reordena.
+
+## DirectContactBlock — Contacto directo compartido
+
+Fuente única del bloque de contacto reutilizable que se renderiza al final de varias páginas. El frontend pide este bloque como contenido global independiente, no lo deriva de `home` ni de `collections`, para que Home, Collections y futuras páginas compartan la misma estructura y el mismo fallback.
+
+Mocks: [src/mocks/direct-contact.en.json](../src/mocks/direct-contact.en.json) y [src/mocks/direct-contact.es.json](../src/mocks/direct-contact.es.json).
+
+Nota para el backend: la respuesta debe venir ya localizada por idioma. Si el frontend pide inglés y español por separado, ambas respuestas deben mantener la misma forma para que el componente pueda cambiar de idioma sin recargar.
+
+```json
+{
+  "type": "shared_cms.DirectContactBlock",
+  "title": "string",
+  "locale": "en | es",
+  "fields": {
+    "copy": {
+      "contact_heading": "string",
+      "contact_cta": "string"
+    },
+    "contact_links": [
+      {
+        "title": "string",
+        "description": "string",
+        "url": "string"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- Este bloque no vive dentro del payload de una página concreta; se trata como contenido global reutilizable.
+- El frontend lo renderiza con ambas lenguas ya resueltas para permitir el cambio de idioma sin recargar.
+- Si el endpoint dedicado no responde, el frontend cae a los mocks locales del bloque.
+
+## CollectionIndexPage
+
+Página de índice de colecciones referenciada por [collections.astro](../src/pages/collections.astro). Esta página no deriva su contenido de HomePage; usa su propio contrato y, aparte de eso, renderiza el bloque compartido de [DirectContactBlock](#directcontactblock--contacto-directo-compartido).
+
+Mocks de referencia: [src/mocks/collections-page.en.json](../src/mocks/collections-page.en.json) y [src/mocks/collections-page.es.json](../src/mocks/collections-page.es.json).
+
+Nota importante: igual que HomePage y ContactPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "collections.CollectionIndexPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_title": "string",
+    "intro_text": "string",
+    "empty_state_text": "string",
+    "categories": [
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": true,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": [
+              {
+                "title": "string",
+                "slug": "string",
+                "image": {
+                  "url": "string",
+                  "alt": "string"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": false,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": []
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `categories` es dinámico y el frontend respeta el orden recibido.
+- El backend o mock devuelve `hero_title`, `intro_text`, `empty_state_text` y `categories` ya localizados para un solo idioma por respuesta.
+- Los productos de la categoría `shower-doors` se agrupan en la galería; las demás categorías pueden actuar como secciones informativas sin productos.
+- Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage y ContactPage.
 
 ## ModelPage
 
@@ -422,7 +518,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 
 ## Pendiente de definir (próximos contratos)
 
-- [ ] `CollectionIndexPage`
 - [ ] `RenovationPage`
 - [ ] `ServicePage`
 - [ ] `BrandPage`

@@ -433,40 +433,6 @@
         "file_url": "#",
         "title_es": "Catálogo 16"
       }
-    ],
-    "contact_links": [
-      {
-        "title_en": "Interior Design Service",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#",
-        "title_es": "Servicio de Diseño de Interiores",
-        "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt."
-      },
-      {
-        "title_en": "Falper Contract",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#",
-        "title_es": "Falper Contract",
-        "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt."
-      },
-      {
-        "title_en": "Retailers",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#",
-        "title_es": "Distribuidores",
-        "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt."
-      },
-      {
-        "title_en": "Contact Us",
-        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "description_en": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt.",
-        "url": "#",
-        "title_es": "Contáctanos",
-        "description_es": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt."
-      }
     ]
   }
 }

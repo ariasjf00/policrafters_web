@@ -1,115 +1,94 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 import DirectContact from '../components/DirectContact.astro';
-import { buildDirectContact } from '../lib/direct-contact';
-import collectionsPage from '../mocks/collections-page.json';
+import { loadCollectionsPageContent } from '../lib/collections-content';
+import { loadDirectContact } from '../lib/direct-contact';
 
 type AnyRecord = Record<string, any>;
 
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
 const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
-const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
-const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
-let isRemoteData = false;
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
+const { en: collectionsEn, es: collectionsEs } = await loadCollectionsPageContent();
 
-const normalizeAssetUrl = (value: unknown): string => {
-  if (!value) return '';
-  if (typeof value !== 'string') return '';
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith('/') && isRemoteData) {
-    return apiOrigin ? `${apiOrigin}${value}` : value;
-  }
-  return value;
-};
-
-let data = collectionsPage;
-
-if (useApi && apiUrl) {
-  try {
-    let localizedApiUrl = apiUrl;
-
-    if (apiUrl.startsWith('http')) {
-      const url = new URL(apiUrl);
-      url.searchParams.set('locale', requestedLang);
-      localizedApiUrl = url.toString();
-    }
-
-    const response = await fetch(localizedApiUrl);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload && typeof payload === 'object') {
-        data = payload;
-        isRemoteData = true;
-      }
-    }
-  } catch (error) {
-    console.warn(`No se pudo cargar la API desde ${apiUrl}. Usando mock local.`, error);
-  }
-}
-
-const resolvedData = data ?? collectionsPage;
-const resolvedFields = (resolvedData.fields ?? collectionsPage.fields ?? {}) as AnyRecord;
-const resolvedMeta = resolvedData.meta ?? collectionsPage.meta ?? {};
-const fallbackFields = (collectionsPage.fields ?? {}) as AnyRecord;
-
-// Mirrors index.astro: ?lang= wins, otherwise the payload's locale decides.
-const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
-const isEsLocale = normalizedLocale.includes('es');
-const selectedLang = langParam === 'en' || langParam === 'es'
-  ? langParam
-  : (isEsLocale ? 'es' : 'en');
+const selectedLang = requestedLang;
 const isEs = selectedLang === 'es';
-const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+const pick = (en: string, es: string) => (isEs ? es : en);
 
-// Feeds the on-page <h2> below (there is no PageLayout hero on this page — see
-// showHero={false} — so these no longer need Es/En sibling props for a hero title).
-const esTitle = resolvedFields.hero_title || resolvedData.title || collectionsPage.title || 'Colecciones';
-const enTitle = resolvedFields.hero_title_en || fallbackFields.hero_title_en || esTitle;
-const esIntro = resolvedFields.intro_text || fallbackFields.intro_text || '';
-const enIntro = resolvedFields.intro_text_en || fallbackFields.intro_text_en || esIntro;
-const esEmptyState = resolvedFields.empty_state_text || fallbackFields.empty_state_text || 'Próximamente';
-const enEmptyState = resolvedFields.empty_state_text_en || fallbackFields.empty_state_text_en || esEmptyState;
+const activeContent = isEs ? collectionsEs : collectionsEn;
+const fallbackContent = isEs ? collectionsEn : collectionsEs;
 
-const pageTitle = pick(esTitle, enTitle);
-const introText = pick(esIntro, enIntro);
+const pageTitle = activeContent.title || activeContent.fields.hero_title || fallbackContent.title || 'Collections';
+const pageDescription = activeContent.meta.search_description || fallbackContent.meta.search_description || 'Featured Policrafters collections';
+const introText = activeContent.fields.intro_text || fallbackContent.fields.intro_text || '';
+const emptyStateEn = collectionsEn.fields.empty_state_text || 'Coming soon';
+const emptyStateEs = collectionsEs.fields.empty_state_text || 'Próximamente';
+const emptyStateText = isEs ? emptyStateEs : emptyStateEn;
 
-// The taxonomy lives under fields.categories: Spanish base key + `_en` sibling, the
-// same convention this file's mock already used for collection_items. NOTE: this
-// diverges from Docs/API_CONTRACT.md, which specifies one already-localized language
-// per API response with no `_en` sibling keys — flagged here rather than fixed, since
-// the mock this page has always shipped with already relies on it.
-const categories = Array.isArray(resolvedFields.categories)
-  ? resolvedFields.categories
-  : (fallbackFields.categories ?? []);
+const categoriesEn = Array.isArray(collectionsEn.fields.categories) ? collectionsEn.fields.categories : [];
+const categoriesEs = Array.isArray(collectionsEs.fields.categories) ? collectionsEs.fields.categories : [];
 
-const showerDoorsCategory = categories.find((category: AnyRecord) => category.key === 'shower-doors') ?? { types: [] };
-const showerDoorTypes = Array.isArray(showerDoorsCategory.types) ? showerDoorsCategory.types : [];
+const categories = (categoriesEn.length ? categoriesEn : categoriesEs).map((enCategory, categoryIndex) => {
+  const esCategory = categoriesEs[categoryIndex] ?? enCategory;
+  const enTypes = Array.isArray(enCategory.types) ? enCategory.types : [];
+  const esTypes = Array.isArray(esCategory.types) ? esCategory.types : [];
 
-// Flatten every type's products into one list for the gallery, tagging each with its
-// type key so the client script can filter by checked type without touching the DOM.
-const showerDoorProducts = showerDoorTypes.flatMap((type: AnyRecord) =>
-  (Array.isArray(type.products) ? type.products : []).map((product: AnyRecord) => ({
-    ...product,
-    typeKey: type.key
-  }))
-);
+  return {
+    key: enCategory.key ?? esCategory.key,
+    label: {
+      en: enCategory.label ?? esCategory.label ?? '',
+      es: esCategory.label ?? enCategory.label ?? ''
+    },
+    hasProducts: Boolean(enCategory.has_products ?? esCategory.has_products),
+    types: (enTypes.length ? enTypes : esTypes).map((enType, typeIndex) => {
+      const esType = esTypes[typeIndex] ?? enType;
+      const enProducts = Array.isArray(enType.products) ? enType.products : [];
+      const esProducts = Array.isArray(esType.products) ? esType.products : [];
+
+      return {
+        key: enType.key ?? esType.key,
+        label: {
+          en: enType.label ?? esType.label ?? '',
+          es: esType.label ?? enType.label ?? ''
+        },
+        products: (enProducts.length ? enProducts : esProducts).map((enProduct, productIndex) => {
+          const esProduct = esProducts[productIndex] ?? enProduct;
+          return {
+            typeKey: enType.key ?? esType.key,
+            slug: enProduct.slug ?? esProduct.slug ?? '#',
+            title: {
+              en: enProduct.title ?? esProduct.title ?? '',
+              es: esProduct.title ?? enProduct.title ?? ''
+            },
+            image: {
+              url: enProduct.image?.url ?? esProduct.image?.url ?? '',
+              alt: {
+                en: enProduct.image?.alt ?? esProduct.image?.alt ?? '',
+                es: esProduct.image?.alt ?? enProduct.image?.alt ?? ''
+              }
+            }
+          };
+        })
+      };
+    })
+  };
+});
 
 const defaultCategoryKey = 'shower-doors';
+const showerDoorsCategory = categories.find((category) => category.key === defaultCategoryKey) ?? { types: [] };
+const showerDoorTypes = Array.isArray(showerDoorsCategory.types) ? showerDoorsCategory.types : [];
 
-// This page has no home payload, so both languages fall back to the home mocks —
-// buildDirectContact is null-safe for exactly this case.
-const { en: directContactEn, es: directContactEs } = buildDirectContact(null, selectedLang);
+const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((product) => product));
 ---
 
 <PageLayout
-  title={resolvedMeta.seo_title || 'Collections | Policrafters'}
-  description={pick(resolvedMeta.search_description, resolvedMeta.search_description_en) || 'Featured Policrafters collections'}
+  title={pageTitle ? `${pageTitle} | Policrafters` : 'Collections | Policrafters'}
+  description={pageDescription}
   showHero={false}
 >
   <section class="collections-shell">
-    <h2 id="collections-title" data-copy-es={esTitle} data-copy-en={enTitle}>{pageTitle}</h2>
-    <p id="collections-intro" class="collections-copy" data-copy-es={esIntro} data-copy-en={enIntro}>{introText}</p>
+    <h2 id="collections-title" data-copy-es={collectionsEs.fields.hero_title} data-copy-en={collectionsEn.fields.hero_title}>{pageTitle}</h2>
+    <p id="collections-intro" class="collections-copy" data-copy-es={collectionsEs.fields.intro_text} data-copy-en={collectionsEn.fields.intro_text}>{introText}</p>
 
     <div class="collections-layout">
       <aside
@@ -128,14 +107,14 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
                 class="filter-section__toggle"
                 aria-expanded={isDefault ? 'true' : 'false'}
                 aria-controls={panelId}
-                data-copy-es={category.label}
-                data-copy-en={category.label_en}
-              >{pick(category.label, category.label_en)}</button>
+                data-copy-es={category.label.es}
+                data-copy-en={category.label.en}
+              >{pick(category.label.en, category.label.es)}</button>
 
               <div id={panelId} class="filter-section__panel" hidden={!isDefault}>
-                {category.has_products ? (
+                {category.hasProducts ? (
                   <ul class="filter-types">
-                    {(category.types ?? []).map((type: AnyRecord) => {
+                    {(category.types ?? []).map((type) => {
                       const inputId = `filter-type-${type.key}`;
                       return (
                         <li>
@@ -146,8 +125,8 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
                               class="filter-type__checkbox"
                               data-type={type.key}
                             />
-                            <span data-copy-es={type.label} data-copy-en={type.label_en}>
-                              {pick(type.label, type.label_en)}
+                            <span data-copy-es={type.label.es} data-copy-en={type.label.en}>
+                              {pick(type.label.en, type.label.es)}
                             </span>
                           </label>
                         </li>
@@ -156,9 +135,9 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
                   </ul>
                 ) : (
                   <ul class="filter-lorem">
-                    {(category.types ?? []).map((sub: AnyRecord) => (
-                      <li data-copy-es={sub.label} data-copy-en={sub.label_en}>
-                        {pick(sub.label, sub.label_en)}
+                    {(category.types ?? []).map((sub) => (
+                      <li data-copy-es={sub.label.es} data-copy-en={sub.label.en}>
+                        {pick(sub.label.en, sub.label.es)}
                       </li>
                     ))}
                   </ul>
@@ -171,21 +150,21 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
 
       <div class="gallery" aria-live="polite">
         <div class="gallery-grid" id="shower-doors-grid">
-          {showerDoorProducts.map((product: AnyRecord) => (
+          {showerDoorProducts.map((product) => (
             <a href="#" class="gallery-card" data-product-type={product.typeKey}>
               <img
-                src={normalizeAssetUrl(product.image?.url)}
-                alt={pick(product.image?.alt, product.image?.alt_en) || ''}
-                data-alt-es={product.image?.alt || ''}
-                data-alt-en={product.image?.alt_en || product.image?.alt || ''}
+                src={product.image?.url || ''}
+                alt={pick(product.image?.alt.en, product.image?.alt.es) || ''}
+                data-alt-es={product.image?.alt.es || ''}
+                data-alt-en={product.image?.alt.en || product.image?.alt.es || ''}
                 loading="lazy"
                 decoding="async"
               />
               <span
                 class="gallery-card__title"
-                data-copy-es={product.title}
-                data-copy-en={product.title_en || product.title}
-              >{pick(product.title, product.title_en)}</span>
+                data-copy-es={product.title.es}
+                data-copy-en={product.title.en}
+              >{pick(product.title.en, product.title.es)}</span>
             </a>
           ))}
         </div>
@@ -194,9 +173,9 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
           class="gallery-empty"
           id="gallery-empty"
           hidden
-          data-copy-es={esEmptyState}
-          data-copy-en={enEmptyState}
-        >{pick(esEmptyState, enEmptyState)}</p>
+          data-copy-es={emptyStateEs}
+          data-copy-en={emptyStateEn}
+        >{emptyStateText}</p>
       </div>
     </div>
 
@@ -207,30 +186,104 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
 <script>
   // @ts-nocheck
   const shell = document.querySelector('.collections-shell');
+  let isWagtailPreview = false;
 
   if (shell) {
-    const sections = Array.from(shell.querySelectorAll('.filter-section'));
+    const filtersContainer = shell.querySelector('.filters');
     const galleryGrid = shell.querySelector('#shower-doors-grid');
     const galleryEmpty = shell.querySelector('#gallery-empty');
-    const cards = galleryGrid ? Array.from(galleryGrid.querySelectorAll('.gallery-card')) : [];
-    const checkboxes = Array.from(shell.querySelectorAll('.filter-type__checkbox'));
+    let sections = [];
+    let cards = [];
+    let checkboxes = [];
+    let previewCategoryMap = new Map();
 
     let activeCategory = 'shower-doors';
+
+    const refreshCollectionsReferences = () => {
+      sections = Array.from(shell.querySelectorAll('.filter-section'));
+      cards = galleryGrid ? Array.from(galleryGrid.querySelectorAll('.gallery-card')) : [];
+      checkboxes = Array.from(shell.querySelectorAll('.filter-type__checkbox'));
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    const getCategoryProducts = (category) => {
+      const types = Array.isArray(category?.types) ? category.types : [];
+      return types.flatMap((type) => {
+        const products = Array.isArray(type?.products) ? type.products : [];
+        return products.map((product) => ({
+          ...product,
+          typeKey: type?.key || ''
+        }));
+      });
+    };
+
+    const renderGalleryCards = (products = []) => {
+      if (!galleryGrid) return;
+
+      galleryGrid.replaceChildren();
+
+      products.forEach((product) => {
+        const card = document.createElement('a');
+        card.href = '#';
+        card.className = 'gallery-card';
+        card.dataset.productType = product.typeKey || '';
+
+        const image = document.createElement('img');
+        image.src = normalizePreviewAssetUrl(product?.image?.url || '');
+        image.alt = product?.image?.alt || '';
+        image.setAttribute('data-alt-es', product?.image?.alt || '');
+        image.setAttribute('data-alt-en', product?.image?.alt || '');
+        image.loading = 'lazy';
+        image.decoding = 'async';
+
+        const title = document.createElement('span');
+        title.className = 'gallery-card__title';
+        title.textContent = product?.title || '';
+        title.setAttribute('data-copy-es', product?.title || '');
+        title.setAttribute('data-copy-en', product?.title || '');
+
+        card.append(image, title);
+        galleryGrid.appendChild(card);
+      });
+
+      refreshCollectionsReferences();
+    };
 
     // Re-applies visibility for whatever is currently active/checked. Never rebuilds
     // the DOM, so checkbox state and scroll position survive both a category switch
     // and a language switch.
     const applyGalleryState = () => {
-      const showShowerDoors = activeCategory === 'shower-doors';
-      if (galleryGrid) galleryGrid.hidden = !showShowerDoors;
-      if (galleryEmpty) galleryEmpty.hidden = showShowerDoors;
+      const activeSection = sections.find((section) => section.dataset.category === activeCategory);
+      const sectionHasProducts = activeSection
+        ? activeSection.dataset.hasProducts === 'true' || Boolean(activeSection.querySelector('.filter-types'))
+        : false;
 
-      if (showShowerDoors) {
-        const checkedTypes = checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.dataset.type);
-        cards.forEach((card) => {
-          const matches = checkedTypes.length === 0 || checkedTypes.includes(card.dataset.productType);
-          card.hidden = !matches;
-        });
+      if (galleryGrid) galleryGrid.hidden = !sectionHasProducts;
+      if (galleryEmpty) galleryEmpty.hidden = sectionHasProducts;
+
+      if (!sectionHasProducts) {
+        return;
+      }
+
+      const checkedTypes = checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.dataset.type);
+      cards.forEach((card) => {
+        const matches = checkedTypes.length === 0 || checkedTypes.includes(card.dataset.productType);
+        card.hidden = !matches;
+      });
+
+      if (galleryEmpty) {
+        const hasVisibleCards = cards.some((card) => !card.hidden);
+        galleryEmpty.hidden = hasVisibleCards;
       }
     };
 
@@ -239,6 +292,12 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
     // accordion — expanding one section collapses the rest.
     const setActiveCategory = (categoryKey) => {
       activeCategory = categoryKey;
+
+      if (isWagtailPreview) {
+        const previewCategory = previewCategoryMap.get(categoryKey);
+        renderGalleryCards(getCategoryProducts(previewCategory));
+      }
+
       sections.forEach((section) => {
         const toggle = section.querySelector('.filter-section__toggle');
         const panel = section.querySelector('.filter-section__panel');
@@ -249,14 +308,20 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
       applyGalleryState();
     };
 
-    sections.forEach((section) => {
-      const toggle = section.querySelector('.filter-section__toggle');
-      toggle?.addEventListener('click', () => setActiveCategory(section.dataset.category));
-    });
+    const bindFilterInteractions = () => {
+      refreshCollectionsReferences();
 
-    checkboxes.forEach((checkbox) => {
-      checkbox.addEventListener('change', applyGalleryState);
-    });
+      sections.forEach((section) => {
+        const toggle = section.querySelector('.filter-section__toggle');
+        toggle?.addEventListener('click', () => setActiveCategory(section.dataset.category));
+      });
+
+      checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', applyGalleryState);
+      });
+    };
+
+    bindFilterInteractions();
 
     // Matches the server-rendered default (shower-doors expanded, no type checked,
     // all 14 cards visible) so there is no flash of different content on load.
@@ -282,6 +347,10 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
     // data-aria-es/-en (aria-label), so switching never touches filter/accordion
     // state above.
     const applyCollectionsLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
       const key = lang === 'en' ? 'en' : 'es';
 
       shell.querySelectorAll('[data-copy-es]').forEach((el) => {
@@ -299,6 +368,152 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
         if (value !== null) el.setAttribute('aria-label', value);
       });
     };
+
+    const applyCollectionsPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const titleEl = shell.querySelector('#collections-title');
+      if (titleEl && typeof fields.hero_title === 'string') {
+        titleEl.textContent = fields.hero_title;
+        titleEl.setAttribute('data-copy-es', fields.hero_title);
+        titleEl.setAttribute('data-copy-en', fields.hero_title);
+      }
+
+      const introEl = shell.querySelector('#collections-intro');
+      if (introEl && typeof fields.intro_text === 'string') {
+        introEl.textContent = fields.intro_text;
+        introEl.setAttribute('data-copy-es', fields.intro_text);
+        introEl.setAttribute('data-copy-en', fields.intro_text);
+      }
+
+      const emptyEl = shell.querySelector('#gallery-empty');
+      if (emptyEl && typeof fields.empty_state_text === 'string') {
+        emptyEl.textContent = fields.empty_state_text;
+        emptyEl.setAttribute('data-copy-es', fields.empty_state_text);
+        emptyEl.setAttribute('data-copy-en', fields.empty_state_text);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const previewCategories = Array.isArray(fields.categories) ? fields.categories : [];
+      previewCategoryMap = new Map(previewCategories.map((category) => [category?.key, category]));
+
+      if (filtersContainer && previewCategories.length > 0) {
+        filtersContainer.replaceChildren();
+
+        previewCategories.forEach((category, categoryIndex) => {
+          const categoryKey = category?.key || `category-${categoryIndex}`;
+          const categoryLabel = category?.label || '';
+          const hasProducts = Boolean(category?.has_products);
+          const panelId = `filter-panel-${categoryKey}`;
+
+          const section = document.createElement('div');
+          section.className = 'filter-section';
+          section.dataset.category = categoryKey;
+          section.dataset.hasProducts = hasProducts ? 'true' : 'false';
+
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'filter-section__toggle';
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-controls', panelId);
+          toggle.setAttribute('data-copy-es', categoryLabel);
+          toggle.setAttribute('data-copy-en', categoryLabel);
+          toggle.textContent = categoryLabel;
+
+          const panel = document.createElement('div');
+          panel.id = panelId;
+          panel.className = 'filter-section__panel';
+          panel.hidden = true;
+
+          const categoryTypes = Array.isArray(category?.types) ? category.types : [];
+
+          if (hasProducts) {
+            const typesList = document.createElement('ul');
+            typesList.className = 'filter-types';
+
+            categoryTypes.forEach((typeItem, typeIndex) => {
+              const typeKey = typeItem?.key || `type-${typeIndex}`;
+              const typeLabel = typeItem?.label || '';
+              const inputId = `filter-type-${categoryKey}-${typeKey}`;
+
+              const li = document.createElement('li');
+              const label = document.createElement('label');
+              label.className = 'filter-type';
+              label.setAttribute('for', inputId);
+
+              const input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = inputId;
+              input.className = 'filter-type__checkbox';
+              input.dataset.type = typeKey;
+
+              const span = document.createElement('span');
+              span.setAttribute('data-copy-es', typeLabel);
+              span.setAttribute('data-copy-en', typeLabel);
+              span.textContent = typeLabel;
+
+              label.append(input, span);
+              li.appendChild(label);
+              typesList.appendChild(li);
+            });
+
+            panel.appendChild(typesList);
+          } else {
+            const textList = document.createElement('ul');
+            textList.className = 'filter-lorem';
+
+            categoryTypes.forEach((typeItem) => {
+              const item = document.createElement('li');
+              const typeLabel = typeItem?.label || '';
+              item.setAttribute('data-copy-es', typeLabel);
+              item.setAttribute('data-copy-en', typeLabel);
+              item.textContent = typeLabel;
+              textList.appendChild(item);
+            });
+
+            panel.appendChild(textList);
+          }
+
+          section.append(toggle, panel);
+          filtersContainer.appendChild(section);
+        });
+
+        bindFilterInteractions();
+
+        const defaultCategory = previewCategories.find((category) => category?.key === 'shower-doors') || previewCategories[0];
+        if (defaultCategory?.key) {
+          setActiveCategory(defaultCategory.key);
+        }
+      }
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (previewData.type !== 'collections.CollectionIndexPage') {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyCollectionsPreview(previewData);
+    });
 
     // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
     // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
