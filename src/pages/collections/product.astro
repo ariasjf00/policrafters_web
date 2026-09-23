@@ -2,127 +2,121 @@
 import PageLayout from '../../layouts/PageLayout.astro';
 import DirectContact from '../../components/DirectContact.astro';
 import { buildDirectContact } from '../../lib/direct-contact';
-import productPage from '../../mocks/product-page.json';
+import { loadProductPageContent } from '../../lib/product-content';
 
 type AnyRecord = Record<string, any>;
 
+// Both languages fetched at build time, same as contact-us.astro / catalogs.ts:
+// this page ships every string twice (data-copy-es/-en) so Header's toggle can
+// switch it without a reload, which means one localized response isn't enough.
+const { en: productEn, es: productEs } = await loadProductPageContent();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n). Matches contact-us.astro's
+// resolution; each mock is now a fully independent locale (no `_en` siblings),
+// so unlike the old single-file mock there's no payload-level `locale` field
+// left to fall back on when the param is absent.
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
-const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
-const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_PRODUCT_API_URL || '';
-const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
-let isRemoteData = false;
-
-const normalizeAssetUrl = (value: unknown): string => {
-  if (!value) return '';
-  if (typeof value !== 'string') return '';
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith('/') && isRemoteData) {
-    return apiOrigin ? `${apiOrigin}${value}` : value;
-  }
-  return value;
-};
-
-let data = productPage;
-
-if (useApi && apiUrl) {
-  try {
-    let localizedApiUrl = apiUrl;
-
-    if (apiUrl.startsWith('http')) {
-      const url = new URL(apiUrl);
-      url.searchParams.set('locale', requestedLang);
-      localizedApiUrl = url.toString();
-    }
-
-    const response = await fetch(localizedApiUrl);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload && typeof payload === 'object') {
-        data = payload;
-        isRemoteData = true;
-      }
-    }
-  } catch (error) {
-    console.warn(`No se pudo cargar la API desde ${apiUrl}. Usando mock local.`, error);
-  }
-}
-
-const resolvedData = data ?? productPage;
-const resolvedFields = (resolvedData.fields ?? productPage.fields ?? {}) as AnyRecord;
-const resolvedMeta = resolvedData.meta ?? productPage.meta ?? {};
-const fallbackFields = (productPage.fields ?? {}) as AnyRecord;
-
-// Mirrors collections.astro: ?lang= wins, otherwise the payload's locale decides.
-const normalizedLocale = typeof resolvedData.locale === 'string' ? resolvedData.locale.toLowerCase() : '';
-const isEsLocale = normalizedLocale.includes('es');
-const selectedLang = langParam === 'en' || langParam === 'es'
-  ? langParam
-  : (isEsLocale ? 'es' : 'en');
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
 const isEs = selectedLang === 'es';
 const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
 
-// fields.* here follows the same Spanish-base + `_en` sibling convention collections.astro
-// already relies on. NOTE: this diverges from Docs/API_CONTRACT.md, which specifies one
-// already-localized language per API response with no `_en` sibling keys — flagged here
-// rather than fixed, for parity with the pattern collections.astro shipped with. See
-// Docs/API_CONTRACT.md's `## ModelPage` section for the note on this divergence.
-const esHeroAlt = resolvedFields.hero_image?.alt || fallbackFields.hero_image?.alt || '';
-const enHeroAlt = resolvedFields.hero_image?.alt_en || fallbackFields.hero_image?.alt_en || esHeroAlt;
-const heroImageUrl = normalizeAssetUrl(resolvedFields.hero_image?.url || fallbackFields.hero_image?.url);
+const activeContent = isEs ? productEs : productEn;
+const enFields = productEn.fields;
+const esFields = productEs.fields;
 
-const esIntro1 = resolvedFields.intro_text_1 || fallbackFields.intro_text_1 || '';
-const enIntro1 = resolvedFields.intro_text_1_en || fallbackFields.intro_text_1_en || esIntro1;
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? 'Producto | Policrafters' : 'Product | Policrafters'),
+  search_description: activeContent.meta?.search_description || 'Policrafters product detail'
+};
 
-const esSecondaryAlt = resolvedFields.secondary_image?.alt || fallbackFields.secondary_image?.alt || '';
-const enSecondaryAlt = resolvedFields.secondary_image?.alt_en || fallbackFields.secondary_image?.alt_en || esSecondaryAlt;
-const secondaryImageUrl = normalizeAssetUrl(resolvedFields.secondary_image?.url || fallbackFields.secondary_image?.url);
+// Image URLs are language-independent (same file either way); only the alt text
+// and the surrounding copy differ per language — same convention contact-us.astro
+// uses for its location photos.
+const esHeroAlt = esFields.hero_image?.alt || '';
+const enHeroAlt = enFields.hero_image?.alt || esHeroAlt;
+const heroImageUrl = enFields.hero_image?.url || esFields.hero_image?.url || '';
 
-const esIntro2 = resolvedFields.intro_text_2 || fallbackFields.intro_text_2 || '';
-const enIntro2 = resolvedFields.intro_text_2_en || fallbackFields.intro_text_2_en || esIntro2;
+const esIntro1 = esFields.intro_text_1 || '';
+const enIntro1 = enFields.intro_text_1 || esIntro1;
 
-const galleryPair = Array.isArray(resolvedFields.gallery_pair) && resolvedFields.gallery_pair.length
-  ? resolvedFields.gallery_pair
-  : (fallbackFields.gallery_pair ?? []);
+const esSecondaryAlt = esFields.secondary_image?.alt || '';
+const enSecondaryAlt = enFields.secondary_image?.alt || esSecondaryAlt;
+const secondaryImageUrl = enFields.secondary_image?.url || esFields.secondary_image?.url || '';
 
-const esEyebrow = resolvedFields.product_eyebrow || fallbackFields.product_eyebrow || '';
-const enEyebrow = resolvedFields.product_eyebrow_en || fallbackFields.product_eyebrow_en || esEyebrow;
-const esHeading = resolvedFields.product_heading || fallbackFields.product_heading || '';
-const enHeading = resolvedFields.product_heading_en || fallbackFields.product_heading_en || esHeading;
-const esBody = resolvedFields.product_body || fallbackFields.product_body || '';
-const enBody = resolvedFields.product_body_en || fallbackFields.product_body_en || esBody;
+const esIntro2 = esFields.intro_text_2 || '';
+const enIntro2 = enFields.intro_text_2 || esIntro2;
 
-const esTechnicalEyebrow = resolvedFields.technical_eyebrow || fallbackFields.technical_eyebrow || '';
-const enTechnicalEyebrow = resolvedFields.technical_eyebrow_en || fallbackFields.technical_eyebrow_en || esTechnicalEyebrow;
+// Both languages' gallery_pair arrays are paired by index (same shared-URL
+// convention as above); English is the spine when lengths ever disagree.
+const enGalleryPair = Array.isArray(enFields.gallery_pair) ? enFields.gallery_pair : [];
+const esGalleryPair = Array.isArray(esFields.gallery_pair) ? esFields.gallery_pair : [];
+const galleryPair = enGalleryPair.map((enImage: AnyRecord, index: number) => {
+  const esImage = esGalleryPair[index] ?? enImage;
+  return {
+    url: enImage?.url || esImage?.url || '',
+    alt: esImage?.alt || '',
+    alt_en: enImage?.alt || esImage?.alt || ''
+  };
+});
 
-const esTechnicalProductAlt = resolvedFields.technical_image_product?.alt || fallbackFields.technical_image_product?.alt || '';
-const enTechnicalProductAlt = resolvedFields.technical_image_product?.alt_en || fallbackFields.technical_image_product?.alt_en || esTechnicalProductAlt;
-const technicalProductImageUrl = normalizeAssetUrl(resolvedFields.technical_image_product?.url || fallbackFields.technical_image_product?.url);
+const esEyebrow = esFields.product_eyebrow || '';
+const enEyebrow = enFields.product_eyebrow || esEyebrow;
+const esHeading = esFields.product_heading || '';
+const enHeading = enFields.product_heading || esHeading;
+const esBody = esFields.product_body || '';
+const enBody = enFields.product_body || esBody;
 
-const esTechnicalDimensionsAlt = resolvedFields.technical_image_dimensions?.alt || fallbackFields.technical_image_dimensions?.alt || '';
-const enTechnicalDimensionsAlt = resolvedFields.technical_image_dimensions?.alt_en || fallbackFields.technical_image_dimensions?.alt_en || esTechnicalDimensionsAlt;
-const technicalDimensionsImageUrl = normalizeAssetUrl(resolvedFields.technical_image_dimensions?.url || fallbackFields.technical_image_dimensions?.url);
+const esTechnicalEyebrow = esFields.technical_eyebrow || '';
+const enTechnicalEyebrow = enFields.technical_eyebrow || esTechnicalEyebrow;
 
-const esDownloadHeading = resolvedFields.download_heading || fallbackFields.download_heading || '';
-const enDownloadHeading = resolvedFields.download_heading_en || fallbackFields.download_heading_en || esDownloadHeading;
+const esTechnicalProductAlt = esFields.technical_image_product?.alt || '';
+const enTechnicalProductAlt = enFields.technical_image_product?.alt || esTechnicalProductAlt;
+const technicalProductImageUrl = enFields.technical_image_product?.url || esFields.technical_image_product?.url || '';
 
-const downloadLinks = Array.isArray(resolvedFields.download_links) && resolvedFields.download_links.length
-  ? resolvedFields.download_links
-  : (fallbackFields.download_links ?? []);
+const esTechnicalDimensionsAlt = esFields.technical_image_dimensions?.alt || '';
+const enTechnicalDimensionsAlt = enFields.technical_image_dimensions?.alt || esTechnicalDimensionsAlt;
+const technicalDimensionsImageUrl = enFields.technical_image_dimensions?.url || esFields.technical_image_dimensions?.url || '';
 
-const esCollectionName = resolvedFields.collection?.name || fallbackFields.collection?.name || '';
-const enCollectionName = resolvedFields.collection?.name_en || fallbackFields.collection?.name_en || esCollectionName;
-const collectionSlug = resolvedFields.collection?.slug || fallbackFields.collection?.slug || '';
+const esDownloadHeading = esFields.download_heading || '';
+const enDownloadHeading = enFields.download_heading || esDownloadHeading;
+
+// Download links are paired by index too: label differs per language, url doesn't.
+const enDownloadLinks = Array.isArray(enFields.download_links) ? enFields.download_links : [];
+const esDownloadLinksSource = Array.isArray(esFields.download_links) ? esFields.download_links : [];
+const downloadLinks = enDownloadLinks.map((enLink: AnyRecord, index: number) => {
+  const esLink = esDownloadLinksSource[index] ?? enLink;
+  return {
+    label: esLink?.label || '',
+    label_en: enLink?.label || esLink?.label || '',
+    url: enLink?.url || esLink?.url || '#'
+  };
+});
+
+const esCollectionName = esFields.collection?.name || '';
+const enCollectionName = enFields.collection?.name || esCollectionName;
+const collectionSlug = enFields.collection?.slug || esFields.collection?.slug || '';
 const backToMenuHref = collectionSlug ? `/collections?category=${collectionSlug}` : '/collections';
 
-const esBackToMenuLabel = resolvedFields.back_to_menu_label || fallbackFields.back_to_menu_label || '';
-const enBackToMenuLabel = resolvedFields.back_to_menu_label_en || fallbackFields.back_to_menu_label_en || esBackToMenuLabel;
+const esBackToMenuLabel = esFields.back_to_menu_label || '';
+const enBackToMenuLabel = enFields.back_to_menu_label || esBackToMenuLabel;
 
-// The CMS may return more than 4 related models; this strip only ever shows 4.
-const relatedModels = (Array.isArray(resolvedFields.related_models) && resolvedFields.related_models.length
-  ? resolvedFields.related_models
-  : (fallbackFields.related_models ?? [])
-).slice(0, 4);
+// Related models paired by index, same convention as gallery_pair/download_links.
+// The CMS may return more than 4; this strip only ever shows 4.
+const enRelatedModels = Array.isArray(enFields.related_models) ? enFields.related_models : [];
+const esRelatedModelsSource = Array.isArray(esFields.related_models) ? esFields.related_models : [];
+const relatedModels = enRelatedModels.slice(0, 4).map((enModel: AnyRecord, index: number) => {
+  const esModel = esRelatedModelsSource[index] ?? enModel;
+  return {
+    title: esModel?.title || '',
+    title_en: enModel?.title || esModel?.title || '',
+    thumbnail: {
+      url: enModel?.thumbnail?.url || esModel?.thumbnail?.url || '',
+      alt: esModel?.thumbnail?.alt || '',
+      alt_en: enModel?.thumbnail?.alt || esModel?.thumbnail?.alt || ''
+    }
+  };
+});
 
 // This page has no home payload, so both languages fall back to the home mocks —
 // buildDirectContact is null-safe for exactly this case (see collections.astro).
@@ -130,8 +124,8 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
 ---
 
 <PageLayout
-  title={resolvedMeta.seo_title || 'Product | Policrafters'}
-  description={pick(resolvedMeta.search_description, resolvedMeta.search_description_en) || 'Policrafters product detail'}
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
   showHero={false}
 >
   <section class="product-shell">
@@ -187,7 +181,7 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
         const enAlt = image?.alt_en || esAlt;
         return (
           <img
-            src={normalizeAssetUrl(image?.url)}
+            src={image?.url}
             alt={pick(esAlt, enAlt)}
             data-alt-es={esAlt}
             data-alt-en={enAlt}
@@ -313,7 +307,7 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
           return (
             <a href="#" class="related-card">
               <img
-                src={normalizeAssetUrl(model?.thumbnail?.url)}
+                src={model?.thumbnail?.url}
                 alt={pick(esAlt, enAlt)}
                 data-alt-es={esAlt}
                 data-alt-en={enAlt}

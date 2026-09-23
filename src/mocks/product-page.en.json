@@ -1,0 +1,94 @@
+{
+  "type": "collections.ModelPage",
+  "title": "Name of the Product",
+  "slug": "product",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Product | Policrafters",
+    "search_description": "Discover Policrafters' fixed shower door model: materials, finishes, and installation details."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/sd-fixed-product-1.jpg",
+      "alt": "Fixed tempered-glass shower door in a modern bathroom"
+    },
+    "intro_text_1": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "secondary_image": {
+      "url": "/images/pages/sd-fixed-product-2.jpg",
+      "alt": "Detail of the fixed shower door system with matte black hardware"
+    },
+    "intro_text_2": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "gallery_pair": [
+      {
+        "url": "/images/pages/sd-fixed-product-3.jpg",
+        "alt": "Side view of the shower with the fixed door installed next to the bathroom vanity"
+      },
+      {
+        "url": "/images/pages/sd-fixed-product-4.jpg",
+        "alt": "Full bathroom with fixed shower door, freestanding tub, and warm-toned finishes"
+      }
+    ],
+    "product_eyebrow": "Lorem Ipsum Dolor",
+    "product_heading": "NAME OF THE PRODUCT",
+    "product_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+    "technical_eyebrow": "Technical Information",
+    "technical_image_product": {
+      "url": "/images/pages/fixed_door_shower_black_white.svg",
+      "alt": "Black and white illustration of a fixed shower door"
+    },
+    "technical_image_dimensions": {
+      "url": "/images/pages/shower_door_dimensions_white.svg",
+      "alt": "White technical drawing of the shower door dimensions: isometric, plan, side and front views"
+    },
+    "download_heading": "DOWNLOAD",
+    "download_links": [
+      { "label": "Technical Sheet PDF", "url": "#" },
+      { "label": "Technical Sheet DWG", "url": "#" },
+      { "label": "Autocad 3D", "url": "#" },
+      { "label": "Autocad 2D", "url": "#" },
+      { "label": "Assembly", "url": "#" },
+      { "label": "Images", "url": "#" },
+      { "label": "PDF Catalog", "url": "#" },
+      { "label": "Finishes", "url": "#" }
+    ],
+    "collection": {
+      "name": "Shower Doors",
+      "slug": "shower-doors"
+    },
+    "related_models": [
+      {
+        "title": "Product 1",
+        "slug": "shower-doors/fixed/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-fixed.jpg",
+          "alt": "Fixed shower door"
+        }
+      },
+      {
+        "title": "Product 2",
+        "slug": "shower-doors/pivot/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-pivot.jpg",
+          "alt": "Pivot shower door"
+        }
+      },
+      {
+        "title": "Product 3",
+        "slug": "shower-doors/sliding-doors/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-sliding-door.jpg",
+          "alt": "Sliding shower door"
+        }
+      },
+      {
+        "title": "Product 4",
+        "slug": "shower-doors/swing-hinges/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-swing-hinges.jpg",
+          "alt": "Swing hinge shower door"
+        }
+      }
+    ],
+    "back_to_menu_label": "Back to products menu"
+  }
+}
