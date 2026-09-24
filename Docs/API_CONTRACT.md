@@ -528,6 +528,7 @@ Respuesta esperada:
     "intro_text_1": "...",
     "secondary_image": { "url": "/media/...jpg", "alt": "..." },
     "intro_text_2": "...",
+    "intro_text_product": "...",
     "gallery_pair": [
       { "url": "/media/...jpg", "alt": "..." },
       { "url": "/media/...jpg", "alt": "..." }
@@ -565,6 +566,7 @@ pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fi
     "intro_text_1": "string",
     "secondary_image": { "url": "string", "alt": "string" },
     "intro_text_2": "string",
+    "intro_text_product": "string",
     "gallery_pair": [
       { "url": "string", "alt": "string" }
     ],
@@ -590,6 +592,9 @@ pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fi
 - `technical_image_product` y `technical_image_dimensions` son dos campos nombrados en
   vez de un array, porque cada ilustración tiene un rol, proporción y ancho de columna
   distintos en el layout — acceder por índice sería frágil.
+- `intro_text_product` es el bloque final de introducción del producto antes del resto
+  del contenido técnico/comercial. El frontend lo usa en el último párrafo introductorio
+  y mantiene `product_body` como fallback de compatibilidad mientras el CMS migra.
 - `download_links[].url` es `"#"` en el mock; se espera que el backend lo alimente con
   URLs reales de documentos de Wagtail (PDF, DWG, etc.). El array es dinámico y el
   frontend renderiza el orden tal como llega, sin reordenar.

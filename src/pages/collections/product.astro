@@ -1,7 +1,7 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
 import DirectContact from '../../components/DirectContact.astro';
-import { buildDirectContact } from '../../lib/direct-contact';
+import { loadDirectContact } from '../../lib/direct-contact';
 import { loadProductPageContent } from '../../lib/product-content';
 
 type AnyRecord = Record<string, any>;
@@ -50,6 +50,9 @@ const secondaryImageUrl = enFields.secondary_image?.url || esFields.secondary_im
 const esIntro2 = esFields.intro_text_2 || '';
 const enIntro2 = enFields.intro_text_2 || esIntro2;
 
+const esIntroProduct = esFields.intro_text_product || esFields.product_body || '';
+const enIntroProduct = enFields.intro_text_product || enFields.product_body || esIntroProduct;
+
 // Both languages' gallery_pair arrays are paired by index (same shared-URL
 // convention as above); English is the spine when lengths ever disagree.
 const enGalleryPair = Array.isArray(enFields.gallery_pair) ? enFields.gallery_pair : [];
@@ -67,8 +70,6 @@ const esEyebrow = esFields.product_eyebrow || '';
 const enEyebrow = enFields.product_eyebrow || esEyebrow;
 const esHeading = esFields.product_heading || '';
 const enHeading = enFields.product_heading || esHeading;
-const esBody = esFields.product_body || '';
-const enBody = enFields.product_body || esBody;
 
 const esTechnicalEyebrow = esFields.technical_eyebrow || '';
 const enTechnicalEyebrow = enFields.technical_eyebrow || esTechnicalEyebrow;
@@ -121,9 +122,7 @@ const relatedModels = enRelatedModels.slice(0, 4).map((enModel: AnyRecord, index
   };
 });
 
-// This page has no home payload, so both languages fall back to the home mocks —
-// buildDirectContact is null-safe for exactly this case (see collections.astro).
-const { en: directContactEn, es: directContactEs } = buildDirectContact(null, selectedLang);
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
 ---
 
 <PageLayout
@@ -213,9 +212,9 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
     </div>
     <p
       class="product-copy product-body"
-      data-copy-es={esBody}
-      data-copy-en={enBody}
-    >{pick(esBody, enBody)}</p>
+      data-copy-es={esIntroProduct}
+      data-copy-en={enIntroProduct}
+    >{pick(esIntroProduct, enIntroProduct)}</p>
 
     <!-- g. Technical Information — full-bleed dark section. Lives inside
          .product-shell, so the existing language-switch script (which

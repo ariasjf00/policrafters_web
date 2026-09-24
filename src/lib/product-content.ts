@@ -36,6 +36,7 @@ export interface ProductPageFields {
   intro_text_1?: string;
   secondary_image?: ProductImage;
   intro_text_2?: string;
+  intro_text_product?: string;
   gallery_pair?: ProductImage[];
   product_eyebrow?: string;
   product_heading?: string;
@@ -129,6 +130,7 @@ const toPayload = (source: any, isRemote: boolean, fallback: any): ProductPagePa
       intro_text_1: fields.intro_text_1 || fallbackFields.intro_text_1 || '',
       secondary_image: normalizeImage(fields.secondary_image, fallbackFields.secondary_image, isRemote),
       intro_text_2: fields.intro_text_2 || fallbackFields.intro_text_2 || '',
+      intro_text_product: fields.intro_text_product || fallbackFields.intro_text_product || fields.product_body || fallbackFields.product_body || '',
       gallery_pair: galleryPair.map((image) => normalizeImage(image, null, isRemote)),
       product_eyebrow: fields.product_eyebrow || fallbackFields.product_eyebrow || '',
       product_heading: fields.product_heading || fallbackFields.product_heading || '',
