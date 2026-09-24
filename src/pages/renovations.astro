@@ -649,14 +649,15 @@ const galleryByCategory = Object.fromEntries(
      shared token — which would either leak to other pages or race PageLayout's own
      CSS on load order — break out of .page-shell with the same full-bleed technique
      PageLayout's own body { overflow-x: clip } comment anticipates, then re-cap the
-     content at 1200px with padding (narrower than Collections' 1440px, since this
-     page's gallery is only 2 columns of landscape images). */
+     content at 1440px with padding — same stage width as Collections
+     (collections.astro), so both galleries line up; only the grid column count
+     and image aspect ratio differ below. */
   .renovations-layout,
   .renovations-shell > :global(.direct-contact) {
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    padding-inline: max(1.5rem, calc((100vw - 1200px) / 2));
+    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
     box-sizing: border-box;
   }
 
