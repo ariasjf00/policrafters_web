@@ -1,0 +1,711 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import DirectContact from '../../components/DirectContact.astro';
+import { buildDirectContact } from '../../lib/direct-contact';
+import { loadProductPageContent } from '../../lib/product-content';
+
+type AnyRecord = Record<string, any>;
+
+// Both languages fetched at build time, same as contact-us.astro / catalogs.ts:
+// this page ships every string twice (data-copy-es/-en) so Header's toggle can
+// switch it without a reload, which means one localized response isn't enough.
+const { en: productEn, es: productEs } = await loadProductPageContent();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n). Matches contact-us.astro's
+// resolution; each mock is now a fully independent locale (no `_en` siblings),
+// so unlike the old single-file mock there's no payload-level `locale` field
+// left to fall back on when the param is absent.
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const activeContent = isEs ? productEs : productEn;
+const enFields = productEn.fields;
+const esFields = productEs.fields;
+
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? 'Producto | Policrafters' : 'Product | Policrafters'),
+  search_description: activeContent.meta?.search_description || 'Policrafters product detail'
+};
+
+// Image URLs are language-independent (same file either way); only the alt text
+// and the surrounding copy differ per language — same convention contact-us.astro
+// uses for its location photos.
+const esHeroAlt = esFields.hero_image?.alt || '';
+const enHeroAlt = enFields.hero_image?.alt || esHeroAlt;
+const heroImageUrl = enFields.hero_image?.url || esFields.hero_image?.url || '';
+
+const esIntro1 = esFields.intro_text_1 || '';
+const enIntro1 = enFields.intro_text_1 || esIntro1;
+
+const esSecondaryAlt = esFields.secondary_image?.alt || '';
+const enSecondaryAlt = enFields.secondary_image?.alt || esSecondaryAlt;
+const secondaryImageUrl = enFields.secondary_image?.url || esFields.secondary_image?.url || '';
+
+const esIntro2 = esFields.intro_text_2 || '';
+const enIntro2 = enFields.intro_text_2 || esIntro2;
+
+// Both languages' gallery_pair arrays are paired by index (same shared-URL
+// convention as above); English is the spine when lengths ever disagree.
+const enGalleryPair = Array.isArray(enFields.gallery_pair) ? enFields.gallery_pair : [];
+const esGalleryPair = Array.isArray(esFields.gallery_pair) ? esFields.gallery_pair : [];
+const galleryPair = enGalleryPair.map((enImage: AnyRecord, index: number) => {
+  const esImage = esGalleryPair[index] ?? enImage;
+  return {
+    url: enImage?.url || esImage?.url || '',
+    alt: esImage?.alt || '',
+    alt_en: enImage?.alt || esImage?.alt || ''
+  };
+});
+
+const esEyebrow = esFields.product_eyebrow || '';
+const enEyebrow = enFields.product_eyebrow || esEyebrow;
+const esHeading = esFields.product_heading || '';
+const enHeading = enFields.product_heading || esHeading;
+const esBody = esFields.product_body || '';
+const enBody = enFields.product_body || esBody;
+
+const esTechnicalEyebrow = esFields.technical_eyebrow || '';
+const enTechnicalEyebrow = enFields.technical_eyebrow || esTechnicalEyebrow;
+
+const esTechnicalProductAlt = esFields.technical_image_product?.alt || '';
+const enTechnicalProductAlt = enFields.technical_image_product?.alt || esTechnicalProductAlt;
+const technicalProductImageUrl = enFields.technical_image_product?.url || esFields.technical_image_product?.url || '';
+
+const esTechnicalDimensionsAlt = esFields.technical_image_dimensions?.alt || '';
+const enTechnicalDimensionsAlt = enFields.technical_image_dimensions?.alt || esTechnicalDimensionsAlt;
+const technicalDimensionsImageUrl = enFields.technical_image_dimensions?.url || esFields.technical_image_dimensions?.url || '';
+
+const esDownloadHeading = esFields.download_heading || '';
+const enDownloadHeading = enFields.download_heading || esDownloadHeading;
+
+// Download links are paired by index too: label differs per language, url doesn't.
+const enDownloadLinks = Array.isArray(enFields.download_links) ? enFields.download_links : [];
+const esDownloadLinksSource = Array.isArray(esFields.download_links) ? esFields.download_links : [];
+const downloadLinks = enDownloadLinks.map((enLink: AnyRecord, index: number) => {
+  const esLink = esDownloadLinksSource[index] ?? enLink;
+  return {
+    label: esLink?.label || '',
+    label_en: enLink?.label || esLink?.label || '',
+    url: enLink?.url || esLink?.url || '#'
+  };
+});
+
+const esCollectionName = esFields.collection?.name || '';
+const enCollectionName = enFields.collection?.name || esCollectionName;
+const collectionSlug = enFields.collection?.slug || esFields.collection?.slug || '';
+const backToMenuHref = collectionSlug ? `/collections?category=${collectionSlug}` : '/collections';
+
+const esBackToMenuLabel = esFields.back_to_menu_label || '';
+const enBackToMenuLabel = enFields.back_to_menu_label || esBackToMenuLabel;
+
+// Related models paired by index, same convention as gallery_pair/download_links.
+// The CMS may return more than 4; this strip only ever shows 4.
+const enRelatedModels = Array.isArray(enFields.related_models) ? enFields.related_models : [];
+const esRelatedModelsSource = Array.isArray(esFields.related_models) ? esFields.related_models : [];
+const relatedModels = enRelatedModels.slice(0, 4).map((enModel: AnyRecord, index: number) => {
+  const esModel = esRelatedModelsSource[index] ?? enModel;
+  return {
+    title: esModel?.title || '',
+    title_en: enModel?.title || esModel?.title || '',
+    thumbnail: {
+      url: enModel?.thumbnail?.url || esModel?.thumbnail?.url || '',
+      alt: esModel?.thumbnail?.alt || '',
+      alt_en: enModel?.thumbnail?.alt || esModel?.thumbnail?.alt || ''
+    }
+  };
+});
+
+// This page has no home payload, so both languages fall back to the home mocks —
+// buildDirectContact is null-safe for exactly this case (see collections.astro).
+const { en: directContactEn, es: directContactEs } = buildDirectContact(null, selectedLang);
+---
+
+<PageLayout
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
+  showHero={false}
+>
+  <section class="product-shell">
+    <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
+         top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`
+         so this image sits directly against the Header with no gap. -->
+    <div class="product-bleed product-hero">
+      <img
+        src={heroImageUrl}
+        alt={pick(esHeroAlt, enHeroAlt)}
+        data-alt-es={esHeroAlt}
+        data-alt-en={enHeroAlt}
+        width="2160"
+        height="1440"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <!-- b. Intro paragraph 1 — centered, inside the normal page-shell flow. -->
+    <p
+      class="product-copy product-copy--centered"
+      data-copy-es={esIntro1}
+      data-copy-en={enIntro1}
+    >{pick(esIntro1, enIntro1)}</p>
+
+    <!-- c. Secondary image — full-bleed, same treatment minus the top margin. -->
+    <div class="product-bleed">
+      <img
+        src={secondaryImageUrl}
+        alt={pick(esSecondaryAlt, enSecondaryAlt)}
+        data-alt-es={esSecondaryAlt}
+        data-alt-en={enSecondaryAlt}
+        width="2123"
+        height="1440"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    <!-- d. Intro paragraph 2 — centered, same treatment as (b). -->
+    <p
+      class="product-copy product-copy--centered"
+      data-copy-es={esIntro2}
+      data-copy-en={enIntro2}
+    >{pick(esIntro2, enIntro2)}</p>
+
+    <!-- e. Image pair, edge to edge with visible white space between. -->
+    <div class="product-pair">
+      {galleryPair.map((image: AnyRecord) => {
+        const esAlt = image?.alt || '';
+        const enAlt = image?.alt_en || esAlt;
+        return (
+          <img
+            src={image?.url}
+            alt={pick(esAlt, enAlt)}
+            data-alt-es={esAlt}
+            data-alt-en={enAlt}
+            width="1440"
+            height="960"
+            loading="lazy"
+            decoding="async"
+          />
+        );
+      })}
+    </div>
+
+    <!-- f. Product title block — left-aligned, border-left rule mirrors
+         .team-card__meta on the homepage (src/pages/index.astro). -->
+    <div class="product-title">
+      <p
+        class="product-eyebrow"
+        data-copy-es={esEyebrow}
+        data-copy-en={enEyebrow}
+      >{pick(esEyebrow, enEyebrow)}</p>
+      <h1
+        class="product-heading"
+        data-copy-es={esHeading}
+        data-copy-en={enHeading}
+      >{pick(esHeading, enHeading)}</h1>
+    </div>
+    <p
+      class="product-copy product-body"
+      data-copy-es={esBody}
+      data-copy-en={enBody}
+    >{pick(esBody, enBody)}</p>
+
+    <!-- g. Technical Information — full-bleed dark section. Lives inside
+         .product-shell, so the existing language-switch script (which
+         queries .product-shell for [data-copy-es]/[data-alt-es]) picks up
+         every node below automatically; no second script needed. -->
+    <div class="technical-section">
+      <div class="technical-inner">
+        <div class="technical-title">
+          <p
+            class="technical-eyebrow"
+            data-copy-es={esTechnicalEyebrow}
+            data-copy-en={enTechnicalEyebrow}
+          >{pick(esTechnicalEyebrow, enTechnicalEyebrow)}</p>
+          <h2
+            class="technical-heading"
+            data-copy-es={esHeading}
+            data-copy-en={enHeading}
+          >{pick(esHeading, enHeading)}</h2>
+        </div>
+
+        <div class="technical-figures">
+          <img
+            src={technicalProductImageUrl}
+            alt={pick(esTechnicalProductAlt, enTechnicalProductAlt)}
+            data-alt-es={esTechnicalProductAlt}
+            data-alt-en={enTechnicalProductAlt}
+            width="1448"
+            height="1086"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            src={technicalDimensionsImageUrl}
+            alt={pick(esTechnicalDimensionsAlt, enTechnicalDimensionsAlt)}
+            data-alt-es={esTechnicalDimensionsAlt}
+            data-alt-en={enTechnicalDimensionsAlt}
+            width="1200"
+            height="1450"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div class="technical-download">
+          <h3
+            class="technical-download__heading"
+            data-copy-es={esDownloadHeading}
+            data-copy-en={enDownloadHeading}
+          >{pick(esDownloadHeading, enDownloadHeading)}</h3>
+          <ul>
+            {downloadLinks.map((link: AnyRecord) => {
+              const esLabel = link?.label || '';
+              const enLabel = link?.label_en || esLabel;
+              return (
+                <li>
+                  <a
+                    href={link?.url || '#'}
+                    data-copy-es={esLabel}
+                    data-copy-en={enLabel}
+                  >{pick(esLabel, enLabel)}</a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- h. Related products — white section between the dark technical block
+         and the footer. Lives inside .product-shell, so the existing
+         applyProductLanguage script picks up every node here too. -->
+    <div class="related-products">
+      <div class="related-products__head">
+        <h2
+          class="related-products__title"
+          data-copy-es={esCollectionName}
+          data-copy-en={enCollectionName}
+        >{pick(esCollectionName, enCollectionName)}</h2>
+        <a
+          class="related-products__back"
+          href={backToMenuHref}
+          data-copy-es={esBackToMenuLabel}
+          data-copy-en={enBackToMenuLabel}
+        >{pick(esBackToMenuLabel, enBackToMenuLabel)}</a>
+      </div>
+      <div class="related-products__grid">
+        {relatedModels.map((model: AnyRecord) => {
+          const esTitle = model?.title || '';
+          const enTitle = model?.title_en || esTitle;
+          const esAlt = model?.thumbnail?.alt || '';
+          const enAlt = model?.thumbnail?.alt_en || esAlt;
+          return (
+            <a href="#" class="related-card">
+              <img
+                src={model?.thumbnail?.url}
+                alt={pick(esAlt, enAlt)}
+                data-alt-es={esAlt}
+                data-alt-en={enAlt}
+                width="2700"
+                height="1800"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                class="related-card__title"
+                data-copy-es={esTitle}
+                data-copy-en={enTitle}
+              >{pick(esTitle, enTitle)}</span>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+
+    <DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.product-shell');
+
+  if (shell) {
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    // All copy ships in the markup as data-copy-es/-en and data-alt-es/-en (images).
+    const applyProductLanguage = (lang) => {
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+    };
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+    // before this page script runs (see collections.astro / Footer.astro for the
+    // same pattern).
+    applyProductLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyProductLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .product-shell {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  /* Full-bleed technique reused from collections.astro: breaks out of the
+     ~1100px .page-shell (see PageLayout.astro's :root --max) to span the
+     full viewport. Safe because PageLayout's body has `overflow-x: clip`. */
+  .product-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  /* Capped rather than `height: auto`: the source photos are ~1.5:1
+     (2160x1440 / 2123x1440), which at full-bleed width runs 960-1280px tall
+     and exceeds most browser windows. clamp() holds the ~2:1 band the design
+     was drawn at (720px at the 1440px stage) and scales down on narrower
+     viewports instead of jumping straight to the floor. object-fit crops
+     each photo to fit rather than stretching or letterboxing it. */
+  .product-bleed img {
+    width: 100%;
+    height: clamp(320px, 45vw, 720px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .product-hero {
+    margin-top: -3rem;
+  }
+
+  .product-copy {
+    margin: 0;
+    color: #2f2f2f;
+    line-height: 1.7;
+    font-size: 1.05rem;
+  }
+
+  .product-copy--centered {
+    max-width: 60ch;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .product-pair {
+    /* Truly edge-to-edge, same as .product-bleed above it — no side padding,
+       no 1440px cap. The 1.75rem gap between the two columns is the only
+       "visible white space between the images" the design calls for. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .product-pair img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+
+  .product-title {
+    margin-top: 1rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .product-eyebrow {
+    margin: 0 0 0.25rem;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: #777;
+  }
+
+  .product-heading {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .product-body {
+    max-width: 78ch;
+  }
+
+  @media (max-width: 680px) {
+    .product-pair {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Full-bleed technique duplicated from .product-bleed rather than reused:
+     .product-bleed img sets height: clamp(...) + object-fit: cover, which
+     would crop these SVGs. Do not merge this into .product-bleed. */
+  .technical-section {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    background: #2f3437;
+    color: #fff;
+  }
+
+  .technical-inner {
+    /* Capped at 1100px — PageLayout.astro's --max — so .technical-title's
+       border lines up with .product-title's above it. */
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
+    padding-block: 4.5rem;
+    box-sizing: border-box;
+  }
+
+  .technical-title {
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .technical-eyebrow {
+    margin: 0 0 0.25rem;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .technical-heading {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-figures {
+    display: grid;
+    grid-template-columns: 0.63fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+    margin-top: 2.5rem;
+  }
+
+  .technical-figures img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .technical-download {
+    margin-top: 3.5rem;
+  }
+
+  .technical-download__heading {
+    margin: 0 0 1.25rem;
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-download ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, auto);
+    justify-content: start;
+    gap: 0.55rem 4rem;
+  }
+
+  .technical-download a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .technical-download a:hover {
+    text-decoration: underline;
+  }
+
+  .technical-download a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 680px) {
+    .technical-inner {
+      padding-inline: 1.25rem;
+    }
+
+    .technical-figures {
+      grid-template-columns: 1fr;
+    }
+
+    .technical-download ul {
+      grid-auto-flow: row;
+      grid-template-rows: none;
+    }
+  }
+
+  /* Full-bleed, capped at 1100px — PageLayout.astro's --max — so
+     .related-products__title lines up with .product-title above it, and
+     the whole page reads as one consistent left edge instead of two
+     different stage widths. (collections.astro caps its own equivalent
+     full-bleed content at 1440px instead; that page has no bordered title
+     sitting in the narrower .page-shell to align against, so the wider
+     stage doesn't create the same mismatch there.)
+     :global() is required: `.direct-contact` is the component's own class,
+     not one Astro's scoping would otherwise match here. */
+  .related-products,
+  .product-shell > :global(.direct-contact) {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
+    box-sizing: border-box;
+  }
+
+  .related-products__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .related-products__title {
+    margin: 0;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .related-products__back {
+    display: inline-block;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid #2f3437;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .related-products__back:hover,
+  .related-products__back:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .related-products__back:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  .related-products__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+
+  .related-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .related-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+  }
+
+  .related-card__title {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  @media (max-width: 980px) {
+    .related-products__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .related-products,
+    .product-shell > :global(.direct-contact) {
+      padding-inline: 1.25rem;
+    }
+
+    .related-products__head {
+      flex-wrap: wrap;
+    }
+
+    .related-products__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
