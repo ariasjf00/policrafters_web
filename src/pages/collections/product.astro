@@ -1,7 +1,7 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
 import DirectContact from '../../components/DirectContact.astro';
-import { buildDirectContact } from '../../lib/direct-contact';
+import { loadDirectContact } from '../../lib/direct-contact';
 import { loadProductPageContent } from '../../lib/product-content';
 
 type AnyRecord = Record<string, any>;
@@ -118,9 +118,12 @@ const relatedModels = enRelatedModels.slice(0, 4).map((enModel: AnyRecord, index
   };
 });
 
-// This page has no home payload, so both languages fall back to the home mocks —
-// buildDirectContact is null-safe for exactly this case (see collections.astro).
-const { en: directContactEn, es: directContactEs } = buildDirectContact(null, selectedLang);
+// This page has no home payload of its own, so it fetches DirectContact directly —
+// same call as collections.astro / renovations.astro / index.astro. (buildDirectContact
+// is for a page that already resolved a home-style payload for the active language and
+// wants to reuse it here without a second fetch; that doesn't apply on this page, and
+// passing it `null` silently produced an empty heading and no columns in both languages.)
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
 ---
 
 <PageLayout
