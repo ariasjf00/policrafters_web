@@ -1,0 +1,195 @@
+{
+  "type": "renovations.RenovationIndexPage",
+  "title": "Renovaciones",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Renovaciones | Policrafters",
+    "search_description": "Explora los proyectos de renovación de Policrafters por tipo de espacio comercial; residencial y aliados estarán disponibles próximamente."
+  },
+  "fields": {
+    "hero_title": "Renovaciones",
+    "intro_text": "Explora nuestros proyectos de renovación comercial por tipo de espacio. El resto de las categorías estará disponible próximamente.",
+    "empty_state_text": "Próximamente",
+    "categories": [
+      {
+        "key": "commercial",
+        "label": "Comercial",
+        "has_products": true,
+        "types": [
+          {
+            "key": "offices",
+            "label": "Oficinas",
+            "products": [
+              {
+                "title": "Oficinas 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-1.jpg",
+                  "alt": "Renovación de oficina comercial"
+                }
+              },
+              {
+                "title": "Oficinas 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-2.jpg",
+                  "alt": "Renovación de oficina comercial"
+                }
+              },
+              {
+                "title": "Oficinas 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-3.jpg",
+                  "alt": "Renovación de oficina comercial"
+                }
+              },
+              {
+                "title": "Oficinas 4",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-4.jpg",
+                  "alt": "Renovación de oficina comercial"
+                }
+              }
+            ]
+          },
+          {
+            "key": "restaurants",
+            "label": "Restaurantes",
+            "products": [
+              {
+                "title": "Restaurantes 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-1.jpg",
+                  "alt": "Renovación de restaurante comercial"
+                }
+              },
+              {
+                "title": "Restaurantes 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-2.jpg",
+                  "alt": "Renovación de restaurante comercial"
+                }
+              },
+              {
+                "title": "Restaurantes 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-3.jpg",
+                  "alt": "Renovación de restaurante comercial"
+                }
+              }
+            ]
+          },
+          {
+            "key": "hotels",
+            "label": "Hoteles",
+            "products": [
+              {
+                "title": "Hoteles 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hotels-1.jpg",
+                  "alt": "Renovación de hotel comercial"
+                }
+              },
+              {
+                "title": "Hoteles 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hotels-2.jpg",
+                  "alt": "Renovación de hotel comercial"
+                }
+              }
+            ]
+          },
+          {
+            "key": "hospitals",
+            "label": "Hospitales",
+            "products": [
+              {
+                "title": "Hospitales 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hospital-1.jpg",
+                  "alt": "Renovación de hospital comercial"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "residential",
+        "label": "Residencial",
+        "has_products": false,
+        "types": [
+          {
+            "key": "residential-lorem-1",
+            "label": "Lorem Ipsum Dolor",
+            "products": []
+          },
+          {
+            "key": "residential-lorem-2",
+            "label": "Sit Amet Consectetur",
+            "products": []
+          },
+          {
+            "key": "residential-lorem-3",
+            "label": "Adipiscing Elit Sed",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "partners",
+        "label": "Aliados",
+        "has_products": true,
+        "show_type_filters": false,
+        "types": [
+          {
+            "key": "partners",
+            "label": "Aliados",
+            "products": [
+              {
+                "title": "Aliados 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Aliado de Policrafters"
+                }
+              },
+              {
+                "title": "Aliados 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Aliado de Policrafters"
+                }
+              },
+              {
+                "title": "Aliados 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Aliado de Policrafters"
+                }
+              },
+              {
+                "title": "Aliados 4",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Aliado de Policrafters"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

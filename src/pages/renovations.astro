@@ -1,15 +1,801 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import DirectContact from '../components/DirectContact.astro';
+import { loadRenovationsPageContent } from '../lib/renovations-content';
+import { loadDirectContact } from '../lib/direct-contact';
+
+type AnyRecord = Record<string, any>;
+
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const requestedLang = langParam === 'en' || langParam === 'es' ? langParam : 'es';
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
+const { en: renovationsEn, es: renovationsEs } = await loadRenovationsPageContent();
+
+const selectedLang = requestedLang;
+const isEs = selectedLang === 'es';
+const pick = (en: string, es: string) => (isEs ? es : en);
+
+const activeContent = isEs ? renovationsEs : renovationsEn;
+const fallbackContent = isEs ? renovationsEn : renovationsEs;
+
+const pageTitle = activeContent.title || activeContent.fields.hero_title || fallbackContent.title || 'Renovations';
+const pageDescription = activeContent.meta.search_description || fallbackContent.meta.search_description || 'Policrafters renovation work';
+const introText = activeContent.fields.intro_text || fallbackContent.fields.intro_text || '';
+const emptyStateEn = renovationsEn.fields.empty_state_text || 'Coming soon';
+const emptyStateEs = renovationsEs.fields.empty_state_text || 'Próximamente';
+const emptyStateText = isEs ? emptyStateEs : emptyStateEn;
+
+const categoriesEn = Array.isArray(renovationsEn.fields.categories) ? renovationsEn.fields.categories : [];
+const categoriesEs = Array.isArray(renovationsEs.fields.categories) ? renovationsEs.fields.categories : [];
+
+const categories = (categoriesEn.length ? categoriesEn : categoriesEs).map((enCategory, categoryIndex) => {
+  const esCategory = categoriesEs[categoryIndex] ?? enCategory;
+  const enTypes = Array.isArray(enCategory.types) ? enCategory.types : [];
+  const esTypes = Array.isArray(esCategory.types) ? esCategory.types : [];
+
+  return {
+    key: enCategory.key ?? esCategory.key,
+    label: {
+      en: enCategory.label ?? esCategory.label ?? '',
+      es: esCategory.label ?? enCategory.label ?? ''
+    },
+    hasProducts: Boolean(enCategory.has_products ?? esCategory.has_products),
+    // Default true: a category with products shows its type filters unless the
+    // payload opts out (see Partners, which has products but no filterable types).
+    showTypeFilters: (enCategory.show_type_filters ?? esCategory.show_type_filters) !== false,
+    types: (enTypes.length ? enTypes : esTypes).map((enType, typeIndex) => {
+      const esType = esTypes[typeIndex] ?? enType;
+      const enProducts = Array.isArray(enType.products) ? enType.products : [];
+      const esProducts = Array.isArray(esType.products) ? esType.products : [];
+
+      return {
+        key: enType.key ?? esType.key,
+        label: {
+          en: enType.label ?? esType.label ?? '',
+          es: esType.label ?? enType.label ?? ''
+        },
+        products: (enProducts.length ? enProducts : esProducts).map((enProduct, productIndex) => {
+          const esProduct = esProducts[productIndex] ?? enProduct;
+          return {
+            typeKey: enType.key ?? esType.key,
+            slug: enProduct.slug ?? esProduct.slug ?? '#',
+            title: {
+              en: enProduct.title ?? esProduct.title ?? '',
+              es: esProduct.title ?? enProduct.title ?? ''
+            },
+            image: {
+              url: enProduct.image?.url ?? esProduct.image?.url ?? '',
+              alt: {
+                en: enProduct.image?.alt ?? esProduct.image?.alt ?? '',
+                es: esProduct.image?.alt ?? enProduct.image?.alt ?? ''
+              }
+            }
+          };
+        })
+      };
+    })
+  };
+});
+
+const defaultCategoryKey = 'commercial';
+const commercialCategory = categories.find((category) => category.key === defaultCategoryKey) ?? { types: [] };
+const commercialTypes = Array.isArray(commercialCategory.types) ? commercialCategory.types : [];
+
+const commercialProducts = commercialTypes.flatMap((type) => type.products.map((product) => product));
+
+// Unlike CollectionIndexPage, more than one category here carries real products
+// (Commercial and Partners both do). The grid is only ever server-rendered with
+// the default category's cards, so the client script needs this per-category
+// lookup — keyed by category, holding both languages per product — to rebuild the
+// gallery when the visitor switches to a different product-bearing category.
+const galleryByCategory = Object.fromEntries(
+  categories
+    .filter((category) => category.hasProducts)
+    .map((category) => [
+      category.key,
+      (category.types ?? []).flatMap((type) => type.products.map((product) => product))
+    ])
+);
 ---
 
 <PageLayout
-  title="Renovaciones | Policrafters"
-  description="Servicios de renovación de Policrafters"
-  heroTitle="Renovaciones"
-  heroSubtitle="Transformamos espacios existentes con soluciones a medida."
+  title={pageTitle ? `${pageTitle} | Policrafters` : 'Renovations | Policrafters'}
+  description={pageDescription}
+  showHero={false}
 >
-  <section>
-    <h2>Renovaciones</h2>
-    <p>Esta página se puede alimentar desde Wagtail.</p>
+  <section class="renovations-shell">
+    <h2 id="renovations-title" data-copy-es={renovationsEs.fields.hero_title} data-copy-en={renovationsEn.fields.hero_title}>{pageTitle}</h2>
+    <p id="renovations-intro" class="renovations-copy" data-copy-es={renovationsEs.fields.intro_text} data-copy-en={renovationsEn.fields.intro_text}>{introText}</p>
+
+    <div class="renovations-layout">
+      <aside
+        class="filters"
+        aria-label={pick('Filtros de renovaciones', 'Renovation filters')}
+        data-aria-es="Filtros de renovaciones"
+        data-aria-en="Renovation filters"
+      >
+        {categories.map((category: AnyRecord) => {
+          const isDefault = category.key === defaultCategoryKey;
+          const panelId = `filter-panel-${category.key}`;
+          return (
+            <div
+              class="filter-section"
+              data-category={category.key}
+              data-has-products={category.hasProducts ? 'true' : 'false'}
+            >
+              <button
+                type="button"
+                class="filter-section__toggle"
+                aria-expanded={isDefault ? 'true' : 'false'}
+                aria-controls={panelId}
+                data-copy-es={category.label.es}
+                data-copy-en={category.label.en}
+              >{pick(category.label.en, category.label.es)}</button>
+
+              <div id={panelId} class="filter-section__panel" hidden={!isDefault}>
+                {category.hasProducts && category.showTypeFilters ? (
+                  <ul class="filter-types">
+                    {(category.types ?? []).map((type) => {
+                      const inputId = `filter-type-${type.key}`;
+                      return (
+                        <li>
+                          <label class="filter-type" for={inputId}>
+                            <input
+                              type="checkbox"
+                              id={inputId}
+                              class="filter-type__checkbox"
+                              data-type={type.key}
+                            />
+                            <span data-copy-es={type.label.es} data-copy-en={type.label.en}>
+                              {pick(type.label.en, type.label.es)}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : !category.hasProducts ? (
+                  <ul class="filter-lorem">
+                    {(category.types ?? []).map((sub) => (
+                      <li data-copy-es={sub.label.es} data-copy-en={sub.label.en}>
+                        {pick(sub.label.en, sub.label.es)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </aside>
+
+      <div class="gallery" aria-live="polite">
+        <div class="gallery-grid" id="renovations-grid">
+          {commercialProducts.map((product) => (
+            <a href={product.slug || '#'} class="gallery-card" data-product-type={product.typeKey}>
+              <img
+                src={product.image?.url || ''}
+                alt={pick(product.image?.alt.en, product.image?.alt.es) || ''}
+                data-alt-es={product.image?.alt.es || ''}
+                data-alt-en={product.image?.alt.en || product.image?.alt.es || ''}
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                class="gallery-card__title"
+                data-copy-es={product.title.es}
+                data-copy-en={product.title.en}
+              >{pick(product.title.en, product.title.es)}</span>
+            </a>
+          ))}
+        </div>
+
+        <p
+          class="gallery-empty"
+          id="gallery-empty"
+          hidden
+          data-copy-es={emptyStateEs}
+          data-copy-en={emptyStateEn}
+        >{emptyStateText}</p>
+      </div>
+    </div>
+
+    <DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
   </section>
 </PageLayout>
+
+<script define:vars={{ galleryByCategory }}>
+  // @ts-nocheck
+  const shell = document.querySelector('.renovations-shell');
+  let isWagtailPreview = false;
+
+  if (shell) {
+    const filtersContainer = shell.querySelector('.filters');
+    const galleryGrid = shell.querySelector('#renovations-grid');
+    const galleryEmpty = shell.querySelector('#gallery-empty');
+    let sections = [];
+    let cards = [];
+    let checkboxes = [];
+    let previewCategoryMap = new Map();
+
+    // Astro's scoped <style> block only stamps its data-astro-cid-* attribute onto
+    // markup it renders server-side; an element built by this script (below, and in
+    // the Wagtail-preview renderGalleryCards) never gets it and silently drops every
+    // scoped rule — most visibly .gallery-card__title's uppercase transform and
+    // .gallery-card img's object-fit/aspect-ratio (images then stretch instead of
+    // cropping). Read the attribute off an already-scoped element once and stamp it
+    // onto every element this script creates.
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
+    let activeCategory = 'commercial';
+    // Matches the category server-rendered into #renovations-grid on load, so the
+    // first call to setActiveCategory('commercial') is a no-op rebuild.
+    let currentGalleryCategory = 'commercial';
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'. Declared early
+    // (ahead of collections.astro's placement) because renderStaticGalleryCards
+    // below needs it, and that function can run during the page's initial
+    // ?category= deep-link handling, before the rest of the script has run.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    const refreshRenovationsReferences = () => {
+      sections = Array.from(shell.querySelectorAll('.filter-section'));
+      cards = galleryGrid ? Array.from(galleryGrid.querySelectorAll('.gallery-card')) : [];
+      checkboxes = Array.from(shell.querySelectorAll('.filter-type__checkbox'));
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    const getCategoryProducts = (category) => {
+      const types = Array.isArray(category?.types) ? category.types : [];
+      return types.flatMap((type) => {
+        const products = Array.isArray(type?.products) ? type.products : [];
+        return products.map((product) => ({
+          ...product,
+          typeKey: type?.key || ''
+        }));
+      });
+    };
+
+    const renderGalleryCards = (products = []) => {
+      if (!galleryGrid) return;
+
+      galleryGrid.replaceChildren();
+
+      products.forEach((product) => {
+        const card = applyScope(document.createElement('a'));
+        card.href = product?.slug || '#';
+        card.className = 'gallery-card';
+        card.dataset.productType = product.typeKey || '';
+
+        const image = applyScope(document.createElement('img'));
+        image.src = normalizePreviewAssetUrl(product?.image?.url || '');
+        image.alt = product?.image?.alt || '';
+        image.setAttribute('data-alt-es', product?.image?.alt || '');
+        image.setAttribute('data-alt-en', product?.image?.alt || '');
+        image.loading = 'lazy';
+        image.decoding = 'async';
+
+        const title = applyScope(document.createElement('span'));
+        title.className = 'gallery-card__title';
+        title.textContent = product?.title || '';
+        title.setAttribute('data-copy-es', product?.title || '');
+        title.setAttribute('data-copy-en', product?.title || '');
+
+        card.append(image, title);
+        galleryGrid.appendChild(card);
+      });
+
+      refreshRenovationsReferences();
+    };
+
+    // Non-preview counterpart to renderGalleryCards above. collections.astro never
+    // needs this: it has exactly one product-bearing category (shower-doors), so
+    // the grid it server-renders is always correct and switching categories only
+    // ever toggles visibility. This page has two (Commercial and Partners), so
+    // switching to a category whose products differ from what's currently in the
+    // DOM has to rebuild the grid from the mock data embedded via define:vars.
+    // Cards render in the current language and still carry data-copy-es/-en +
+    // data-alt-es/-en, so a later language switch doesn't need to rebuild again.
+    const renderStaticGalleryCards = (categoryKey) => {
+      if (!galleryGrid) return;
+      const products = galleryByCategory[categoryKey] || [];
+      const lang = getActiveLang();
+
+      galleryGrid.replaceChildren();
+
+      products.forEach((product) => {
+        const card = applyScope(document.createElement('a'));
+        card.href = product?.slug || '#';
+        card.className = 'gallery-card';
+        card.dataset.productType = product.typeKey || '';
+
+        const altEs = product?.image?.alt?.es || '';
+        const altEn = product?.image?.alt?.en || altEs;
+        const image = applyScope(document.createElement('img'));
+        image.src = product?.image?.url || '';
+        image.alt = lang === 'es' ? altEs : altEn;
+        image.setAttribute('data-alt-es', altEs);
+        image.setAttribute('data-alt-en', altEn);
+        image.loading = 'lazy';
+        image.decoding = 'async';
+
+        const titleEs = product?.title?.es || '';
+        const titleEn = product?.title?.en || titleEs;
+        const title = applyScope(document.createElement('span'));
+        title.className = 'gallery-card__title';
+        title.textContent = lang === 'es' ? titleEs : titleEn;
+        title.setAttribute('data-copy-es', titleEs);
+        title.setAttribute('data-copy-en', titleEn);
+
+        card.append(image, title);
+        galleryGrid.appendChild(card);
+      });
+
+      currentGalleryCategory = categoryKey;
+      refreshRenovationsReferences();
+    };
+
+    // Re-applies visibility for whatever is currently active/checked. Never rebuilds
+    // the DOM, so checkbox state and scroll position survive both a category switch
+    // and a language switch.
+    const applyGalleryState = () => {
+      const activeSection = sections.find((section) => section.dataset.category === activeCategory);
+      const sectionHasProducts = activeSection
+        ? activeSection.dataset.hasProducts === 'true'
+        : false;
+
+      if (galleryGrid) galleryGrid.hidden = !sectionHasProducts;
+      if (galleryEmpty) galleryEmpty.hidden = sectionHasProducts;
+
+      if (!sectionHasProducts) {
+        return;
+      }
+
+      const checkedTypes = checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.dataset.type);
+      cards.forEach((card) => {
+        const matches = checkedTypes.length === 0 || checkedTypes.includes(card.dataset.productType);
+        card.hidden = !matches;
+      });
+
+      if (galleryEmpty) {
+        const hasVisibleCards = cards.some((card) => !card.hidden);
+        galleryEmpty.hidden = hasVisibleCards;
+      }
+    };
+
+    // Expanding a section IS selecting it: the mockup treats "Commercial" as both
+    // the default expanded panel and the default visible gallery. Single-open
+    // accordion — expanding one section collapses the rest.
+    const setActiveCategory = (categoryKey) => {
+      activeCategory = categoryKey;
+
+      if (isWagtailPreview) {
+        const previewCategory = previewCategoryMap.get(categoryKey);
+        renderGalleryCards(getCategoryProducts(previewCategory));
+      } else if (galleryByCategory[categoryKey] && currentGalleryCategory !== categoryKey) {
+        renderStaticGalleryCards(categoryKey);
+      }
+
+      sections.forEach((section) => {
+        const toggle = section.querySelector('.filter-section__toggle');
+        const panel = section.querySelector('.filter-section__panel');
+        const isActive = section.dataset.category === categoryKey;
+        toggle?.setAttribute('aria-expanded', String(isActive));
+        if (panel) panel.hidden = !isActive;
+      });
+      applyGalleryState();
+    };
+
+    const bindFilterInteractions = () => {
+      refreshRenovationsReferences();
+
+      sections.forEach((section) => {
+        const toggle = section.querySelector('.filter-section__toggle');
+        toggle?.addEventListener('click', () => setActiveCategory(section.dataset.category));
+      });
+
+      checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', applyGalleryState);
+      });
+    };
+
+    bindFilterInteractions();
+
+    // A product page can link back with ?category=<key> to open that section.
+    // Keys are read off the rendered sections rather than hard-coded, so adding a
+    // category to the mock needs no change here. Falls through to the
+    // server-rendered default (commercial expanded, no type checked, all 10 cards
+    // visible) when the param is absent or unknown, so there is no flash of
+    // different content on load in that case.
+    const requestedCategory = new URLSearchParams(window.location.search).get('category');
+    const knownCategories = sections.map((section) => section.dataset.category);
+
+    if (requestedCategory && knownCategories.includes(requestedCategory)) {
+      setActiveCategory(requestedCategory);
+    } else {
+      applyGalleryState();
+    }
+
+    // All copy ships in the markup as data-copy-es/-en, data-alt-es/-en (images), and
+    // data-aria-es/-en (aria-label), so switching never touches filter/accordion
+    // state above.
+    const applyRenovationsLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      shell.querySelectorAll('[data-aria-es]').forEach((el) => {
+        const value = el.getAttribute('data-aria-' + key);
+        if (value !== null) el.setAttribute('aria-label', value);
+      });
+    };
+
+    const applyRenovationsPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const titleEl = shell.querySelector('#renovations-title');
+      if (titleEl && typeof fields.hero_title === 'string') {
+        titleEl.textContent = fields.hero_title;
+        titleEl.setAttribute('data-copy-es', fields.hero_title);
+        titleEl.setAttribute('data-copy-en', fields.hero_title);
+      }
+
+      const introEl = shell.querySelector('#renovations-intro');
+      if (introEl && typeof fields.intro_text === 'string') {
+        introEl.textContent = fields.intro_text;
+        introEl.setAttribute('data-copy-es', fields.intro_text);
+        introEl.setAttribute('data-copy-en', fields.intro_text);
+      }
+
+      const emptyEl = shell.querySelector('#gallery-empty');
+      if (emptyEl && typeof fields.empty_state_text === 'string') {
+        emptyEl.textContent = fields.empty_state_text;
+        emptyEl.setAttribute('data-copy-es', fields.empty_state_text);
+        emptyEl.setAttribute('data-copy-en', fields.empty_state_text);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const previewCategories = Array.isArray(fields.categories) ? fields.categories : [];
+      previewCategoryMap = new Map(previewCategories.map((category) => [category?.key, category]));
+
+      if (filtersContainer && previewCategories.length > 0) {
+        filtersContainer.replaceChildren();
+
+        previewCategories.forEach((category, categoryIndex) => {
+          const categoryKey = category?.key || `category-${categoryIndex}`;
+          const categoryLabel = category?.label || '';
+          const hasProducts = Boolean(category?.has_products);
+          const showTypeFilters = category?.show_type_filters !== false;
+          const panelId = `filter-panel-${categoryKey}`;
+
+          const section = applyScope(document.createElement('div'));
+          section.className = 'filter-section';
+          section.dataset.category = categoryKey;
+          section.dataset.hasProducts = hasProducts ? 'true' : 'false';
+
+          const toggle = applyScope(document.createElement('button'));
+          toggle.type = 'button';
+          toggle.className = 'filter-section__toggle';
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-controls', panelId);
+          toggle.setAttribute('data-copy-es', categoryLabel);
+          toggle.setAttribute('data-copy-en', categoryLabel);
+          toggle.textContent = categoryLabel;
+
+          const panel = applyScope(document.createElement('div'));
+          panel.id = panelId;
+          panel.className = 'filter-section__panel';
+          panel.hidden = true;
+
+          const categoryTypes = Array.isArray(category?.types) ? category.types : [];
+
+          if (hasProducts && showTypeFilters) {
+            const typesList = applyScope(document.createElement('ul'));
+            typesList.className = 'filter-types';
+
+            categoryTypes.forEach((typeItem, typeIndex) => {
+              const typeKey = typeItem?.key || `type-${typeIndex}`;
+              const typeLabel = typeItem?.label || '';
+              const inputId = `filter-type-${categoryKey}-${typeKey}`;
+
+              const li = applyScope(document.createElement('li'));
+              const label = applyScope(document.createElement('label'));
+              label.className = 'filter-type';
+              label.setAttribute('for', inputId);
+
+              const input = applyScope(document.createElement('input'));
+              input.type = 'checkbox';
+              input.id = inputId;
+              input.className = 'filter-type__checkbox';
+              input.dataset.type = typeKey;
+
+              const span = applyScope(document.createElement('span'));
+              span.setAttribute('data-copy-es', typeLabel);
+              span.setAttribute('data-copy-en', typeLabel);
+              span.textContent = typeLabel;
+
+              label.append(input, span);
+              li.appendChild(label);
+              typesList.appendChild(li);
+            });
+
+            panel.appendChild(typesList);
+          } else if (!hasProducts) {
+            const textList = applyScope(document.createElement('ul'));
+            textList.className = 'filter-lorem';
+
+            categoryTypes.forEach((typeItem) => {
+              const item = applyScope(document.createElement('li'));
+              const typeLabel = typeItem?.label || '';
+              item.setAttribute('data-copy-es', typeLabel);
+              item.setAttribute('data-copy-en', typeLabel);
+              item.textContent = typeLabel;
+              textList.appendChild(item);
+            });
+
+            panel.appendChild(textList);
+          }
+
+          section.append(toggle, panel);
+          filtersContainer.appendChild(section);
+        });
+
+        bindFilterInteractions();
+
+        const defaultCategory = previewCategories.find((category) => category?.key === 'commercial') || previewCategories[0];
+        if (defaultCategory?.key) {
+          setActiveCategory(defaultCategory.key);
+        }
+      }
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (previewData.type !== 'renovations.RenovationIndexPage') {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyRenovationsPreview(previewData);
+    });
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+    // before this page script runs (see Footer.astro for the same pattern).
+    applyRenovationsLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyRenovationsLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .renovations-shell {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .renovations-shell h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    letter-spacing: 0.02em;
+  }
+
+  .renovations-copy {
+    margin: 0;
+    max-width: 78ch;
+    color: #2f2f2f;
+    line-height: 1.7;
+    font-size: 1.05rem;
+  }
+
+  /* This page needs a wider stage than the ~1100px .page-shell every other interior
+     page shares (see PageLayout.astro's :root --max). Rather than override that
+     shared token — which would either leak to other pages or race PageLayout's own
+     CSS on load order — break out of .page-shell with the same full-bleed technique
+     PageLayout's own body { overflow-x: clip } comment anticipates, then re-cap the
+     content at 1200px with padding (narrower than Collections' 1440px, since this
+     page's gallery is only 2 columns of landscape images). */
+  .renovations-layout,
+  .renovations-shell > :global(.direct-contact) {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-inline: max(1.5rem, calc((100vw - 1200px) / 2));
+    box-sizing: border-box;
+  }
+
+  .renovations-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .filters {
+    display: grid;
+    border-top: 1px solid #dcdcdc;
+  }
+
+  .filter-section {
+    border-bottom: 1px solid #dcdcdc;
+  }
+
+  .filter-section__toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: 0;
+    padding: 0.9rem 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    color: #161616;
+    cursor: pointer;
+  }
+
+  .filter-section__toggle::after {
+    content: '+';
+    font-size: 1.15rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .filter-section__toggle[aria-expanded="true"]::after {
+    content: '\2212';
+  }
+
+  .filter-section__panel {
+    padding: 0 0 1.1rem;
+  }
+
+  .filter-types,
+  .filter-lorem {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .filter-type {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    color: #2f2f2f;
+    cursor: pointer;
+  }
+
+  .filter-type__checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #161616;
+    cursor: pointer;
+  }
+
+  .filter-lorem li {
+    font-size: 0.85rem;
+    color: #777;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+
+  .gallery-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .gallery-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+  }
+
+  .gallery-card__title {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .gallery-empty {
+    margin: 0;
+    padding: 4rem 0;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #777;
+  }
+
+  @media (max-width: 980px) {
+    .renovations-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .gallery-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .renovations-layout,
+    .renovations-shell > :global(.direct-contact) {
+      padding-inline: 1.25rem;
+    }
+
+    .gallery-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -322,6 +322,99 @@ Nota importante: igual que HomePage y ContactPage, la API devuelve un solo idiom
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage y ContactPage.
 
+## RenovationIndexPage
+
+Página de índice de renovaciones referenciada por [renovations.astro](../src/pages/renovations.astro). Sigue el mismo patrón que [CollectionIndexPage](#collectionindexpage): contrato propio, sin depender de HomePage, y renderiza el bloque compartido de [DirectContactBlock](#directcontactblock--contacto-directo-compartido) al final.
+
+Mocks de referencia: [src/mocks/renovations-page.en.json](../src/mocks/renovations-page.en.json) y [src/mocks/renovations-page.es.json](../src/mocks/renovations-page.es.json).
+
+Nota importante: igual que CollectionIndexPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "renovations.RenovationIndexPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_title": "string",
+    "intro_text": "string",
+    "empty_state_text": "string",
+    "categories": [
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": true,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": [
+              {
+                "title": "string",
+                "slug": "string",
+                "image": {
+                  "url": "string",
+                  "alt": "string"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": true,
+        "show_type_filters": false,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": [
+              {
+                "title": "string",
+                "slug": "string",
+                "image": {
+                  "url": "string",
+                  "alt": "string"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": false,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": []
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `categories` es dinámico y el frontend respeta el orden recibido.
+- El backend o mock devuelve `hero_title`, `intro_text`, `empty_state_text` y `categories` ya localizados para un solo idioma por respuesta.
+- Los productos de la categoría `commercial` se agrupan en la galería (2 columnas, imágenes en formato horizontal); `residential` es una sección informativa sin productos (`has_products: false`), igual que `storage-systems`/`complements` en CollectionIndexPage.
+- `show_type_filters` es un campo opcional por categoría, propio de este contrato (no existe en CollectionIndexPage). Con `has_products: true`, controla si la categoría renderiza checkboxes de tipo en el panel de filtros:
+  - Ausente o `true` (default): se renderiza la lista de tipos como checkboxes filtrables (comportamiento igual a `commercial`).
+  - `false`: la categoría no expone filtros por tipo — el panel se renderiza vacío — pero sus productos sí aparecen en la galería al expandirla. Así se modela `partners`, que tiene un solo grupo de productos sin sub-tipos.
+- Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage y CollectionIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).

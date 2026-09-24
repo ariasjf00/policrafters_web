@@ -1,0 +1,195 @@
+{
+  "type": "renovations.RenovationIndexPage",
+  "title": "Renovations",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Renovations | Policrafters",
+    "search_description": "Browse Policrafters renovation work by commercial space type, with residential and partner projects coming soon."
+  },
+  "fields": {
+    "hero_title": "Renovations",
+    "intro_text": "Explore our commercial renovation work by space type. The remaining categories are coming soon.",
+    "empty_state_text": "Coming soon",
+    "categories": [
+      {
+        "key": "commercial",
+        "label": "Commercial",
+        "has_products": true,
+        "types": [
+          {
+            "key": "offices",
+            "label": "Offices",
+            "products": [
+              {
+                "title": "Offices 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-1.jpg",
+                  "alt": "Commercial office renovation"
+                }
+              },
+              {
+                "title": "Offices 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-2.jpg",
+                  "alt": "Commercial office renovation"
+                }
+              },
+              {
+                "title": "Offices 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-3.jpg",
+                  "alt": "Commercial office renovation"
+                }
+              },
+              {
+                "title": "Offices 4",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-office-4.jpg",
+                  "alt": "Commercial office renovation"
+                }
+              }
+            ]
+          },
+          {
+            "key": "restaurants",
+            "label": "Restaurants",
+            "products": [
+              {
+                "title": "Restaurants 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-1.jpg",
+                  "alt": "Commercial restaurant renovation"
+                }
+              },
+              {
+                "title": "Restaurants 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-2.jpg",
+                  "alt": "Commercial restaurant renovation"
+                }
+              },
+              {
+                "title": "Restaurants 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-restaurant-3.jpg",
+                  "alt": "Commercial restaurant renovation"
+                }
+              }
+            ]
+          },
+          {
+            "key": "hotels",
+            "label": "Hotels",
+            "products": [
+              {
+                "title": "Hotels 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hotels-1.jpg",
+                  "alt": "Commercial hotel renovation"
+                }
+              },
+              {
+                "title": "Hotels 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hotels-2.jpg",
+                  "alt": "Commercial hotel renovation"
+                }
+              }
+            ]
+          },
+          {
+            "key": "hospitals",
+            "label": "Hospitals",
+            "products": [
+              {
+                "title": "Hospitals 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-commercial-hospital-1.jpg",
+                  "alt": "Commercial hospital renovation"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "residential",
+        "label": "Residential",
+        "has_products": false,
+        "types": [
+          {
+            "key": "residential-lorem-1",
+            "label": "Lorem Ipsum Dolor",
+            "products": []
+          },
+          {
+            "key": "residential-lorem-2",
+            "label": "Sit Amet Consectetur",
+            "products": []
+          },
+          {
+            "key": "residential-lorem-3",
+            "label": "Adipiscing Elit Sed",
+            "products": []
+          }
+        ]
+      },
+      {
+        "key": "partners",
+        "label": "Partners",
+        "has_products": true,
+        "show_type_filters": false,
+        "types": [
+          {
+            "key": "partners",
+            "label": "Partners",
+            "products": [
+              {
+                "title": "Partners 1",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Policrafters partner"
+                }
+              },
+              {
+                "title": "Partners 2",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Policrafters partner"
+                }
+              },
+              {
+                "title": "Partners 3",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Policrafters partner"
+                }
+              },
+              {
+                "title": "Partners 4",
+                "slug": "#",
+                "image": {
+                  "url": "/images/pages/rn-partners.jpg",
+                  "alt": "Policrafters partner"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
