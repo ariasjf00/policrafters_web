@@ -323,9 +323,20 @@ const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((
 
     bindFilterInteractions();
 
-    // Matches the server-rendered default (shower-doors expanded, no type checked,
-    // all 14 cards visible) so there is no flash of different content on load.
-    applyGalleryState();
+    // A product page can link back with ?category=<key> to open that section
+    // (see the back button in collections/product.astro). Keys are read off the
+    // rendered sections rather than hard-coded, so adding a category to the mock
+    // needs no change here. Falls through to the server-rendered default (shower-doors
+    // expanded, no type checked, all 14 cards visible) when the param is absent or
+    // unknown, so there is no flash of different content on load in that case.
+    const requestedCategory = new URLSearchParams(window.location.search).get('category');
+    const knownCategories = sections.map((section) => section.dataset.category);
+
+    if (requestedCategory && knownCategories.includes(requestedCategory)) {
+      setActiveCategory(requestedCategory);
+    } else {
+      applyGalleryState();
+    }
 
     const getLangFromUrl = () => {
       const params = new URLSearchParams(window.location.search);

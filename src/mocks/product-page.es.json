@@ -1,0 +1,94 @@
+{
+  "type": "collections.ModelPage",
+  "title": "Nombre del Producto",
+  "slug": "product",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Producto | Policrafters",
+    "search_description": "Conoce el modelo de puerta de ducha fija de Policrafters: materiales, acabados y detalles de instalación."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/sd-fixed-product-1.jpg",
+      "alt": "Puerta de ducha fija de cristal templado en un baño moderno"
+    },
+    "intro_text_1": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "secondary_image": {
+      "url": "/images/pages/sd-fixed-product-2.jpg",
+      "alt": "Detalle del sistema de puerta de ducha fija con herrajes en negro mate"
+    },
+    "intro_text_2": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "gallery_pair": [
+      {
+        "url": "/images/pages/sd-fixed-product-3.jpg",
+        "alt": "Vista lateral de la ducha con puerta fija instalada junto a mueble de baño"
+      },
+      {
+        "url": "/images/pages/sd-fixed-product-4.jpg",
+        "alt": "Baño completo con puerta de ducha fija, bañera independiente y acabados en tonos cálidos"
+      }
+    ],
+    "product_eyebrow": "Lorem Ipsum Dolor",
+    "product_heading": "NOMBRE DEL PRODUCTO",
+    "product_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+    "technical_eyebrow": "Información Técnica",
+    "technical_image_product": {
+      "url": "/images/pages/fixed_door_shower_black_white.svg",
+      "alt": "Ilustración en blanco y negro de una puerta de ducha fija"
+    },
+    "technical_image_dimensions": {
+      "url": "/images/pages/shower_door_dimensions_white.svg",
+      "alt": "Plano técnico en blanco con las dimensiones de la puerta de ducha: vista isométrica, planta, lateral y frontal"
+    },
+    "download_heading": "DESCARGAS",
+    "download_links": [
+      { "label": "Ficha Técnica PDF", "url": "#" },
+      { "label": "Ficha Técnica DWG", "url": "#" },
+      { "label": "Autocad 3D", "url": "#" },
+      { "label": "Autocad 2D", "url": "#" },
+      { "label": "Montaje", "url": "#" },
+      { "label": "Imágenes", "url": "#" },
+      { "label": "Catálogo PDF", "url": "#" },
+      { "label": "Acabados", "url": "#" }
+    ],
+    "collection": {
+      "name": "Puertas de Ducha",
+      "slug": "shower-doors"
+    },
+    "related_models": [
+      {
+        "title": "Producto 1",
+        "slug": "shower-doors/fixed/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-fixed.jpg",
+          "alt": "Puerta de ducha fija"
+        }
+      },
+      {
+        "title": "Producto 2",
+        "slug": "shower-doors/pivot/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-pivot.jpg",
+          "alt": "Puerta de ducha pivotante"
+        }
+      },
+      {
+        "title": "Producto 3",
+        "slug": "shower-doors/sliding-doors/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-sliding-door.jpg",
+          "alt": "Puerta de ducha corredera"
+        }
+      },
+      {
+        "title": "Producto 4",
+        "slug": "shower-doors/swing-hinges/model-1",
+        "thumbnail": {
+          "url": "/images/pages/sd-swing-hinges.jpg",
+          "alt": "Puerta de ducha con bisagras abatibles"
+        }
+      }
+    ],
+    "back_to_menu_label": "Volver al menú de productos"
+  }
+}

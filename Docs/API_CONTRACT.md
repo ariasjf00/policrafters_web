@@ -369,6 +369,75 @@ Página de un modelo/producto individual dentro de una colección (referencia: f
 }
 ```
 
+### `/collections/product` — campos implementados
+
+[src/pages/collections/product.astro](../src/pages/collections/product.astro) implementa la
+página completa de un `ModelPage`: hero + dos imágenes de ancho completo intercaladas con
+texto + un par de imágenes + bloque de título; una sección de información técnica (eyebrow +
+encabezado — reutiliza `product_heading`, no un campo aparte — dos ilustraciones y una lista
+de enlaces de descarga); y un bloque de productos relacionados (título de la colección + botón
+de vuelta al menú + hasta 4 tarjetas), seguido del componente compartido `DirectContact` (ver
+[DirectContact.astro](../src/components/DirectContact.astro) y
+[direct-contact.ts](../src/lib/direct-contact.ts), que ya tienen su propio contrato vía el
+payload de home).
+
+A diferencia de `collections.astro`, este endpoint **sigue la regla general** del documento:
+un solo idioma ya resuelto por respuesta, sin pares `_en`. El frontend pide `?lang=en` y
+`?lang=es` por separado en build time y conserva ambos en el markup (el mismo patrón que
+`ContactPage` y `CatalogIndex` — ver [product-content.ts](../src/lib/product-content.ts)),
+en vez del convenio base-español + hermano `_en` que el bloque introductorio usó en un borrador
+anterior de este documento. Mocks de referencia:
+[src/mocks/product-page.en.json](../src/mocks/product-page.en.json) y
+[src/mocks/product-page.es.json](../src/mocks/product-page.es.json).
+
+El resto del contrato de `ModelPage` (`specs`, `gallery`, `brand`, `breadcrumbs`) sigue
+pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fields` arriba:
+
+```json
+{
+  "fields": {
+    "hero_image": { "url": "string", "alt": "string" },
+    "intro_text_1": "string",
+    "secondary_image": { "url": "string", "alt": "string" },
+    "intro_text_2": "string",
+    "gallery_pair": [
+      { "url": "string", "alt": "string" }
+    ],
+    "product_eyebrow": "string",
+    "product_heading": "string",
+    "product_body": "string",
+    "technical_eyebrow": "string",
+    "technical_image_product": { "url": "string", "alt": "string" },
+    "technical_image_dimensions": { "url": "string", "alt": "string" },
+    "download_heading": "string",
+    "download_links": [
+      { "label": "string", "url": "string" }
+    ],
+    "collection": { "name": "string", "slug": "string" },
+    "related_models": [
+      { "title": "string", "slug": "string", "thumbnail": { "url": "string", "alt": "string" } }
+    ],
+    "back_to_menu_label": "string"
+  }
+}
+```
+
+- `technical_image_product` y `technical_image_dimensions` son dos campos nombrados en
+  vez de un array, porque cada ilustración tiene un rol, proporción y ancho de columna
+  distintos en el layout — acceder por índice sería frágil.
+- `download_links[].url` es `"#"` en el mock; se espera que el backend lo alimente con
+  URLs reales de documentos de Wagtail (PDF, DWG, etc.). El array es dinámico y el
+  frontend renderiza el orden tal como llega, sin reordenar.
+- El frontend renderiza **como máximo 4** `related_models` (recorta el array si trae
+  más) — el backend no necesita limitarlo.
+- `back_to_menu_label` es el único campo sin equivalente previo en el contrato de
+  `ModelPage`; el resto (`collection`, `related_models`) ya estaba definido ahí.
+- `collection.slug` arma el enlace de vuelta como `/collections?category=<slug>`, por lo
+  que debe coincidir con un `key` de categoría del mock
+  [collections-page.json](../src/mocks/collections-page.json)
+  (`fields.categories[].key`, p. ej. `shower-doors`). `CollectionIndexPage` en sí sigue
+  pendiente de contrato formal — ver "Pendiente de definir" al final de este documento.
+
 ## ContactPage (contenido de página)
 
 Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),
