@@ -483,6 +483,78 @@ anterior de este documento. Mocks de referencia:
 [src/mocks/product-page.en.json](../src/mocks/product-page.en.json) y
 [src/mocks/product-page.es.json](../src/mocks/product-page.es.json).
 
+#### Contrato de URL y búsqueda por producto real
+
+La ruta real del detalle no es una sola página fija llamada `/collections/product` para todos
+los productos. El frontend ahora soporta URLs dinámicas de la forma:
+
+```text
+/collections/<category>/<type>/<model>
+```
+
+Ejemplo:
+
+```text
+/collections/shower-doors/fixed/model-1
+/collections/shower-doors/pivot/model-1
+```
+
+La API debe resolver el producto por el slug completo, no por una sola página genérica. Es decir,
+el backend debe aceptar un filtro de `slug` y devolver solo el `ModelPage` correspondiente.
+
+```http
+GET /api/products?lang=en&slug=shower-doors/fixed/model-1
+```
+
+Respuesta esperada:
+
+```json
+{
+  "type": "collections.ModelPage",
+  "title": "Name of the Product",
+  "slug": "shower-doors/fixed/model-1",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Product | Policrafters",
+    "search_description": "Discover Policrafters' fixed shower door model"
+  },
+  "fields": {
+    "collection": {
+      "name": "Shower Doors",
+      "slug": "shower-doors"
+    },
+    "product_heading": "NAME OF THE PRODUCT",
+    "hero_image": { "url": "/media/...jpg", "alt": "Fixed tempered-glass shower door" },
+    "intro_text_1": "...",
+    "secondary_image": { "url": "/media/...jpg", "alt": "..." },
+    "intro_text_2": "...",
+    "gallery_pair": [
+      { "url": "/media/...jpg", "alt": "..." },
+      { "url": "/media/...jpg", "alt": "..." }
+    ],
+    "technical_eyebrow": "Technical Information",
+    "technical_image_product": { "url": "/media/...svg", "alt": "..." },
+    "technical_image_dimensions": { "url": "/media/...svg", "alt": "..." },
+    "download_heading": "DOWNLOAD",
+    "download_links": [
+      { "label": "Technical Sheet PDF", "url": "/media/...pdf" }
+    ],
+    "related_models": [
+      {
+        "title": "Product 1",
+        "slug": "shower-doors/fixed/model-1",
+        "thumbnail": { "url": "/media/...jpg", "alt": "Fixed shower door" }
+      }
+    ],
+    "back_to_menu_label": "Back to products menu"
+  }
+}
+```
+
+Esto es importante porque la colección lista productos con `slug` completo, y la página de detalle
+**debe resolver exactamente ese producto**. No se puede devolver siempre el mismo payload de
+`/collections/product` para cada imagen clickeada.
+
 El resto del contrato de `ModelPage` (`specs`, `gallery`, `brand`, `breadcrumbs`) sigue
 pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fields` arriba:
 

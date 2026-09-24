@@ -84,8 +84,8 @@ export const buildDirectContact = (
   resolved: any,
   resolvedLang: Lang
 ): { en: DirectContactPayload; es: DirectContactPayload } => ({
-  en: toDirectContactPayload(resolvedLang === 'en' ? resolved : mocks.en, mocks.en),
-  es: toDirectContactPayload(resolvedLang === 'es' ? resolved : mocks.es, mocks.es)
+  en: resolvedLang === 'en' && resolved ? toDirectContactPayload(resolved, mocks.en) : mocks.en,
+  es: resolvedLang === 'es' && resolved ? toDirectContactPayload(resolved, mocks.es) : mocks.es
 });
 
 export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; es: DirectContactPayload }> => {

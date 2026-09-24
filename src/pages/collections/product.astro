@@ -9,7 +9,10 @@ type AnyRecord = Record<string, any>;
 // Both languages fetched at build time, same as contact-us.astro / catalogs.ts:
 // this page ships every string twice (data-copy-es/-en) so Header's toggle can
 // switch it without a reload, which means one localized response isn't enough.
-const { en: productEn, es: productEs } = await loadProductPageContent();
+const propSlug = Astro.props.slug || '';
+const dynamicRouteSegments = [Astro.params.category, Astro.params.type, Astro.params.model].filter(Boolean);
+const requestedSlug = propSlug || (dynamicRouteSegments.length ? dynamicRouteSegments.join('/') : Astro.url.searchParams.get('slug') || '');
+const { en: productEn, es: productEs } = await loadProductPageContent(requestedSlug || undefined);
 
 // Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
 // CLAUDE.md — there is no route-based i18n). Matches contact-us.astro's
@@ -333,6 +336,17 @@ const { en: directContactEn, es: directContactEs } = buildDirectContact(null, se
 
 <script>
   // @ts-nocheck
+  if (window.location.pathname === '/collections/product') {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('slug') || '';
+    if (slug) {
+      const canonicalSlug = slug.split('/').filter(Boolean).map((segment) => encodeURIComponent(segment)).join('/');
+      const lang = params.get('lang');
+      const target = `/collections/${canonicalSlug}${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`;
+      window.location.replace(target);
+    }
+  }
+
   const shell = document.querySelector('.product-shell');
 
   if (shell) {

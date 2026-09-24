@@ -65,6 +65,25 @@ const useApi = import.meta.env.PUBLIC_USE_API === 'true';
 const apiUrl = import.meta.env.PUBLIC_PRODUCT_API_URL || '';
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
+const buildRequestUrl = (lang: Lang, slug?: string): string => {
+  if (!apiUrl) return apiUrl;
+
+  try {
+    const url = new URL(apiUrl);
+    url.searchParams.set('lang', lang);
+    if (slug) {
+      url.searchParams.set('slug', slug);
+    }
+    return url.toString();
+  } catch {
+    if (slug) {
+      const separator = apiUrl.includes('?') ? '&' : '?';
+      return `${apiUrl}${separator}lang=${lang}&slug=${encodeURIComponent(slug)}`;
+    }
+    return `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}lang=${lang}`;
+  }
+};
+
 // CMS image paths come back host-relative and need the API origin prepended;
 // identical-looking /images/... paths from public/ must be left alone. Only values
 // known to have come from the API reach this.
@@ -129,18 +148,11 @@ const toPayload = (source: any, isRemote: boolean, fallback: any): ProductPagePa
   };
 };
 
-const fetchLang = async (lang: Lang): Promise<ProductPagePayload> => {
+const fetchLang = async (lang: Lang, slug?: string): Promise<ProductPagePayload> => {
   const fallback = mocks[lang];
   if (!useApi || !apiUrl) return toPayload(fallback, false, fallback);
 
-  let requestUrl = apiUrl;
-  try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('lang', lang);
-    requestUrl = url.toString();
-  } catch {
-    // Relative endpoint: send it as configured.
-  }
+  const requestUrl = buildRequestUrl(lang, slug);
 
   try {
     const response = await fetch(requestUrl);
@@ -155,7 +167,7 @@ const fetchLang = async (lang: Lang): Promise<ProductPagePayload> => {
   return toPayload(fallback, false, fallback);
 };
 
-export const loadProductPageContent = async (): Promise<{ en: ProductPagePayload; es: ProductPagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en'), fetchLang('es')]);
+export const loadProductPageContent = async (slug?: string): Promise<{ en: ProductPagePayload; es: ProductPagePayload }> => {
+  const [en, es] = await Promise.all([fetchLang('en', slug), fetchLang('es', slug)]);
   return { en, es };
 };
