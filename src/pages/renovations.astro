@@ -608,7 +608,7 @@ const galleryByCategory = Object.fromEntries(
         return;
       }
 
-      if (previewData.type !== 'renovations.RenovationIndexPage') {
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.RenovationIndexPage')) {
         return;
       }
 
