@@ -415,6 +415,58 @@ Nota importante: igual que CollectionIndexPage, la API devuelve un solo idioma p
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage y CollectionIndexPage.
 
+## ServicesPage
+
+Página de servicios referenciada por [services.astro](../src/pages/services.astro). Contrato propio, sin depender de HomePage; renderiza el carrusel compartido de [CatalogIndex](#catalogindex--catálogos) y el bloque compartido de [DirectContactBlock](#directcontactblock--contacto-directo-compartido) al final.
+
+Mocks de referencia: [src/mocks/services-page.en.json](../src/mocks/services-page.en.json) y [src/mocks/services-page.es.json](../src/mocks/services-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_SERVICES_API_URL`.
+
+Nota importante: igual que CollectionIndexPage y RenovationIndexPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "services.ServicesPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_image": {
+      "url": "string",
+      "alt": "string"
+    },
+    "intro_eyebrow": "string",
+    "intro_heading": "string",
+    "intro_text": "string",
+    "services": [
+      {
+        "key": "string",
+        "heading": "string",
+        "subtitle": "string",
+        "body": ["string", "string", "string"],
+        "image": {
+          "url": "string",
+          "alt": "string"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `services` es un array dinámico y ordenado; el frontend respeta el orden recibido y alterna la posición de la imagen (izquierda/derecha) según el índice, no según un campo del payload.
+- `body` es un array de párrafos — el diseño actual usa tres por bloque, pero el frontend no asume una cantidad fija.
+- Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
+- El backend o mock devuelve `hero_image`, `intro_eyebrow`, `intro_heading`, `intro_text` y `services` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`.
+- Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos ([DirectContactBlock](#directcontactblock--contacto-directo-compartido) y [CatalogIndex](#catalogindex--catálogos)).
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -757,8 +809,8 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 
 ## Pendiente de definir (próximos contratos)
 
-- [ ] `RenovationPage`
-- [ ] `ServicePage`
+- [x] `RenovationIndexPage` (ver [RenovationIndexPage](#renovationindexpage))
+- [x] `ServicesPage` (ver [ServicesPage](#servicespage))
 - [ ] `BrandPage`
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

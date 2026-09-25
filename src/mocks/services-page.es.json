@@ -1,0 +1,90 @@
+{
+  "type": "services.ServicesPage",
+  "title": "Servicios",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Servicios | Policrafters",
+    "search_description": "Conoce la gama completa de servicios de Policrafters, desde diseño e ingeniería hasta empaque, instalación y gestión de proyectos."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/services.jpg",
+      "alt": "Planta de producción de Policrafters"
+    },
+    "intro_eyebrow": "Nuestros Servicios",
+    "intro_heading": "CREANDO SOLUCIONES DESDE EL CONCEPTO HASTA LA ENTREGA",
+    "intro_text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "services": [
+      {
+        "key": "design-plans",
+        "heading": "PLANOS DE DISEÑO",
+        "subtitle": "Lorem ipsum",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis.",
+          "Nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent.",
+          "Luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat."
+        ],
+        "image": {
+          "url": "/images/pages/rn-partners.jpg",
+          "alt": "Planos de diseño en proceso en Policrafters"
+        }
+      },
+      {
+        "key": "packing-delivery-handling",
+        "heading": "EMPAQUE, ENTREGA Y MANEJO",
+        "subtitle": "Lorem ipsum",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+        ],
+        "image": {
+          "url": "/images/pages/rn-partners.jpg",
+          "alt": "Empaque de un producto terminado de Policrafters"
+        }
+      },
+      {
+        "key": "installations",
+        "heading": "INSTALACIONES",
+        "subtitle": "Lorem ipsum",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam."
+        ],
+        "image": {
+          "url": "/images/pages/rn-partners.jpg",
+          "alt": "Equipo de instalación de Policrafters en obra"
+        }
+      },
+      {
+        "key": "management",
+        "heading": "GESTIÓN",
+        "subtitle": "Lorem ipsum",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat."
+        ],
+        "image": {
+          "url": "/images/pages/rn-partners.jpg",
+          "alt": "Equipo de gestión de proyectos revisando planos"
+        }
+      },
+      {
+        "key": "engineering-services",
+        "heading": "SERVICIOS DE INGENIERÍA",
+        "subtitle": "Lorem ipsum",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis.",
+          "Nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent.",
+          "Luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat."
+        ],
+        "image": {
+          "url": "/images/pages/rn-partners.jpg",
+          "alt": "Equipo de ingeniería de Policrafters trabajando"
+        }
+      }
+    ]
+  }
+}
