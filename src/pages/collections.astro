@@ -151,7 +151,11 @@ const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((
       <div class="gallery" aria-live="polite">
         <div class="gallery-grid" id="shower-doors-grid">
           {showerDoorProducts.map((product) => (
-            <a href="#" class="gallery-card" data-product-type={product.typeKey}>
+            <a
+              href={product.slug ? `/collections/${product.slug}` : '#'}
+              class="gallery-card"
+              data-product-type={product.typeKey}
+            >
               <img
                 src={product.image?.url || ''}
                 alt={pick(product.image?.alt.en, product.image?.alt.es) || ''}
@@ -234,7 +238,8 @@ const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((
 
       products.forEach((product) => {
         const card = document.createElement('a');
-        card.href = '#';
+        const productHref = product?.slug ? `/collections/${product.slug}` : '#';
+        card.href = productHref;
         card.className = 'gallery-card';
         card.dataset.productType = product.typeKey || '';
 

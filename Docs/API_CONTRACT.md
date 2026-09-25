@@ -322,6 +322,99 @@ Nota importante: igual que HomePage y ContactPage, la API devuelve un solo idiom
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage y ContactPage.
 
+## RenovationIndexPage
+
+Página de índice de renovaciones referenciada por [renovations.astro](../src/pages/renovations.astro). Sigue el mismo patrón que [CollectionIndexPage](#collectionindexpage): contrato propio, sin depender de HomePage, y renderiza el bloque compartido de [DirectContactBlock](#directcontactblock--contacto-directo-compartido) al final.
+
+Mocks de referencia: [src/mocks/renovations-page.en.json](../src/mocks/renovations-page.en.json) y [src/mocks/renovations-page.es.json](../src/mocks/renovations-page.es.json).
+
+Nota importante: igual que CollectionIndexPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "renovations.RenovationIndexPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_title": "string",
+    "intro_text": "string",
+    "empty_state_text": "string",
+    "categories": [
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": true,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": [
+              {
+                "title": "string",
+                "slug": "string",
+                "image": {
+                  "url": "string",
+                  "alt": "string"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": true,
+        "show_type_filters": false,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": [
+              {
+                "title": "string",
+                "slug": "string",
+                "image": {
+                  "url": "string",
+                  "alt": "string"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "string",
+        "label": "string",
+        "has_products": false,
+        "types": [
+          {
+            "key": "string",
+            "label": "string",
+            "products": []
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `categories` es dinámico y el frontend respeta el orden recibido.
+- El backend o mock devuelve `hero_title`, `intro_text`, `empty_state_text` y `categories` ya localizados para un solo idioma por respuesta.
+- Los productos de la categoría `commercial` se agrupan en la galería (2 columnas, imágenes en formato horizontal); `residential` es una sección informativa sin productos (`has_products: false`), igual que `storage-systems`/`complements` en CollectionIndexPage.
+- `show_type_filters` es un campo opcional por categoría, propio de este contrato (no existe en CollectionIndexPage). Con `has_products: true`, controla si la categoría renderiza checkboxes de tipo en el panel de filtros:
+  - Ausente o `true` (default): se renderiza la lista de tipos como checkboxes filtrables (comportamiento igual a `commercial`).
+  - `false`: la categoría no expone filtros por tipo — el panel se renderiza vacío — pero sus productos sí aparecen en la galería al expandirla. Así se modela `partners`, que tiene un solo grupo de productos sin sub-tipos.
+- Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage y CollectionIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -390,6 +483,79 @@ anterior de este documento. Mocks de referencia:
 [src/mocks/product-page.en.json](../src/mocks/product-page.en.json) y
 [src/mocks/product-page.es.json](../src/mocks/product-page.es.json).
 
+#### Contrato de URL y búsqueda por producto real
+
+La ruta real del detalle no es una sola página fija llamada `/collections/product` para todos
+los productos. El frontend ahora soporta URLs dinámicas de la forma:
+
+```text
+/collections/<category>/<type>/<model>
+```
+
+Ejemplo:
+
+```text
+/collections/shower-doors/fixed/model-1
+/collections/shower-doors/pivot/model-1
+```
+
+La API debe resolver el producto por el slug completo, no por una sola página genérica. Es decir,
+el backend debe aceptar un filtro de `slug` y devolver solo el `ModelPage` correspondiente.
+
+```http
+GET /api/products?lang=en&slug=shower-doors/fixed/model-1
+```
+
+Respuesta esperada:
+
+```json
+{
+  "type": "collections.ModelPage",
+  "title": "Name of the Product",
+  "slug": "shower-doors/fixed/model-1",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Product | Policrafters",
+    "search_description": "Discover Policrafters' fixed shower door model"
+  },
+  "fields": {
+    "collection": {
+      "name": "Shower Doors",
+      "slug": "shower-doors"
+    },
+    "product_heading": "NAME OF THE PRODUCT",
+    "hero_image": { "url": "/media/...jpg", "alt": "Fixed tempered-glass shower door" },
+    "intro_text_1": "...",
+    "secondary_image": { "url": "/media/...jpg", "alt": "..." },
+    "intro_text_2": "...",
+    "intro_text_product": "...",
+    "gallery_pair": [
+      { "url": "/media/...jpg", "alt": "..." },
+      { "url": "/media/...jpg", "alt": "..." }
+    ],
+    "technical_eyebrow": "Technical Information",
+    "technical_image_product": { "url": "/media/...svg", "alt": "..." },
+    "technical_image_dimensions": { "url": "/media/...svg", "alt": "..." },
+    "download_heading": "DOWNLOAD",
+    "download_links": [
+      { "label": "Technical Sheet PDF", "url": "/media/...pdf" }
+    ],
+    "related_models": [
+      {
+        "title": "Product 1",
+        "slug": "shower-doors/fixed/model-1",
+        "thumbnail": { "url": "/media/...jpg", "alt": "Fixed shower door" }
+      }
+    ],
+    "back_to_menu_label": "Back to products menu"
+  }
+}
+```
+
+Esto es importante porque la colección lista productos con `slug` completo, y la página de detalle
+**debe resolver exactamente ese producto**. No se puede devolver siempre el mismo payload de
+`/collections/product` para cada imagen clickeada.
+
 El resto del contrato de `ModelPage` (`specs`, `gallery`, `brand`, `breadcrumbs`) sigue
 pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fields` arriba:
 
@@ -400,6 +566,7 @@ pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fi
     "intro_text_1": "string",
     "secondary_image": { "url": "string", "alt": "string" },
     "intro_text_2": "string",
+    "intro_text_product": "string",
     "gallery_pair": [
       { "url": "string", "alt": "string" }
     ],
@@ -425,6 +592,9 @@ pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fi
 - `technical_image_product` y `technical_image_dimensions` son dos campos nombrados en
   vez de un array, porque cada ilustración tiene un rol, proporción y ancho de columna
   distintos en el layout — acceder por índice sería frágil.
+- `intro_text_product` es el bloque final de introducción del producto antes del resto
+  del contenido técnico/comercial. El frontend lo usa en el último párrafo introductorio
+  y mantiene `product_body` como fallback de compatibilidad mientras el CMS migra.
 - `download_links[].url` es `"#"` en el mock; se espera que el backend lo alimente con
   URLs reales de documentos de Wagtail (PDF, DWG, etc.). El array es dinámico y el
   frontend renderiza el orden tal como llega, sin reordenar.

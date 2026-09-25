@@ -1,0 +1,54 @@
+---
+import collectionsEnMock from '../../mocks/collections-page.en.json';
+import collectionsEsMock from '../../mocks/collections-page.es.json';
+import ProductPage from './product.astro';
+
+export async function getStaticPaths() {
+  const getSlugsFromPayload = (payload: any): string[] => {
+    const seen = new Set<string>();
+    const categories = Array.isArray(payload?.fields?.categories) ? payload.fields.categories : [];
+
+    return categories.flatMap((category: any) => {
+      const types = Array.isArray(category?.types) ? category.types : [];
+      return types.flatMap((type: any) => {
+        const products = Array.isArray(type?.products) ? type.products : [];
+        return products
+          .map((product: any) => String(product?.slug || '').trim())
+          .filter((slug) => slug && !seen.has(slug) && seen.add(slug));
+      });
+    });
+  };
+
+  const useApi = import.meta.env.PUBLIC_USE_API === 'true';
+  const collectionsApiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
+
+  if (useApi && collectionsApiUrl) {
+    try {
+      const requestUrl = collectionsApiUrl.includes('?')
+        ? `${collectionsApiUrl}&locale=en`
+        : `${collectionsApiUrl}?locale=en`;
+
+      const response = await fetch(requestUrl);
+      if (response.ok) {
+        const payload = await response.json();
+        const slugs = getSlugsFromPayload(payload);
+        if (slugs.length) {
+          return slugs.map((slug) => ({ params: { slug } }));
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo generar static paths desde la API de colecciones. Usando fallback local.', error);
+    }
+  }
+
+  const payloads = [collectionsEnMock, collectionsEsMock];
+  const slugs = payloads.flatMap((payload) => getSlugsFromPayload(payload));
+
+  return slugs.map((slug) => ({ params: { slug } }));
+}
+
+const requestedSlug = Astro.params.slug || '';
+---
+
+<ProductPage slug={requestedSlug} />
+---
