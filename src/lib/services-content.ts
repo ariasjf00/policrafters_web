@@ -96,20 +96,45 @@ const fetchLang = async (lang: Lang): Promise<ServicesPagePayload> => {
   if (!useApi || !apiUrl) return toPayload(fallback, false, fallback);
 
   let requestUrl = apiUrl;
+  let legacyLangUrl = apiUrl;
   try {
     const url = new URL(apiUrl);
     url.searchParams.set('locale', lang);
     requestUrl = url.toString();
+
+    const legacyUrl = new URL(apiUrl);
+    legacyUrl.searchParams.set('lang', lang);
+    legacyLangUrl = legacyUrl.toString();
   } catch {
     // Relative endpoint: send it as configured.
+    const separator = apiUrl.includes('?') ? '&' : '?';
+    requestUrl = `${apiUrl}${separator}locale=${lang}`;
+    legacyLangUrl = `${apiUrl}${separator}lang=${lang}`;
   }
 
   try {
-    const response = await fetch(requestUrl);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload && typeof payload === 'object') return toPayload(payload, true, fallback);
-    }
+    const unwrapPayload = (payload: any): any => {
+      if (!payload || typeof payload !== 'object') return null;
+      if (payload.fields) return payload;
+      if (Array.isArray(payload.items) && payload.items.length) return payload.items[0];
+      if (Array.isArray(payload.results) && payload.results.length) return payload.results[0];
+      return payload;
+    };
+
+    const tryParse = async (url: string): Promise<ServicesPagePayload | null> => {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const raw = await response.json();
+      const payload = unwrapPayload(raw);
+      return payload && typeof payload === 'object' ? toPayload(payload, true, fallback) : null;
+    };
+
+    const fromLocale = await tryParse(requestUrl);
+    if (fromLocale) return fromLocale;
+
+    // Backward compatibility while some environments still expect lang.
+    const fromLang = await tryParse(legacyLangUrl);
+    if (fromLang) return fromLang;
   } catch (error) {
     console.warn(`No se pudo cargar Services desde ${requestUrl}. Usando mock local.`, error);
   }

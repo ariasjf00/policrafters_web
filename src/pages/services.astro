@@ -172,8 +172,15 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
 <script>
   // @ts-nocheck
   const shell = document.querySelector('.services-shell');
+  let isWagtailPreview = false;
 
   if (shell) {
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
     const getLangFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const lang = params.get('lang');
@@ -190,8 +197,23 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
       return 'en';
     };
 
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
     // All copy ships in the markup as data-copy-es/-en and data-alt-es/-en (images).
     const applyServicesLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
       const key = lang === 'en' ? 'en' : 'es';
 
       shell.querySelectorAll('[data-copy-es]').forEach((el) => {
@@ -206,6 +228,125 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
 
       document.documentElement.lang = key;
     };
+
+    const applyServicesPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const hero = shell.querySelector('.services-hero img');
+      if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        const heroAlt = fields.hero_image.alt || '';
+        if (heroUrl) hero.setAttribute('src', heroUrl);
+        hero.setAttribute('alt', heroAlt);
+        hero.setAttribute('data-alt-es', heroAlt);
+        hero.setAttribute('data-alt-en', heroAlt);
+      }
+
+      const eyebrowEl = shell.querySelector('.services-intro .section-eyebrow');
+      if (eyebrowEl && typeof fields.intro_eyebrow === 'string') {
+        eyebrowEl.textContent = fields.intro_eyebrow;
+        eyebrowEl.setAttribute('data-copy-es', fields.intro_eyebrow);
+        eyebrowEl.setAttribute('data-copy-en', fields.intro_eyebrow);
+      }
+
+      const headingEl = shell.querySelector('.services-intro .section-heading');
+      if (headingEl && typeof fields.intro_heading === 'string') {
+        headingEl.textContent = fields.intro_heading;
+        headingEl.setAttribute('data-copy-es', fields.intro_heading);
+        headingEl.setAttribute('data-copy-en', fields.intro_heading);
+      }
+
+      const introEl = shell.querySelector('.services-intro__text');
+      if (introEl && typeof fields.intro_text === 'string') {
+        introEl.textContent = fields.intro_text;
+        introEl.setAttribute('data-copy-es', fields.intro_text);
+        introEl.setAttribute('data-copy-en', fields.intro_text);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const services = Array.isArray(fields.services) ? fields.services : [];
+      shell.querySelectorAll('.service-row').forEach((row) => row.remove());
+
+      services.forEach((service, index) => {
+        const row = applyScope(document.createElement('div'));
+        row.className = `service-row${index % 2 === 1 ? ' service-row--reversed' : ''}`;
+
+        const imageWrap = applyScope(document.createElement('div'));
+        imageWrap.className = 'service-row__image-wrap';
+
+        const image = applyScope(document.createElement('img'));
+        image.className = 'service-row__image';
+        image.src = normalizePreviewAssetUrl(service?.image?.url || '');
+        image.alt = service?.image?.alt || '';
+        image.setAttribute('data-alt-es', service?.image?.alt || '');
+        image.setAttribute('data-alt-en', service?.image?.alt || '');
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        imageWrap.appendChild(image);
+
+        const copy = applyScope(document.createElement('div'));
+        copy.className = 'service-row__copy';
+
+        const title = applyScope(document.createElement('div'));
+        title.className = 'service-row__title';
+
+        const heading = applyScope(document.createElement('h2'));
+        heading.className = 'service-row__heading';
+        heading.textContent = service?.heading || '';
+        heading.setAttribute('data-copy-es', service?.heading || '');
+        heading.setAttribute('data-copy-en', service?.heading || '');
+
+        const subtitle = applyScope(document.createElement('p'));
+        subtitle.className = 'service-row__subtitle';
+        subtitle.textContent = service?.subtitle || '';
+        subtitle.setAttribute('data-copy-es', service?.subtitle || '');
+        subtitle.setAttribute('data-copy-en', service?.subtitle || '');
+
+        title.append(heading, subtitle);
+        copy.appendChild(title);
+
+        const body = Array.isArray(service?.body) ? service.body : [];
+        body.forEach((paragraph) => {
+          const paragraphEl = applyScope(document.createElement('p'));
+          paragraphEl.className = 'service-row__body';
+          paragraphEl.textContent = paragraph || '';
+          paragraphEl.setAttribute('data-copy-es', paragraph || '');
+          paragraphEl.setAttribute('data-copy-en', paragraph || '');
+          copy.appendChild(paragraphEl);
+        });
+
+        row.append(imageWrap, copy);
+        shell.appendChild(row);
+      });
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.ServicesPage')) {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyServicesPreview(previewData);
+    });
 
     // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
     // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
