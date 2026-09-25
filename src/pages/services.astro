@@ -133,16 +133,18 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
           decoding="async"
         />
         <div class="service-row__copy">
-          <h2
-            class="service-row__heading"
-            data-copy-es={service.heading.es}
-            data-copy-en={service.heading.en}
-          >{pick(service.heading.es, service.heading.en)}</h2>
-          <p
-            class="service-row__subtitle"
-            data-copy-es={service.subtitle.es}
-            data-copy-en={service.subtitle.en}
-          >{pick(service.subtitle.es, service.subtitle.en)}</p>
+          <div class="service-row__title">
+            <h2
+              class="service-row__heading"
+              data-copy-es={service.heading.es}
+              data-copy-en={service.heading.en}
+            >{pick(service.heading.es, service.heading.en)}</h2>
+            <p
+              class="service-row__subtitle"
+              data-copy-es={service.subtitle.es}
+              data-copy-en={service.subtitle.en}
+            >{pick(service.subtitle.es, service.subtitle.en)}</p>
+          </div>
           {service.body.map((para: AnyRecord) => (
             <p
               class="service-row__body"
@@ -281,7 +283,7 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
        to span roughly the image's height so each row breaks cleanly, and a 2fr
        copy column is too wide and runs short. */
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 3rem;
+    gap: 2rem;
     align-items: stretch;
     padding: 3.5rem 0;
     /* Same trick as index.astro's .about-grid: the distance from the container
@@ -289,9 +291,15 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
     --page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
   }
 
+  /* Default (left-bleed) placement: image first/left, copy second/right.
+     order is stated explicitly on both sides — see .service-row--reversed
+     below — so the two variants read as an exact mirror of each other
+     rather than one being the "real" rule and the other a partial override. */
   .service-row__image {
+    order: 1;
     width: calc(100% + var(--page-gutter));
     margin-left: calc(-1 * var(--page-gutter));
+    margin-right: 0;
     height: 100%;
     min-height: 320px;
     /* cover, not the homepage's contain: these rows are height-matched to the
@@ -300,8 +308,18 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
     display: block;
   }
 
-  /* Even rows: text left, image right — and the bleed mirrors to the right
-     edge. The homepage only ever bleeds left, so this half is new. */
+  .service-row__copy {
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+
+  /* Even rows: text left, image right. Every property the left-bleed image
+     sets is restated here with the opposite side flipped, so both variants
+     use the identical mechanism (order swap + bleed swap) instead of one
+     inheriting unstated values from the other. */
   .service-row--reversed .service-row__image {
     order: 2;
     margin-left: 0;
@@ -312,17 +330,22 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
     order: 1;
   }
 
-  .service-row__copy {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: left;
+  /* Border-left rule mirrors .team-card__meta on the homepage (Position/Name)
+     and .product-title on the product page: a 1pt left border sets off the
+     heading + subtitle as one block, with margin-bottom carrying the space
+     down to the body paragraphs that used to live on .service-row__subtitle. */
+  .service-row__title {
+    margin-bottom: 1.5rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
   }
 
   /* Dark product-title heading scale from product.astro, not the tan
      .section-heading — these rows read as near-black in the reference. */
   .service-row__heading {
-    margin: 0 0 .25rem;
+    margin: 0 0 .15rem;
     font-size: clamp(1.3rem, 2vw, 1.75rem);
     font-weight: 700;
     letter-spacing: .02em;
@@ -331,7 +354,7 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
   }
 
   .service-row__subtitle {
-    margin: 0 0 1.5rem;
+    margin: 0;
     font-size: .8rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -375,6 +398,7 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
       order: 0;
     }
 
+    .service-row__copy,
     .service-row--reversed .service-row__copy {
       order: 0;
     }
