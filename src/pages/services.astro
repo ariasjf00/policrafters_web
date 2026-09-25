@@ -121,17 +121,19 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
          rows since the homepage only ever bleeds left). -->
     {services.map((service: AnyRecord, index: number) => (
       <div class={`service-row${index % 2 === 1 ? ' service-row--reversed' : ''}`}>
-        <img
-          class="service-row__image"
-          src={service.image.url}
-          alt={pick(service.image.alt.es, service.image.alt.en)}
-          data-alt-es={service.image.alt.es}
-          data-alt-en={service.image.alt.en}
-          width="1440"
-          height="768"
-          loading="lazy"
-          decoding="async"
-        />
+        <div class="service-row__image-wrap">
+          <img
+            class="service-row__image"
+            src={service.image.url}
+            alt={pick(service.image.alt.es, service.image.alt.en)}
+            data-alt-es={service.image.alt.es}
+            data-alt-en={service.image.alt.en}
+            width="1440"
+            height="768"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
         <div class="service-row__copy">
           <div class="service-row__title">
             <h2
@@ -294,14 +296,29 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
   /* Default (left-bleed) placement: image first/left, copy second/right.
      order is stated explicitly on both sides — see .service-row--reversed
      below — so the two variants read as an exact mirror of each other
-     rather than one being the "real" rule and the other a partial override. */
-  .service-row__image {
+     rather than one being the "real" rule and the other a partial override.
+
+     The bleed math (width > 100% + negative margin) lives on this wrapper
+     DIV, not on the <img> itself: PageLayout loads Tailwind's global.css,
+     whose preflight sets `img { max-width: 100% }`. That silently clamped
+     an oversized width back down to 100% while the negative margin still
+     applied, so the image shifted toward the viewport edge without actually
+     widening — a big gap opened up between it and the text. Wrapping it in
+     a plain DIV (untouched by that img rule) and keeping the <img> itself
+     at a safe 100%/100% avoids the clash, the same way .services-bleed
+     wraps the hero photo instead of bleeding the <img> directly. */
+  .service-row__image-wrap {
     order: 1;
     width: calc(100% + var(--page-gutter));
     margin-left: calc(-1 * var(--page-gutter));
     margin-right: 0;
     height: 100%;
     min-height: 320px;
+  }
+
+  .service-row__image {
+    width: 100%;
+    height: 100%;
     /* cover, not the homepage's contain: these rows are height-matched to the
        copy, and contain would letterbox a 1.875:1 photo in a taller column. */
     object-fit: cover;
@@ -316,11 +333,11 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
     text-align: left;
   }
 
-  /* Even rows: text left, image right. Every property the left-bleed image
+  /* Even rows: text left, image right. Every property the left-bleed wrapper
      sets is restated here with the opposite side flipped, so both variants
      use the identical mechanism (order swap + bleed swap) instead of one
      inheriting unstated values from the other. */
-  .service-row--reversed .service-row__image {
+  .service-row--reversed .service-row__image-wrap {
     order: 2;
     margin-left: 0;
     margin-right: calc(-1 * var(--page-gutter));
@@ -388,8 +405,8 @@ const services = enServices.map((enItem: AnyRecord, index: number) => {
       padding: 2.5rem 0;
     }
 
-    .service-row__image,
-    .service-row--reversed .service-row__image {
+    .service-row__image-wrap,
+    .service-row--reversed .service-row__image-wrap {
       width: 100%;
       margin-left: 0;
       margin-right: 0;
