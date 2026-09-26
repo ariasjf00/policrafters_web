@@ -1,15 +1,564 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import CatalogsCarousel from '../components/CatalogsCarousel.astro';
+import DirectContact from '../components/DirectContact.astro';
+import { loadServicesPageContent } from '../lib/services-content';
+import { loadCatalogs } from '../lib/catalogs';
+import { loadDirectContact } from '../lib/direct-contact';
+
+type AnyRecord = Record<string, any>;
+
+// Both languages fetched at build time, same as product.astro / catalogs.ts: this
+// page ships every string twice (data-copy-es/-en) so Header's toggle can switch it
+// without a reload, which means one localized response isn't enough.
+const { en: servicesEn, es: servicesEs } = await loadServicesPageContent();
+const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n).
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const activeContent = isEs ? servicesEs : servicesEn;
+const enFields = servicesEn.fields;
+const esFields = servicesEs.fields;
+
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? 'Servicios | Policrafters' : 'Services | Policrafters'),
+  search_description: activeContent.meta?.search_description || 'Policrafters services'
+};
+
+// Image URL is language-independent (same file either way); only the alt text
+// differs per language — same convention product.astro uses for its hero.
+const esHeroAlt = esFields.hero_image?.alt || '';
+const enHeroAlt = enFields.hero_image?.alt || esHeroAlt;
+const heroImageUrl = enFields.hero_image?.url || esFields.hero_image?.url || '';
+
+const esIntroEyebrow = esFields.intro_eyebrow || '';
+const enIntroEyebrow = enFields.intro_eyebrow || esIntroEyebrow;
+const esIntroHeading = esFields.intro_heading || '';
+const enIntroHeading = enFields.intro_heading || esIntroHeading;
+const esIntroText = esFields.intro_text || '';
+const enIntroText = enFields.intro_text || esIntroText;
+
+// The two services arrays are paired by index (same shared-URL convention as
+// product.astro's gallery_pair); English drives the length when they ever disagree.
+const enServices = Array.isArray(enFields.services) ? enFields.services : [];
+const esServices = Array.isArray(esFields.services) ? esFields.services : [];
+const services = enServices.map((enItem: AnyRecord, index: number) => {
+  const esItem = esServices[index] ?? enItem;
+  const enBody = Array.isArray(enItem.body) ? enItem.body : [];
+  const esBody = Array.isArray(esItem.body) ? esItem.body : [];
+
+  return {
+    key: enItem.key ?? esItem.key ?? String(index),
+    heading: { es: esItem.heading ?? enItem.heading ?? '', en: enItem.heading ?? esItem.heading ?? '' },
+    subtitle: { es: esItem.subtitle ?? enItem.subtitle ?? '', en: enItem.subtitle ?? esItem.subtitle ?? '' },
+    body: enBody.map((enPara: string, paraIndex: number) => ({
+      es: esBody[paraIndex] ?? enPara,
+      en: enPara
+    })),
+    image: {
+      url: enItem.image?.url || esItem.image?.url || '',
+      alt: { es: esItem.image?.alt ?? '', en: enItem.image?.alt ?? esItem.image?.alt ?? '' }
+    }
+  };
+});
 ---
 
 <PageLayout
-  title="Servicios | Policrafters"
-  description="Servicios de Policrafters"
-  heroTitle="Servicios"
-  heroSubtitle="Conoce el rango de servicios que ofrecemos a nuestros clientes."
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
+  showHero={false}
 >
-  <section>
-    <h2>Servicios</h2>
-    <p>Esta página se puede alimentar desde Wagtail.</p>
+  <section class="services-shell">
+    <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
+         top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`
+         so this image sits directly against the Header with no gap. Same
+         mechanic and height rules as collections/product.astro's hero. -->
+    <div class="services-bleed services-hero">
+      <img
+        src={heroImageUrl}
+        alt={pick(esHeroAlt, enHeroAlt)}
+        data-alt-es={esHeroAlt}
+        data-alt-en={enHeroAlt}
+        width="1440"
+        height="960"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <!-- b. Intro — eyebrow + heading reuse the homepage's .section-eyebrow /
+         .section-heading recipe (index.astro), centered, with a lorem ipsum
+         paragraph underneath. -->
+    <div class="services-intro">
+      <p
+        class="section-eyebrow"
+        data-copy-es={esIntroEyebrow}
+        data-copy-en={enIntroEyebrow}
+      >{pick(esIntroEyebrow, enIntroEyebrow)}</p>
+      <h1
+        class="section-heading"
+        data-copy-es={esIntroHeading}
+        data-copy-en={enIntroHeading}
+      >{pick(esIntroHeading, enIntroHeading)}</h1>
+      <p
+        class="services-intro__text"
+        data-copy-es={esIntroText}
+        data-copy-en={enIntroText}
+      >{pick(esIntroText, enIntroText)}</p>
+    </div>
+
+    <!-- c. Five alternating image/text rows, same about-grid technique as
+         index.astro's About Us/Brands section (1fr/1fr instead of 1fr/2fr so
+         the copy roughly matches the image's height; object-fit: cover instead
+         of contain for the same reason; bleed mirrors to the right on even
+         rows since the homepage only ever bleeds left). -->
+    {services.map((service: AnyRecord, index: number) => (
+      <div class={`service-row${index % 2 === 1 ? ' service-row--reversed' : ''}`}>
+        <div class="service-row__image-wrap">
+          <img
+            class="service-row__image"
+            src={service.image.url}
+            alt={pick(service.image.alt.es, service.image.alt.en)}
+            data-alt-es={service.image.alt.es}
+            data-alt-en={service.image.alt.en}
+            width="1440"
+            height="768"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="service-row__copy">
+          <div class="service-row__title">
+            <h2
+              class="service-row__heading"
+              data-copy-es={service.heading.es}
+              data-copy-en={service.heading.en}
+            >{pick(service.heading.es, service.heading.en)}</h2>
+            <p
+              class="service-row__subtitle"
+              data-copy-es={service.subtitle.es}
+              data-copy-en={service.subtitle.en}
+            >{pick(service.subtitle.es, service.subtitle.en)}</p>
+          </div>
+          {service.body.map((para: AnyRecord) => (
+            <p
+              class="service-row__body"
+              data-copy-es={para.es}
+              data-copy-en={para.en}
+            >{pick(para.es, para.en)}</p>
+          ))}
+        </div>
+      </div>
+    ))}
   </section>
+
+  {/* Outside .services-shell on purpose: both components own their own language
+      switching, so keeping them out of this page's subscriber leaves one owner.
+      Same rationale as contact-us.astro. */}
+  <hr class="section-rule" />
+
+  <CatalogsCarousel lang={selectedLang} en={catalogsEn} es={catalogsEs} />
+
+  <DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
 </PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.services-shell');
+  let isWagtailPreview = false;
+
+  if (shell) {
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    // All copy ships in the markup as data-copy-es/-en and data-alt-es/-en (images).
+    const applyServicesLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      document.documentElement.lang = key;
+    };
+
+    const applyServicesPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const hero = shell.querySelector('.services-hero img');
+      if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        const heroAlt = fields.hero_image.alt || '';
+        if (heroUrl) hero.setAttribute('src', heroUrl);
+        hero.setAttribute('alt', heroAlt);
+        hero.setAttribute('data-alt-es', heroAlt);
+        hero.setAttribute('data-alt-en', heroAlt);
+      }
+
+      const eyebrowEl = shell.querySelector('.services-intro .section-eyebrow');
+      if (eyebrowEl && typeof fields.intro_eyebrow === 'string') {
+        eyebrowEl.textContent = fields.intro_eyebrow;
+        eyebrowEl.setAttribute('data-copy-es', fields.intro_eyebrow);
+        eyebrowEl.setAttribute('data-copy-en', fields.intro_eyebrow);
+      }
+
+      const headingEl = shell.querySelector('.services-intro .section-heading');
+      if (headingEl && typeof fields.intro_heading === 'string') {
+        headingEl.textContent = fields.intro_heading;
+        headingEl.setAttribute('data-copy-es', fields.intro_heading);
+        headingEl.setAttribute('data-copy-en', fields.intro_heading);
+      }
+
+      const introEl = shell.querySelector('.services-intro__text');
+      if (introEl && typeof fields.intro_text === 'string') {
+        introEl.textContent = fields.intro_text;
+        introEl.setAttribute('data-copy-es', fields.intro_text);
+        introEl.setAttribute('data-copy-en', fields.intro_text);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const services = Array.isArray(fields.services) ? fields.services : [];
+      shell.querySelectorAll('.service-row').forEach((row) => row.remove());
+
+      services.forEach((service, index) => {
+        const row = applyScope(document.createElement('div'));
+        row.className = `service-row${index % 2 === 1 ? ' service-row--reversed' : ''}`;
+
+        const imageWrap = applyScope(document.createElement('div'));
+        imageWrap.className = 'service-row__image-wrap';
+
+        const image = applyScope(document.createElement('img'));
+        image.className = 'service-row__image';
+        image.src = normalizePreviewAssetUrl(service?.image?.url || '');
+        image.alt = service?.image?.alt || '';
+        image.setAttribute('data-alt-es', service?.image?.alt || '');
+        image.setAttribute('data-alt-en', service?.image?.alt || '');
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        imageWrap.appendChild(image);
+
+        const copy = applyScope(document.createElement('div'));
+        copy.className = 'service-row__copy';
+
+        const title = applyScope(document.createElement('div'));
+        title.className = 'service-row__title';
+
+        const heading = applyScope(document.createElement('h2'));
+        heading.className = 'service-row__heading';
+        heading.textContent = service?.heading || '';
+        heading.setAttribute('data-copy-es', service?.heading || '');
+        heading.setAttribute('data-copy-en', service?.heading || '');
+
+        const subtitle = applyScope(document.createElement('p'));
+        subtitle.className = 'service-row__subtitle';
+        subtitle.textContent = service?.subtitle || '';
+        subtitle.setAttribute('data-copy-es', service?.subtitle || '');
+        subtitle.setAttribute('data-copy-en', service?.subtitle || '');
+
+        title.append(heading, subtitle);
+        copy.appendChild(title);
+
+        const body = Array.isArray(service?.body) ? service.body : [];
+        body.forEach((paragraph) => {
+          const paragraphEl = applyScope(document.createElement('p'));
+          paragraphEl.className = 'service-row__body';
+          paragraphEl.textContent = paragraph || '';
+          paragraphEl.setAttribute('data-copy-es', paragraph || '');
+          paragraphEl.setAttribute('data-copy-en', paragraph || '');
+          copy.appendChild(paragraphEl);
+        });
+
+        row.append(imageWrap, copy);
+        shell.appendChild(row);
+      });
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.ServicesPage')) {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyServicesPreview(previewData);
+    });
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+    // before this page script runs (see collections/product.astro for the same
+    // pattern).
+    applyServicesLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyServicesLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .services-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Full-bleed technique reused from collections/product.astro: breaks out of the
+     ~1100px .page-shell (see PageLayout.astro's :root --max) to span the full
+     viewport. Safe because PageLayout's body has `overflow-x: clip`. */
+  .services-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  /* Capped rather than `height: auto`, same clamp product.astro uses: services.jpg
+     is 1.5:1, which at full-bleed width runs ~960px tall and exceeds most browser
+     windows. object-fit crops the photo to fit rather than stretching it. */
+  .services-bleed img {
+    width: 100%;
+    height: clamp(320px, 45vw, 720px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .services-hero {
+    margin-top: -3rem;
+  }
+
+  .services-intro {
+    padding: 3.5rem 0 1rem;
+    text-align: center;
+  }
+
+  .services-intro__text {
+    max-width: 62ch;
+    margin: 0 auto;
+    text-align: center;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  /* Reused verbatim from index.astro's eyebrow + heading recipe. Neither rule
+     sets font-family: both inherit Arimo from PageLayout.astro. */
+  .section-eyebrow {
+    margin: 0 0 .4rem;
+    font-style: italic;
+    font-size: .95rem;
+    color: #555;
+  }
+
+  .section-heading {
+    margin: 0 0 2.5rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #B6AE99;
+  }
+
+  .service-row {
+    display: grid;
+    /* 1fr 1fr, not the homepage's .about-grid 1fr 2fr: the three paragraphs need
+       to span roughly the image's height so each row breaks cleanly, and a 2fr
+       copy column is too wide and runs short. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: stretch;
+    padding: 3.5rem 0;
+    /* Same trick as index.astro's .about-grid: the distance from the container
+       edge to the page edge, so the image can bleed out to the viewport. */
+    --page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
+  }
+
+  /* Default (left-bleed) placement: image first/left, copy second/right.
+     order is stated explicitly on both sides — see .service-row--reversed
+     below — so the two variants read as an exact mirror of each other
+     rather than one being the "real" rule and the other a partial override.
+
+     The bleed math (width > 100% + negative margin) lives on this wrapper
+     DIV, not on the <img> itself: PageLayout loads Tailwind's global.css,
+     whose preflight sets `img { max-width: 100% }`. That silently clamped
+     an oversized width back down to 100% while the negative margin still
+     applied, so the image shifted toward the viewport edge without actually
+     widening — a big gap opened up between it and the text. Wrapping it in
+     a plain DIV (untouched by that img rule) and keeping the <img> itself
+     at a safe 100%/100% avoids the clash, the same way .services-bleed
+     wraps the hero photo instead of bleeding the <img> directly. */
+  .service-row__image-wrap {
+    order: 1;
+    width: calc(100% + var(--page-gutter));
+    margin-left: calc(-1 * var(--page-gutter));
+    margin-right: 0;
+    height: 100%;
+    min-height: 320px;
+  }
+
+  .service-row__image {
+    width: 100%;
+    height: 100%;
+    /* cover, not the homepage's contain: these rows are height-matched to the
+       copy, and contain would letterbox a 1.875:1 photo in a taller column. */
+    object-fit: cover;
+    display: block;
+  }
+
+  .service-row__copy {
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+
+  /* Even rows: text left, image right. Every property the left-bleed wrapper
+     sets is restated here with the opposite side flipped, so both variants
+     use the identical mechanism (order swap + bleed swap) instead of one
+     inheriting unstated values from the other. */
+  .service-row--reversed .service-row__image-wrap {
+    order: 2;
+    margin-left: 0;
+    margin-right: calc(-1 * var(--page-gutter));
+  }
+
+  .service-row--reversed .service-row__copy {
+    order: 1;
+  }
+
+  /* Border-left rule mirrors .team-card__meta on the homepage (Position/Name)
+     and .product-title on the product page: a 1pt left border sets off the
+     heading + subtitle as one block, with margin-bottom carrying the space
+     down to the body paragraphs that used to live on .service-row__subtitle. */
+  .service-row__title {
+    margin-bottom: 1.5rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  /* Dark product-title heading scale from product.astro, not the tan
+     .section-heading — these rows read as near-black in the reference. */
+  .service-row__heading {
+    margin: 0 0 .15rem;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .service-row__subtitle {
+    margin: 0;
+    font-size: .8rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #777;
+  }
+
+  .service-row__body {
+    margin: 0 0 1.25rem;
+    line-height: 1.6;
+    color: #333;
+    font-size: .95rem;
+  }
+
+  .service-row__body:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Matches index.astro's divider; .services-shell's spacing does not reach
+     outside it, so the spacing around the rule is set explicitly here. */
+  .section-rule {
+    width: min(var(--max), 92%);
+    margin: 3.5rem auto 3rem;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  @media (max-width: 900px) {
+    .service-row {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+      padding: 2.5rem 0;
+    }
+
+    .service-row__image-wrap,
+    .service-row--reversed .service-row__image-wrap {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      height: auto;
+      min-height: 0;
+      order: 0;
+    }
+
+    .service-row__copy,
+    .service-row--reversed .service-row__copy {
+      order: 0;
+    }
+  }
+</style>
