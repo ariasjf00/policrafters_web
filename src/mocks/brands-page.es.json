@@ -1,0 +1,193 @@
+{
+  "type": "brands.BrandsPage",
+  "title": "Marcas",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Marcas | Policrafters",
+    "search_description": "Conoce a los fabricantes aliados de Policrafters: Alutech USA y Glasstech USA."
+  },
+  "fields": {
+    "brand_logos": [
+      {
+        "key": "crafters",
+        "placeholder_text": "LOGO DE CRAFTERS DESIGN & RENOVATIONS",
+        "image": null
+      },
+      {
+        "key": "alutech",
+        "placeholder_text": "",
+        "image": {
+          "url": "/images/pages/Logo-Alutech-USA.png",
+          "alt": "Logo de Alutech USA"
+        }
+      },
+      {
+        "key": "glasstech",
+        "placeholder_text": "",
+        "image": {
+          "url": "/images/pages/Logo-Glasstech.png",
+          "alt": "Logo de Glasstech USA"
+        }
+      }
+    ],
+    "banner_image": {
+      "url": "/images/pages/values_1.webp",
+      "alt": "Socio arquitectónico de Policrafters"
+    },
+    "banner_heading": "Socio Arquitectónico",
+    "banner_cta": {
+      "label": "CONTÁCTANOS AHORA",
+      "url": "/contact-us"
+    },
+    "copy": {
+      "projects_eyebrow": "Nuestros proyectos",
+      "projects_heading": "MIRA LO QUE PODEMOS CREAR",
+      "projects_cta": "Ver todos los proyectos",
+      "projects_prev_aria": "Ver proyecto anterior",
+      "projects_next_aria": "Ver siguiente proyecto",
+      "projects_carousel_aria": "Carrusel de proyectos",
+      "projects_dot_aria": "Ir al proyecto",
+      "about_eyebrow": "Nosotros, Marcas",
+      "about_heading": "BIENVENIDO A POLICRAFTERS",
+      "about_body_1": "En Policrafters, nos enorgullecemos de ofrecer soluciones que no solo son innovadoras, sino también altamente personalizables para satisfacer las necesidades únicas de cada cliente. Nuestro compromiso con la excelencia se refleja en cada proyecto que emprendemos, desde el concepto hasta la finalización. Un nombre distinguido en Diseño de Interiores y Soluciones de Arquitectura.",
+      "about_body_2": "Fabricados en Estados Unidos con materiales de primera calidad y tecnología de vanguardia, nuestros productos son un testimonio de la experiencia y dedicación de nuestro equipo. Nuestro personal aporta una gran experiencia que nos permite diseñar, fabricar e instalar soluciones a medida en el sur de Florida y más allá. Ya sea que busques trabajos intrincados en vidrio, aluminio, otros metales o carpintería, Policrafters está listo para hacer realidad tu visión.",
+      "about_brands_label": "Nuestras Marcas",
+      "about_cta": "Saber más",
+      "team_eyebrow": "Nuestro Equipo, Experiencia",
+      "team_heading": "LA GENTE DETRÁS DEL OFICIO",
+      "values_eyebrow": "Nuestros Valores",
+      "values_heading": "LOS PRINCIPIOS DETRÁS DE TODO LO QUE CREAMOS",
+      "values_prev_aria": "Ver valor anterior",
+      "values_next_aria": "Ver siguiente valor",
+      "values_carousel_aria": "Carrusel de valores",
+      "values_dot_aria": "Ir al valor"
+    },
+    "featured_projects": [
+      {
+        "title": "Easy Slide",
+        "slug": "easy-slide",
+        "thumbnail": {
+          "url": "/images/projects/Easy_Slide.png",
+          "alt": "Easy Slide"
+        },
+        "description": "Sistema de puertas corredizas de bajo perfil que maximiza la luz natural sin sacrificar espacio en planta."
+      },
+      {
+        "title": "Pergola Thermal",
+        "slug": "pergola-thermal",
+        "thumbnail": {
+          "url": "/images/projects/Pergola_Thermal.png",
+          "alt": "Pergola Thermal"
+        },
+        "description": "Estructura térmica resistente pensada para espacios exteriores confortables durante todo el año."
+      },
+      {
+        "title": "Vienna Shower Door",
+        "slug": "vienna-shower-door",
+        "thumbnail": {
+          "url": "/images/projects/Vienna_Shower_Door.png",
+          "alt": "Vienna Shower Door"
+        },
+        "description": "Mampara de cristal templado con herrajes minimalistas que aportan elegancia al baño moderno."
+      },
+      {
+        "title": "Prima Pivot",
+        "slug": "prima-pivot",
+        "thumbnail": {
+          "url": "/images/projects/Prima_Shower_D.jpg",
+          "alt": "Prima Pivot"
+        },
+        "description": "Puerta pivotante de diseño limpio, ideal para accesos de gran formato con apertura suave."
+      },
+      {
+        "title": "Cardiff",
+        "slug": "cardiff",
+        "thumbnail": {
+          "url": "/images/projects/Cardiff.jpg",
+          "alt": "Cardiff"
+        },
+        "description": "Solución de cerramiento en vidrio y acero que combina durabilidad con una estética sobria."
+      }
+    ],
+    "about_image": {
+      "url": "/images/pages/about_us.png",
+      "alt": "Equipo de Policrafters"
+    },
+    "about_links": [
+      { "label": "glasstech-usa.com", "url": "https://glasstech-usa.com" },
+      { "label": "alutech-usa.com", "url": "https://alutech-usa.com" }
+    ],
+    "team_members": [
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": {
+          "url": "/images/pages/office_portrait_1.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": {
+          "url": "/images/pages/office_portrait_2.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": {
+          "url": "/images/pages/office_portrait_3.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "name": "NAME LAST NAME",
+        "role": "Puesto",
+        "photo": {
+          "url": "/images/pages/office_portrait_4.png",
+          "alt": "Integrante del equipo Policrafters"
+        },
+        "bio": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ],
+    "values_slides": [
+      {
+        "title": "Calidad",
+        "image": {
+          "url": "/images/pages/values_1.webp",
+          "alt": "Calidad Policrafters"
+        },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Durabilidad",
+        "image": {
+          "url": "/images/pages/values_2.webp",
+          "alt": "Durabilidad Policrafters"
+        },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Experiencia",
+        "image": {
+          "url": "/images/pages/values_3.webp",
+          "alt": "Experiencia Policrafters"
+        },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      },
+      {
+        "title": "Innovación",
+        "image": {
+          "url": "/images/pages/values_4.webp",
+          "alt": "Innovación Policrafters"
+        },
+        "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+      }
+    ]
+  }
+}
