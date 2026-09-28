@@ -467,6 +467,110 @@ Nota importante: igual que CollectionIndexPage y RenovationIndexPage, la API dev
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos ([DirectContactBlock](#directcontactblock--contacto-directo-compartido) y [CatalogIndex](#catalogindex--catálogos)).
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage, CollectionIndexPage y RenovationIndexPage.
 
+## BrandsPage
+
+Página de marcas referenciada por [brands.astro](../src/pages/brands.astro). Contrato propio, sin depender de HomePage, aunque el tramo inferior de la página (proyectos, nosotros/marcas, equipo, valores) reutiliza el mismo contenido que HomePage y vive en su propio payload — ambas páginas pueden divergir sin coordinarse. Renderiza el carrusel compartido de [CatalogIndex](#catalogindex--catálogos) y el bloque compartido de [DirectContactBlock](#directcontactblock--contacto-directo-compartido) al final, igual que ServicesPage.
+
+Mocks de referencia: [src/mocks/brands-page.en.json](../src/mocks/brands-page.en.json) y [src/mocks/brands-page.es.json](../src/mocks/brands-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_BRANDS_API_URL`.
+
+Nota importante: igual que ServicesPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "brands.BrandsPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "brand_logos": [
+      {
+        "key": "string",
+        "placeholder_text": "string",
+        "image": { "url": "string", "alt": "string" } 
+      }
+    ],
+    "banner_image": {
+      "url": "string",
+      "alt": "string"
+    },
+    "banner_heading": "string",
+    "banner_cta": {
+      "label": "string",
+      "url": "string"
+    },
+    "copy": {
+      "projects_eyebrow": "string",
+      "projects_heading": "string",
+      "projects_cta": "string",
+      "projects_prev_aria": "string",
+      "projects_next_aria": "string",
+      "projects_carousel_aria": "string",
+      "projects_dot_aria": "string",
+      "about_eyebrow": "string",
+      "about_heading": "string",
+      "about_body_1": "string",
+      "about_body_2": "string",
+      "about_brands_label": "string",
+      "about_cta": "string",
+      "team_eyebrow": "string",
+      "team_heading": "string",
+      "values_eyebrow": "string",
+      "values_heading": "string",
+      "values_prev_aria": "string",
+      "values_next_aria": "string",
+      "values_carousel_aria": "string",
+      "values_dot_aria": "string"
+    },
+    "featured_projects": [
+      {
+        "title": "string",
+        "slug": "string",
+        "thumbnail": { "url": "string", "alt": "string" },
+        "description": "string"
+      }
+    ],
+    "about_image": {
+      "url": "string",
+      "alt": "string"
+    },
+    "about_links": [
+      { "label": "string", "url": "string" }
+    ],
+    "team_members": [
+      {
+        "name": "string",
+        "role": "string",
+        "photo": { "url": "string", "alt": "string" },
+        "bio": "string"
+      }
+    ],
+    "values_slides": [
+      {
+        "title": "string",
+        "image": { "url": "string", "alt": "string" },
+        "description": "string"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `brand_logos` es un array ordenado de exactamente 3 entradas hoy (placeholder de Crafters Design & Renovations, Alutech USA, Glasstech USA), pero el frontend no asume una cantidad fija — renderiza en el orden recibido. `image` es `null` mientras un logo no exista todavía; en ese caso el frontend muestra `placeholder_text` como texto en su lugar. Cuando `image` está presente, `placeholder_text` se ignora.
+- `banner_image`, `banner_heading` y `banner_cta` alimentan la franja de bienvenida a pantalla completa con overlay oscuro; `banner_cta.url` es la URL de destino del botón (hoy `/contact-us`).
+- `copy`, `featured_projects`, `about_image`, `about_links`, `team_members` y `values_slides` tienen la misma forma que sus equivalentes en [HomePage](#homepage-contrato-nuevo-para-diseño-actual) (`fields.copy`, `fields.featured_projects`, `fields.team_members`, `fields.values_slides`), pero son un payload independiente: el backend puede hacer que ambas páginas compartan el mismo contenido o diverjan, sin que el frontend tenga que coordinarlas.
+- `about_links` reemplaza los enlaces de marca que HomePage codifica directamente en el markup (`glasstech-usa.com`, `alutech-usa.com`); aquí vienen del payload como `{ label, url }`.
+- Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
+- El backend o mock devuelve todos los campos ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`.
+- Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos ([DirectContactBlock](#directcontactblock--contacto-directo-compartido) y [CatalogIndex](#catalogindex--catálogos)).
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
