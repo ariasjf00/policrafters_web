@@ -915,6 +915,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 
 - [x] `RenovationIndexPage` (ver [RenovationIndexPage](#renovationindexpage))
 - [x] `ServicesPage` (ver [ServicesPage](#servicespage))
-- [ ] `BrandPage`
+- [x] `BrandPage` (ver [BrandsPage](#brandspage))
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.
