@@ -308,7 +308,14 @@ const countries = [
       <a class="contact-highlight__value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
       {contactUrl && (
         <div class="contact-highlight__action">
-          <a class="submit-btn" href={contactUrl} data-copy-en={contentCopy.projectButtonLabel.en} data-copy-es={contentCopy.projectButtonLabel.es}>
+          <a
+            class="submit-btn"
+            href={contactUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-copy-en={contentCopy.projectButtonLabel.en}
+            data-copy-es={contentCopy.projectButtonLabel.es}
+          >
             {pick(contentCopy.projectButtonLabel.en, contentCopy.projectButtonLabel.es)}
           </a>
         </div>
@@ -561,6 +568,8 @@ const countries = [
       const projectButton = document.querySelector('.contact-highlight__action .submit-btn');
       if (projectButton) {
         setCopyPair(projectButton, fields.copy?.project_button_label || '');
+        projectButton.setAttribute('target', '_blank');
+        projectButton.setAttribute('rel', 'noopener noreferrer');
         if (typeof fields.contact?.url_contact === 'string') {
           projectButton.setAttribute('href', fields.contact.url_contact);
         }
