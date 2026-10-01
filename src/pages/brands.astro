@@ -1,35 +1,1568 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import CatalogsCarousel from '../components/CatalogsCarousel.astro';
+import DirectContact from '../components/DirectContact.astro';
+import { loadBrandsPageContent } from '../lib/brands-content';
+import { loadCatalogs } from '../lib/catalogs';
+import { loadDirectContact } from '../lib/direct-contact';
 
+type AnyRecord = Record<string, any>;
+
+// Both languages fetched at build time, same as services.astro / product.astro:
+// this page ships every string twice (data-copy-es/-en) so Header's toggle can
+// switch it without a reload, which means one localized response isn't enough.
+const { en: brandsEn, es: brandsEs } = await loadBrandsPageContent();
+const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
+const { en: directContactEn, es: directContactEs } = await loadDirectContact();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n).
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
-const lang = langParam === 'en' ? 'en' : 'es';
-const copy = lang === 'en'
-  ? {
-      title: 'Brands | Policrafters',
-      description: 'Brands we work with',
-      heroTitle: 'Brands',
-      heroSubtitle: 'We present the brands and manufacturers that support our projects.',
-      sectionTitle: 'Brands',
-      sectionBody: 'This page can be powered by Wagtail.'
-    }
-  : {
-      title: 'Marcas | Policrafters',
-      description: 'Marcas con las que trabajamos',
-      heroTitle: 'Marcas',
-      heroSubtitle: 'Presentamos las marcas y fabricantes que acompañan nuestros proyectos.',
-      sectionTitle: 'Marcas',
-      sectionBody: 'Esta página se puede alimentar desde Wagtail.'
-    };
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const activeContent = isEs ? brandsEs : brandsEn;
+const enFields = brandsEn.fields;
+const esFields = brandsEs.fields;
+
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? 'Marcas | Policrafters' : 'Brands | Policrafters'),
+  search_description: activeContent.meta?.search_description || 'Policrafters brands'
+};
+
+// a. Logo row — paired by index, English driving the length, same convention
+// services.astro uses for its `services` array. `image` stays null until the
+// real logo exists; the placeholder text is only rendered in that case.
+const enLogos = Array.isArray(enFields.brand_logos) ? enFields.brand_logos : [];
+const esLogos = Array.isArray(esFields.brand_logos) ? esFields.brand_logos : [];
+const brandLogos = enLogos.map((enItem: AnyRecord, index: number) => {
+  const esItem = esLogos[index] ?? enItem;
+  const hasImage = Boolean(enItem.image?.url || esItem.image?.url);
+  return {
+    key: enItem.key ?? esItem.key ?? String(index),
+    placeholderText: {
+      es: esItem.placeholder_text ?? enItem.placeholder_text ?? '',
+      en: enItem.placeholder_text ?? esItem.placeholder_text ?? ''
+    },
+    image: hasImage
+      ? {
+          url: enItem.image?.url || esItem.image?.url || '',
+          alt: { es: esItem.image?.alt ?? '', en: enItem.image?.alt ?? esItem.image?.alt ?? '' }
+        }
+      : null
+  };
+});
+
+// b. Banner — image URL is language-independent; only alt/heading/CTA differ.
+const esBannerAlt = esFields.banner_image?.alt || '';
+const enBannerAlt = enFields.banner_image?.alt || esBannerAlt;
+const bannerImageUrl = enFields.banner_image?.url || esFields.banner_image?.url || '';
+const esBannerHeading = esFields.banner_heading || '';
+const enBannerHeading = enFields.banner_heading || esBannerHeading;
+const esBannerCtaLabel = esFields.banner_cta?.label || '';
+const enBannerCtaLabel = enFields.banner_cta?.label || esBannerCtaLabel;
+const bannerCtaUrl = enFields.banner_cta?.url || esFields.banner_cta?.url || '/contact-us';
+
+// c-f. Copy shared with the homepage's lower sections — paired the same way
+// services.astro pairs its intro copy.
+const enCopy = enFields.copy ?? {};
+const esCopy = esFields.copy ?? {};
+const cp = (key: string) => ({ es: esCopy[key] ?? enCopy[key] ?? '', en: enCopy[key] ?? esCopy[key] ?? '' });
+
+const projectsEyebrow = cp('projects_eyebrow');
+const projectsHeading = cp('projects_heading');
+const projectsCta = cp('projects_cta');
+const projectsPrevAria = cp('projects_prev_aria');
+const projectsNextAria = cp('projects_next_aria');
+const projectsCarouselAria = cp('projects_carousel_aria');
+const projectsDotAria = cp('projects_dot_aria');
+const aboutEyebrow = cp('about_eyebrow');
+const aboutHeading = cp('about_heading');
+const aboutBody1 = cp('about_body_1');
+const aboutBody2 = cp('about_body_2');
+const aboutBrandsLabel = cp('about_brands_label');
+const aboutCta = cp('about_cta');
+const teamEyebrow = cp('team_eyebrow');
+const teamHeading = cp('team_heading');
+const valuesEyebrow = cp('values_eyebrow');
+const valuesHeading = cp('values_heading');
+const valuesPrevAria = cp('values_prev_aria');
+const valuesNextAria = cp('values_next_aria');
+const valuesCarouselAria = cp('values_carousel_aria');
+const valuesDotAria = cp('values_dot_aria');
+
+// Featured projects — paired by index (same shared-URL convention as
+// services.astro's `services` array); English drives the length.
+const enProjects = Array.isArray(enFields.featured_projects) ? enFields.featured_projects : [];
+const esProjects = Array.isArray(esFields.featured_projects) ? esFields.featured_projects : [];
+const featuredProjects = enProjects.map((enItem: AnyRecord, index: number) => {
+  const esItem = esProjects[index] ?? enItem;
+  return {
+    slug: enItem.slug ?? esItem.slug ?? String(index),
+    thumbnailUrl: enItem.thumbnail?.url || esItem.thumbnail?.url || '',
+    thumbnailAlt: { es: esItem.thumbnail?.alt ?? '', en: enItem.thumbnail?.alt ?? esItem.thumbnail?.alt ?? '' },
+    title: { es: esItem.title ?? enItem.title ?? '', en: enItem.title ?? esItem.title ?? '' },
+    description: { es: esItem.description ?? enItem.description ?? '', en: enItem.description ?? esItem.description ?? '' }
+  };
+});
+
+// About image + brand links.
+const esAboutImageAlt = esFields.about_image?.alt || '';
+const enAboutImageAlt = enFields.about_image?.alt || esAboutImageAlt;
+const aboutImageUrl = enFields.about_image?.url || esFields.about_image?.url || '';
+
+const enAboutLinks = Array.isArray(enFields.about_links) ? enFields.about_links : [];
+const esAboutLinks = Array.isArray(esFields.about_links) ? esFields.about_links : [];
+const aboutLinks = enAboutLinks.map((enItem: AnyRecord, index: number) => {
+  const esItem = esAboutLinks[index] ?? enItem;
+  return {
+    url: enItem.url ?? esItem.url ?? '#',
+    // Domain-name labels are language-neutral, unlike the rest of this page's copy.
+    label: enItem.label ?? esItem.label ?? ''
+  };
+});
+
+// Team members — paired by index.
+const enTeam = Array.isArray(enFields.team_members) ? enFields.team_members : [];
+const esTeam = Array.isArray(esFields.team_members) ? esFields.team_members : [];
+const teamMembers = enTeam.map((enItem: AnyRecord, index: number) => {
+  const esItem = esTeam[index] ?? enItem;
+  return {
+    photoUrl: enItem.photo?.url || esItem.photo?.url || '',
+    photoAlt: {
+      es: esItem.photo?.alt || 'Integrante del equipo Policrafters',
+      en: enItem.photo?.alt || esItem.photo?.alt || 'Policrafters team member'
+    },
+    role: { es: esItem.role ?? enItem.role ?? '', en: enItem.role ?? esItem.role ?? '' },
+    name: { es: esItem.name ?? enItem.name ?? '', en: enItem.name ?? esItem.name ?? '' },
+    bio: { es: esItem.bio ?? enItem.bio ?? '', en: enItem.bio ?? esItem.bio ?? '' }
+  };
+});
+
+// Values slides — paired by index.
+const enValues = Array.isArray(enFields.values_slides) ? enFields.values_slides : [];
+const esValues = Array.isArray(esFields.values_slides) ? esFields.values_slides : [];
+const valuesSlides = enValues.map((enItem: AnyRecord, index: number) => {
+  const esItem = esValues[index] ?? enItem;
+  return {
+    imageUrl: enItem.image?.url || esItem.image?.url || '',
+    imageAlt: { es: esItem.image?.alt ?? '', en: enItem.image?.alt ?? esItem.image?.alt ?? '' },
+    title: { es: esItem.title ?? enItem.title ?? '', en: enItem.title ?? esItem.title ?? '' },
+    description: { es: esItem.description ?? enItem.description ?? '', en: enItem.description ?? esItem.description ?? '' }
+  };
+});
 ---
 
 <PageLayout
-  title={copy.title}
-  description={copy.description}
-  heroTitle={copy.heroTitle}
-  heroSubtitle={copy.heroSubtitle}
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
+  showHero={false}
 >
-  <section>
-    <h2>{copy.sectionTitle}</h2>
-    <p>{copy.sectionBody}</p>
+  <section class="brands-shell">
+    <!-- a. Logo row — full-bleed band flush under the sticky nav, same
+         margin-top: -3rem trick services.astro's hero uses to cancel
+         PageLayout's `.page-shell { padding: 3rem 0 4rem }`. Three equal
+         columns divided by a solid 1px rule. The Crafters Design &
+         Renovations logo doesn't exist yet, so its cell renders styled
+         placeholder text instead of an image. -->
+    <div class="brands-bleed brands-logos">
+      <div class="brands-logos__grid">
+        {brandLogos.map((logo: AnyRecord) => (
+          logo.image ? (
+            <div class="brands-logos__cell">
+              <img
+                class="brands-logos__image"
+                src={logo.image.url}
+                alt={pick(logo.image.alt.es, logo.image.alt.en)}
+                data-alt-es={logo.image.alt.es}
+                data-alt-en={logo.image.alt.en}
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+          ) : (
+            <div class="brands-logos__cell">
+              <p
+                class="brands-logos__placeholder"
+                data-copy-es={logo.placeholderText.es}
+                data-copy-en={logo.placeholderText.en}
+              >{pick(logo.placeholderText.es, logo.placeholderText.en)}</p>
+            </div>
+          )
+        ))}
+      </div>
+    </div>
+
+    <!-- b. Banner — full-bleed values_1.webp with a dark overlay and a
+         centered title + CTA. Height is capped at 800px (hard requirement);
+         clamp keeps it responsive below that ceiling the same way
+         services.astro's hero clamps to 720px. -->
+    <div class="brands-bleed brands-banner">
+      <img
+        class="brands-banner__image"
+        src={bannerImageUrl}
+        alt={pick(esBannerAlt, enBannerAlt)}
+        data-alt-es={esBannerAlt}
+        data-alt-en={enBannerAlt}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+      <div class="brands-banner__overlay"></div>
+      <div class="brands-banner__content">
+        <h1
+          class="brands-banner__title"
+          data-copy-es={esBannerHeading}
+          data-copy-en={enBannerHeading}
+        >{pick(esBannerHeading, enBannerHeading)}</h1>
+        <a
+          class="brands-banner__cta"
+          href={bannerCtaUrl}
+          data-copy-es={esBannerCtaLabel}
+          data-copy-en={enBannerCtaLabel}
+        >{pick(esBannerCtaLabel, enBannerCtaLabel)}</a>
+      </div>
+    </div>
+
+    <!-- c. Projects — copied from index.astro's "Our projects" section (same
+         carousel shell, arrows, dots, CTA). Localized strings switch from the
+         homepage's id-based re-render to data-copy-es/-en, since this page
+         uses the subscriber pattern, not define:vars. -->
+    <section class="projects-section">
+      <p
+        class="section-eyebrow"
+        data-copy-es={projectsEyebrow.es}
+        data-copy-en={projectsEyebrow.en}
+      >{pick(projectsEyebrow.es, projectsEyebrow.en)}</p>
+      <h2
+        class="section-heading"
+        data-copy-es={projectsHeading.es}
+        data-copy-en={projectsHeading.en}
+      >{pick(projectsHeading.es, projectsHeading.en)}</h2>
+
+      <div class="projects-carousel-shell">
+        <div class="projects-carousel-viewport">
+          <div class="projects-carousel-controls" aria-hidden="true">
+            <button
+              id="projects-prev"
+              class="projects-arrow-btn"
+              data-action="prev"
+              disabled
+              aria-label={pick(projectsPrevAria.es, projectsPrevAria.en)}
+            >
+              <svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+            </button>
+            <button
+              id="projects-next"
+              class="projects-arrow-btn"
+              data-action="next"
+              aria-label={pick(projectsNextAria.es, projectsNextAria.en)}
+            >
+              <svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+            </button>
+          </div>
+
+          <div
+            class="projects-carousel"
+            id="projects-carousel"
+            aria-label={pick(projectsCarouselAria.es, projectsCarouselAria.en)}
+          >
+            {featuredProjects.map((p: AnyRecord, index: number) => (
+              <a href="#" class="projects-card" data-project-index={index}>
+                <img
+                  src={p.thumbnailUrl}
+                  alt={pick(p.thumbnailAlt.es, p.thumbnailAlt.en)}
+                  data-alt-es={p.thumbnailAlt.es}
+                  data-alt-en={p.thumbnailAlt.en}
+                  loading="lazy"
+                />
+                <div class="projects-card__body">
+                  <h3
+                    class="projects-card__title"
+                    data-copy-es={p.title.es}
+                    data-copy-en={p.title.en}
+                  >{pick(p.title.es, p.title.en)}</h3>
+                  <p
+                    class="projects-card__description"
+                    data-copy-es={p.description.es}
+                    data-copy-en={p.description.en}
+                  >{pick(p.description.es, p.description.en)}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div
+          class="projects-indicator"
+          id="projects-indicator"
+          role="tablist"
+          aria-label={pick(projectsCarouselAria.es, projectsCarouselAria.en)}
+        >
+          <button
+            type="button"
+            class="projects-indicator-arrow"
+            data-action="prev"
+            disabled
+            aria-label={pick(projectsPrevAria.es, projectsPrevAria.en)}
+          >
+            <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+          </button>
+          <div
+            class="projects-dots"
+            id="projects-dots"
+            data-dot-aria-es={projectsDotAria.es}
+            data-dot-aria-en={projectsDotAria.en}
+          >
+            {featuredProjects.map((_: AnyRecord, index: number) => (
+              <button
+                type="button"
+                class:list={["projects-dot", index === 0 && "is-active"]}
+                data-dot-index={index}
+                aria-label={`${pick(projectsDotAria.es, projectsDotAria.en)} ${index + 1}`}
+              ></button>
+            ))}
+          </div>
+          <button
+            type="button"
+            class="projects-indicator-arrow"
+            data-action="next"
+            aria-label={pick(projectsNextAria.es, projectsNextAria.en)}
+          >
+            <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <a
+        id="projects-cta"
+        href="#"
+        class="projects-cta-btn"
+        data-copy-es={projectsCta.es}
+        data-copy-en={projectsCta.en}
+      >{pick(projectsCta.es, projectsCta.en)}</a>
+    </section>
+
+    <hr class="section-rule" />
+
+    <!-- d. About Us, Brands — copied from index.astro's about-section. The
+         `.container` class is dropped: `.page-shell` already constrains the
+         width, unlike the homepage which has no such wrapper. The bleed math
+         moves onto a wrapper div (see .about-image-wrap in <style>) instead
+         of the <img> itself — PageLayout's global.css preflight sets
+         `img { max-width: 100% }`, which would otherwise clamp the oversized
+         width back down while the negative margin still applied, opening a
+         gap beside the text (the same bug noted in services.astro). -->
+    <section class="about-section">
+      <div class="about-grid">
+        <div class="about-image-wrap">
+          <img
+            class="about-image"
+            src={aboutImageUrl}
+            alt={pick(esAboutImageAlt, enAboutImageAlt)}
+            data-alt-es={esAboutImageAlt}
+            data-alt-en={enAboutImageAlt}
+            loading="lazy"
+          />
+        </div>
+        <div class="about-copy">
+          <p
+            class="section-eyebrow"
+            data-copy-es={aboutEyebrow.es}
+            data-copy-en={aboutEyebrow.en}
+          >{pick(aboutEyebrow.es, aboutEyebrow.en)}</p>
+          <h2
+            class="section-heading"
+            data-copy-es={aboutHeading.es}
+            data-copy-en={aboutHeading.en}
+          >{pick(aboutHeading.es, aboutHeading.en)}</h2>
+          <p data-copy-es={aboutBody1.es} data-copy-en={aboutBody1.en}>{pick(aboutBody1.es, aboutBody1.en)}</p>
+          <p data-copy-es={aboutBody2.es} data-copy-en={aboutBody2.en}>{pick(aboutBody2.es, aboutBody2.en)}</p>
+          <p
+            class="about-brands-label"
+            data-copy-es={aboutBrandsLabel.es}
+            data-copy-en={aboutBrandsLabel.en}
+          >{pick(aboutBrandsLabel.es, aboutBrandsLabel.en)}</p>
+          <ul class="about-brands-list">
+            {aboutLinks.map((link: AnyRecord) => (
+              <li><a href={link.url} target="_blank" rel="noopener">{link.label}</a></li>
+            ))}
+          </ul>
+          <a
+            class="about-cta-btn"
+            href="#"
+            data-copy-es={aboutCta.es}
+            data-copy-en={aboutCta.en}
+          >{pick(aboutCta.es, aboutCta.en)}</a>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-rule" />
+
+    <!-- e. Team — copied from index.astro's team-section. -->
+    <section class="team-section">
+      <p
+        class="section-eyebrow"
+        data-copy-es={teamEyebrow.es}
+        data-copy-en={teamEyebrow.en}
+      >{pick(teamEyebrow.es, teamEyebrow.en)}</p>
+      <h2
+        class="section-heading"
+        data-copy-es={teamHeading.es}
+        data-copy-en={teamHeading.en}
+      >{pick(teamHeading.es, teamHeading.en)}</h2>
+
+      <div class="team-grid">
+        {teamMembers.map((member: AnyRecord) => (
+          <div class="team-card">
+            <img
+              class="team-card__photo"
+              src={member.photoUrl}
+              alt={pick(member.photoAlt.es, member.photoAlt.en)}
+              data-alt-es={member.photoAlt.es}
+              data-alt-en={member.photoAlt.en}
+              loading="lazy"
+            />
+            <div class="team-card__meta">
+              <p
+                class="team-card__role"
+                data-copy-es={member.role.es}
+                data-copy-en={member.role.en}
+              >{pick(member.role.es, member.role.en)}</p>
+              <p
+                class="team-card__name"
+                data-copy-es={member.name.es}
+                data-copy-en={member.name.en}
+              >{pick(member.name.es, member.name.en)}</p>
+            </div>
+            <p
+              class="team-card__bio"
+              data-copy-es={member.bio.es}
+              data-copy-en={member.bio.en}
+            >{pick(member.bio.es, member.bio.en)}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <hr class="section-rule" />
+
+    <!-- f. Values — copied from index.astro's values-section (opacity fade
+         slider). `.values-slider` gets its full-bleed back explicitly (see
+         <style>): on the homepage it was already full-width because
+         `.values-section` sits outside any `.container`; inside
+         `.page-shell` it would otherwise cap at ~1100px. -->
+    <section class="values-section">
+      <div class="values-header">
+        <p
+          class="section-eyebrow"
+          data-copy-es={valuesEyebrow.es}
+          data-copy-en={valuesEyebrow.en}
+        >{pick(valuesEyebrow.es, valuesEyebrow.en)}</p>
+        <h2
+          class="section-heading"
+          data-copy-es={valuesHeading.es}
+          data-copy-en={valuesHeading.en}
+        >{pick(valuesHeading.es, valuesHeading.en)}</h2>
+      </div>
+
+      <div
+        class="values-slider"
+        id="values-slider"
+        aria-roledescription="carousel"
+        aria-label={pick(valuesCarouselAria.es, valuesCarouselAria.en)}
+      >
+        {valuesSlides.map((slide: AnyRecord, index: number) => (
+          <div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
+            <img
+              class="values-slide__image"
+              src={slide.imageUrl}
+              alt={pick(slide.imageAlt.es, slide.imageAlt.en)}
+              data-alt-es={slide.imageAlt.es}
+              data-alt-en={slide.imageAlt.en}
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+            <div class="values-slide__caption">
+              <h3
+                class="values-slide__title"
+                data-copy-es={slide.title.es}
+                data-copy-en={slide.title.en}
+              >{pick(slide.title.es, slide.title.en)}</h3>
+              <p
+                class="values-slide__description"
+                data-copy-es={slide.description.es}
+                data-copy-en={slide.description.en}
+              >{pick(slide.description.es, slide.description.en)}</p>
+            </div>
+          </div>
+        ))}
+
+        <div class="values-slider-controls" aria-hidden="true">
+          <button id="values-prev" class="values-arrow-btn" data-action="prev" aria-label={pick(valuesPrevAria.es, valuesPrevAria.en)}>
+            <svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#fff" /></svg>
+          </button>
+          <button id="values-next" class="values-arrow-btn" data-action="next" aria-label={pick(valuesNextAria.es, valuesNextAria.en)}>
+            <svg viewBox="0 0 24 24" width="29" height="29" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#fff" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="values-indicator"
+        id="values-indicator"
+        role="tablist"
+        aria-label={pick(valuesCarouselAria.es, valuesCarouselAria.en)}
+      >
+        <button type="button" class="values-indicator-arrow" data-action="prev" aria-label={pick(valuesPrevAria.es, valuesPrevAria.en)}>
+          <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
+        </button>
+        <div
+          class="values-dots"
+          id="values-dots"
+          data-dot-aria-es={valuesDotAria.es}
+          data-dot-aria-en={valuesDotAria.en}
+        >
+          {valuesSlides.map((_: AnyRecord, index: number) => (
+            <button
+              type="button"
+              class:list={["values-dot", index === 0 && "is-active"]}
+              data-dot-index={index}
+              aria-label={`${pick(valuesDotAria.es, valuesDotAria.en)} ${index + 1}`}
+            ></button>
+          ))}
+        </div>
+        <button type="button" class="values-indicator-arrow" data-action="next" aria-label={pick(valuesNextAria.es, valuesNextAria.en)}>
+          <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
+        </button>
+      </div>
+    </section>
   </section>
+
+  {/* Outside .brands-shell on purpose: both components own their own language
+      switching, so keeping them out of this page's subscriber leaves one
+      owner. Same rationale as services.astro / contact-us.astro. */}
+  <hr class="section-rule" />
+
+  <CatalogsCarousel lang={selectedLang} en={catalogsEn} es={catalogsEs} />
+
+  <DirectContact lang={selectedLang} en={directContactEn} es={directContactEs} />
 </PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.brands-shell');
+
+  if (shell) {
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    // All copy ships in the markup as data-copy-es/-en and data-alt-es/-en (images).
+    const applyBrandsLanguage = (lang) => {
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      document.documentElement.lang = key;
+    };
+
+    // The projects/values dots are (re)built at runtime, so their aria-labels
+    // aren't covered by the data-copy-es/-en sweep above — each dot container
+    // carries the label pair in data-dot-aria-es/-en instead. Re-labels
+    // existing dots on a language switch; the render functions below already
+    // read the same dataset when a dot is first created.
+    const refreshDotAria = (lang) => {
+      const key = lang === 'es' ? 'es' : 'en';
+
+      const relabel = (containerId, dotClass) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const base = key === 'es'
+          ? (container.dataset.dotAriaEs || 'Ir al elemento')
+          : (container.dataset.dotAriaEn || 'Go to item');
+        container.querySelectorAll('.' + dotClass).forEach((dot) => {
+          const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+          dot.setAttribute('aria-label', `${base} ${dotIndex + 1}`);
+        });
+      };
+
+      relabel('projects-dots', 'projects-dot');
+      relabel('values-dots', 'values-dot');
+    };
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. Self-boot first, since Header's boot dispatch fires
+    // before this page script runs (see services.astro for the same pattern).
+    applyBrandsLanguage(getActiveLang());
+    refreshDotAria(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => {
+      applyBrandsLanguage(event.detail);
+      refreshDotAria(event.detail);
+    });
+
+    // --- Projects carousel — copied from index.astro, minus the CMS
+    // re-render hooks (nothing here recreates cards at runtime). ---
+    const projectsCarousel = document.getElementById('projects-carousel');
+    const projectsButtons = document.querySelectorAll('#projects-prev, #projects-next, .projects-indicator-arrow');
+    const projectsDotsContainer = document.getElementById('projects-dots');
+    let projectsCards = projectsCarousel
+      ? Array.from(projectsCarousel.querySelectorAll('.projects-card'))
+      : [];
+
+    let projectsCount = projectsCards.length;
+    let projectsCurrentIndex = 0;
+    let projectsStepSize = 0;
+    let projectsPageCount = projectsCount;
+    let projectsScrollRaf = null;
+
+    const getCardOffset = (index) => {
+      const safeIndex = Math.max(0, Math.min(index, projectsCards.length - 1));
+      const target = projectsCards[safeIndex];
+      return target ? target.offsetLeft : 0;
+    };
+
+    // Astro's scoped styles only match elements carrying its data-astro-cid-*
+    // attribute, which is baked in at build time. Buttons created here at runtime
+    // need that same attribute copied over or the scoped .projects-dot rules
+    // (shape, fill, active state) silently fail to apply to them.
+    const astroScopeAttrs = projectsDotsContainer
+      ? Array.from(projectsDotsContainer.attributes).filter((attr) => attr.name.startsWith('data-astro-cid-'))
+      : [];
+
+    const renderProjectsDots = (pageCount) => {
+      if (!projectsDotsContainer) return;
+      const dotAriaEs = projectsDotsContainer.dataset.dotAriaEs || 'Ir al proyecto';
+      const dotAriaEn = projectsDotsContainer.dataset.dotAriaEn || 'Go to project';
+      const activeLang = getActiveLang();
+      projectsDotsContainer.innerHTML = '';
+      for (let i = 0; i < pageCount; i += 1) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'projects-dot';
+        dot.setAttribute('data-dot-index', String(i));
+        dot.setAttribute('aria-label', `${activeLang === 'es' ? dotAriaEs : dotAriaEn} ${i + 1}`);
+        astroScopeAttrs.forEach((attr) => dot.setAttribute(attr.name, attr.value));
+        projectsDotsContainer.appendChild(dot);
+      }
+    };
+
+    const measureProjectsStep = () => {
+      if (!projectsCarousel || projectsCards.length < 2) return;
+      projectsStepSize = projectsCards[1].offsetLeft - projectsCards[0].offsetLeft;
+      if (projectsStepSize <= 0) {
+        projectsStepSize = projectsCards[0].getBoundingClientRect().width;
+      }
+      // A carousel that shows more than one card per step has fewer distinct
+      // scroll stops than cards: the last (visibleCount - 1) cards share their
+      // stop with an earlier one, so the dot count must follow visible count.
+      const visibleCount = Math.max(1, Math.round(projectsCarousel.clientWidth / projectsStepSize));
+      const nextPageCount = Math.max(1, projectsCount - visibleCount + 1);
+      if (nextPageCount !== projectsPageCount) {
+        projectsPageCount = nextPageCount;
+        renderProjectsDots(projectsPageCount);
+        projectsCurrentIndex = Math.min(projectsCurrentIndex, projectsPageCount - 1);
+        refreshDotAria(getActiveLang());
+      }
+    };
+
+    const updateProjectsIndicator = () => {
+      if (!projectsPageCount) return;
+      document.querySelectorAll('.projects-dot').forEach((dot) => {
+        const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+        dot.classList.toggle('is-active', dotIndex === projectsCurrentIndex);
+      });
+      projectsButtons.forEach((button) => {
+        const action = button.getAttribute('data-action');
+        if (action === 'prev') button.disabled = projectsCurrentIndex === 0;
+        if (action === 'next') button.disabled = projectsCurrentIndex === projectsPageCount - 1;
+      });
+    };
+
+    const scrollProjectsToIndex = (index) => {
+      if (!projectsCarousel) return;
+      const clamped = Math.max(0, Math.min(index, projectsPageCount - 1));
+      const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+      const left = clamped === projectsPageCount - 1 ? maxScroll : getCardOffset(clamped);
+      projectsCarousel.scrollTo({ left, behavior: 'smooth' });
+      projectsCurrentIndex = clamped;
+      updateProjectsIndicator();
+    };
+
+    const handleProjectsScroll = () => {
+      if (projectsScrollRaf) return;
+      projectsScrollRaf = requestAnimationFrame(() => {
+        projectsScrollRaf = null;
+        if (!projectsStepSize || !projectsCarousel) return;
+        const maxScroll = projectsCarousel.scrollWidth - projectsCarousel.clientWidth;
+        const atEnd = maxScroll - projectsCarousel.scrollLeft < 2;
+        projectsCurrentIndex = atEnd
+          ? projectsPageCount - 1
+          : Math.min(Math.round(projectsCarousel.scrollLeft / projectsStepSize), projectsPageCount - 1);
+        updateProjectsIndicator();
+      });
+    };
+
+    const setupProjectsCarousel = () => {
+      if (!projectsCarousel || !projectsCount) return;
+
+      requestAnimationFrame(() => {
+        measureProjectsStep();
+        updateProjectsIndicator();
+      });
+
+      window.addEventListener('resize', () => {
+        requestAnimationFrame(measureProjectsStep);
+      });
+
+      projectsCarousel.addEventListener('scroll', handleProjectsScroll, { passive: true });
+
+      projectsButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+          scrollProjectsToIndex(projectsCurrentIndex + direction);
+        });
+      });
+
+      projectsDotsContainer?.addEventListener('click', (event) => {
+        const dot = event.target.closest('.projects-dot');
+        if (!dot) return;
+        const targetIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+        scrollProjectsToIndex(targetIndex);
+      });
+    };
+
+    setupProjectsCarousel();
+
+    // --- Values slider — copied from index.astro, minus the CMS re-render
+    // hook (nothing here recreates slides at runtime). ---
+    const valuesSlider = document.getElementById('values-slider');
+
+    let valuesSlides = valuesSlider
+      ? Array.from(valuesSlider.querySelectorAll('.values-slide'))
+      : [];
+
+    let valuesDots = Array.from(
+      document.querySelectorAll('.values-dot')
+    );
+
+    const valuesButtons = document.querySelectorAll(
+      '#values-prev, #values-next, .values-indicator-arrow'
+    );
+
+    let valuesCount = valuesSlides.length;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let valuesCurrentIndex = 0;
+    let valuesIntervalId = null;
+
+    const goToValuesSlide = (index) => {
+      valuesCurrentIndex = (index + valuesCount) % valuesCount;
+      valuesSlides.forEach((slide, i) => {
+        const isActive = i === valuesCurrentIndex;
+        slide.classList.toggle('is-active', isActive);
+        slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      });
+      valuesDots.forEach((dot) => {
+        const dotIndex = Number.parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+        dot.classList.toggle('is-active', dotIndex === valuesCurrentIndex);
+      });
+    };
+
+    const stopValuesAutoplay = () => {
+      if (valuesIntervalId) {
+        clearInterval(valuesIntervalId);
+        valuesIntervalId = null;
+      }
+    };
+
+    const startValuesAutoplay = () => {
+      if (prefersReducedMotion || !valuesCount) return;
+      stopValuesAutoplay();
+      valuesIntervalId = setInterval(() => {
+        goToValuesSlide(valuesCurrentIndex + 1);
+      }, 4000);
+    };
+
+    const setupValuesSlider = () => {
+      if (!valuesSlider || !valuesCount) return;
+
+      valuesButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const direction = button.getAttribute('data-action') === 'next' ? 1 : -1;
+          goToValuesSlide(valuesCurrentIndex + direction);
+          startValuesAutoplay();
+        });
+      });
+
+      const valuesDotsContainer = document.getElementById('values-dots');
+
+      valuesDotsContainer?.addEventListener('click', (event) => {
+        const dot = event.target.closest('.values-dot');
+        if (!dot) return;
+
+        const targetIndex = Number.parseInt(
+          dot.getAttribute('data-dot-index') || '0',
+          10
+        );
+
+        goToValuesSlide(targetIndex);
+        startValuesAutoplay();
+      });
+
+      valuesSlider.addEventListener('mouseenter', stopValuesAutoplay);
+      valuesSlider.addEventListener('mouseleave', startValuesAutoplay);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          stopValuesAutoplay();
+        } else {
+          startValuesAutoplay();
+        }
+      });
+
+      startValuesAutoplay();
+    };
+
+    setupValuesSlider();
+
+    // The catalogs slider lives in CatalogsCarousel.astro and wires itself up.
+  }
+</script>
+
+<style>
+  .brands-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Full-bleed technique reused from services.astro: breaks out of the
+     ~1100px .page-shell (see PageLayout.astro's :root --max) to span the full
+     viewport. Safe because PageLayout's body has `overflow-x: clip`. */
+  .brands-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the logo row sits flush under Header instead of leaving a
+     3rem gap above it, and adds the top rule the reference screenshot shows. */
+  .brands-logos {
+    margin-top: -3rem;
+    border-top: 1px solid #2f3437;
+  }
+
+  .brands-logos__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .brands-logos__cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    min-height: 160px;
+  }
+
+  /* Solid 1px vertical rule between cells, per spec. */
+  .brands-logos__cell + .brands-logos__cell {
+    border-left: 1px solid #2f3437;
+  }
+
+  .brands-logos__image {
+    width: 100%;
+    max-width: 220px;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* The Crafters Design & Renovations logo isn't ready yet — styled
+     placeholder text stands in for it until the real artwork exists. */
+  .brands-logos__placeholder {
+    margin: 0;
+    max-width: 22ch;
+    text-align: center;
+    font-size: clamp(1.1rem, 2vw, 1.6rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    line-height: 1.35;
+    color: #B6AE99;
+  }
+
+  .brands-banner {
+    position: relative;
+  }
+
+  /* Capped at 800px per spec (clamp's ceiling), same clamp mechanic
+     services.astro's hero uses for its own 720px ceiling. */
+  .brands-banner__image {
+    width: 100%;
+    height: clamp(320px, 45vw, 800px);
+    object-fit: cover;
+    display: block;
+  }
+
+  .brands-banner__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+  }
+
+  .brands-banner__content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+    text-align: center;
+    padding: 0 1.5rem;
+  }
+
+  .brands-banner__title {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  }
+
+  .brands-banner__cta {
+    display: inline-block;
+    padding: .85rem 2.5rem;
+    border: 1px solid #fff;
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .82rem;
+    font-weight: 600;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  .brands-banner__cta:hover,
+  .brands-banner__cta:focus-visible {
+    background: #fff;
+    color: #111;
+  }
+
+  .brands-banner__cta:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+
+  /* Reused verbatim from index.astro's eyebrow + heading recipe. Neither rule
+     sets font-family: both inherit Arimo from PageLayout.astro. */
+  .section-eyebrow {
+    margin: 0 0 .4rem;
+    font-style: italic;
+    font-size: .95rem;
+    color: #555;
+  }
+
+  .section-heading {
+    margin: 0 0 2.5rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #B6AE99;
+  }
+
+  /* --- Projects (copied from index.astro's .projects-* rules) --- */
+
+  /* width: 100%, not the homepage's min(var(--max), 92%): this section is
+     already inside `.page-shell`, which applies that same constraint, so
+     re-stating it here would double-constrain the width. */
+  .projects-section {
+    width: 100%;
+    padding: 4rem 0;
+    text-align: center;
+  }
+
+  .projects-carousel-shell {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .projects-carousel-viewport {
+    position: relative;
+  }
+
+  .projects-carousel-controls {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .projects-arrow-btn {
+    border: none;
+    background: none;
+    padding: .5rem;
+    cursor: pointer;
+    pointer-events: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+    transition: opacity .2s ease;
+  }
+
+  .projects-arrow-btn:hover {
+    opacity: .75;
+  }
+
+  .projects-arrow-btn:disabled {
+    opacity: .35;
+    cursor: default;
+  }
+
+  .projects-carousel {
+    /* The gap is what separates one project from the next, so the cards have to
+       give it back: two cards plus one gap must still add up to the viewport. */
+    --projects-gap: 1.5rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - var(--projects-gap)) / 2);
+    gap: var(--projects-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .projects-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .projects-card {
+    scroll-snap-align: start;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .projects-card img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    display: block;
+  }
+
+  .projects-card__body {
+    padding: 1.25rem 2rem 0;
+    text-align: center;
+  }
+
+  .projects-card__title {
+    margin: 0 0 .5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .projects-card__description {
+    margin: 0 auto;
+    max-width: 42ch;
+    font-size: .9rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .projects-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    margin: 1.75rem 0 2.5rem;
+  }
+
+  .projects-indicator-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: .3rem;
+    cursor: pointer;
+  }
+
+  .projects-indicator-arrow:disabled {
+    opacity: .35;
+    cursor: default;
+  }
+
+  .projects-dots {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .projects-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid #2f3437;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color .2s ease;
+  }
+
+  .projects-dot.is-active {
+    background: #2f3437;
+  }
+
+  .projects-cta-btn {
+    display: inline-block;
+    padding: .85rem 2.25rem;
+    border: 1px solid #2f3437;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .82rem;
+    font-weight: 600;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  .projects-cta-btn:hover,
+  .projects-cta-btn:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .projects-cta-btn:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  /* width: 100% for the same double-constraint reason as .projects-section;
+     margin is vertical-only since each section already carries its own
+     `padding: 4rem 0`, matching the homepage's rhythm exactly. */
+  .section-rule {
+    width: 100%;
+    margin: 0 auto;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  /* --- About Us, Brands (copied from index.astro's .about-* rules) --- */
+
+  .about-section {
+    padding: 4rem 0;
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 3rem;
+    align-items: stretch;
+    --page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
+  }
+
+  /* Bleed math lives on this wrapper DIV, not on the <img> itself — see the
+     comment above the markup for why (PageLayout's global.css preflight sets
+     `img { max-width: 100% }`, which clashes with an oversized width). */
+  .about-image-wrap {
+    width: calc(100% + var(--page-gutter));
+    margin-left: calc(-1 * var(--page-gutter));
+    height: 100%;
+    min-height: 320px;
+  }
+
+  .about-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .about-copy {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .about-copy .section-eyebrow,
+  .about-copy .section-heading {
+    text-align: left;
+  }
+
+  .about-copy p {
+    margin: 0 0 1.25rem;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .about-brands-label {
+    margin: .5rem 0 .75rem;
+    font-weight: 700;
+  }
+
+  .about-brands-list {
+    margin: 0 0 2rem;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .about-brands-list li {
+    margin-bottom: .4rem;
+  }
+
+  /* Inlined equivalent of index.astro's .link-body (src/styles/links.css):
+     that stylesheet is imported only by the homepage per CLAUDE.md, so the
+     underline-on-hover treatment is restated here scoped to this list rather
+     than importing the shared file into a PageLayout page. */
+  .about-brands-list a {
+    color: #2f3437;
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 1px;
+    padding-bottom: 3px;
+    transition: background-size .25s ease;
+  }
+
+  .about-brands-list a:visited {
+    color: #808080;
+  }
+
+  .about-brands-list a:hover,
+  .about-brands-list a:focus-visible {
+    background-size: 100% 2px;
+    font-weight: 600;
+  }
+
+  .about-cta-btn {
+    align-self: flex-end;
+    margin-top: auto;
+    display: inline-block;
+    padding: .85rem 2.25rem;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    font-size: .95rem;
+    font-weight: 600;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  .about-cta-btn:hover,
+  .about-cta-btn:focus-visible {
+    background: #fff;
+    color: #2f3437;
+    box-shadow: inset 0 0 0 1px #2f3437;
+  }
+
+  .about-cta-btn:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  /* --- Team (copied from index.astro's .team-* rules) --- */
+
+  .team-section {
+    padding: 4rem 0;
+    text-align: center;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .team-card {
+    text-align: left;
+  }
+
+  .team-card__photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    display: block;
+    border-style: solid;
+    border-width: 1pt;
+    border-color: #2f3437;
+  }
+
+  .team-card__meta {
+    margin-top: 1rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .team-card__role {
+    margin: 0 0 .25rem;
+    font-style: italic;
+    font-size: .78rem;
+    color: #777;
+  }
+
+  .team-card__name {
+    margin: 0 0 .5rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #111;
+  }
+
+  .team-card__bio {
+    margin: 0;
+    font-size: .82rem;
+    line-height: 1.55;
+    color: #666;
+  }
+
+  /* --- Values (copied from index.astro's .values-* rules) --- */
+
+  .values-section {
+    padding: 4rem 0;
+    text-align: center;
+  }
+
+  .values-header {
+    width: 100%;
+  }
+
+  /* Bleed re-added explicitly: on the homepage `.values-section` sits outside
+     any `.container`, so `width: 100%` was already the full viewport. Inside
+     `.page-shell` that same rule would cap at ~1100px, so the bleed is
+     restated here (safe: PageLayout sets `body { overflow-x: clip }`). */
+  .values-slider {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: 2.5rem;
+    aspect-ratio: 16 / 7;
+    overflow: hidden;
+  }
+
+  .values-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity .8s ease;
+  }
+
+  .values-slide.is-active {
+    opacity: 1;
+    z-index: 2;
+    pointer-events: auto;
+  }
+
+  .values-slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to top left, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 55%);
+  }
+
+  .values-slide__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .values-slide__caption {
+    position: absolute;
+    right: 6%;
+    bottom: 12%;
+    z-index: 2;
+    max-width: 42ch;
+    text-align: left;
+    border-left-style: solid;
+    border-left-color: #b6ae99;
+    padding-left: 12px;
+  }
+
+  .values-slide__title {
+    margin: 0 0 .5rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  }
+
+  .values-slide__description {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.55;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  }
+
+  .values-slider-controls {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .values-arrow-btn {
+    border: none;
+    background: none;
+    padding: .5rem;
+    cursor: pointer;
+    pointer-events: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .4));
+    transition: opacity .2s ease;
+  }
+
+  .values-arrow-btn:hover {
+    opacity: .75;
+  }
+
+  .values-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    margin: 1.75rem 0 0;
+  }
+
+  .values-indicator-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: .3rem;
+    cursor: pointer;
+  }
+
+  .values-dots {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .values-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid #2f3437;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color .2s ease;
+  }
+
+  .values-dot.is-active {
+    background: #2f3437;
+  }
+
+  @media (max-width: 900px) {
+    .brands-logos__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .brands-logos__cell + .brands-logos__cell {
+      border-left: none;
+      border-top: 1px solid #2f3437;
+    }
+
+    .projects-carousel {
+      grid-auto-columns: 88vw;
+    }
+
+    .projects-card__body {
+      padding: 1rem 1.25rem 0;
+    }
+
+    .about-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about-image-wrap {
+      width: 100%;
+      margin-left: 0;
+      height: auto;
+      min-height: 0;
+    }
+
+    .about-cta-btn {
+      align-self: flex-start;
+    }
+
+    .team-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .values-slider {
+      aspect-ratio: 4 / 3;
+    }
+
+    .values-slide__caption {
+      left: 6%;
+      right: 6%;
+      max-width: none;
+    }
+
+    .values-slide__title {
+      font-size: 1.9rem;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .team-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .values-slide__title {
+      font-size: 1.5rem;
+    }
+
+    .values-slide__description {
+      font-size: .8rem;
+    }
+
+    .values-slide__caption {
+      bottom: 8%;
+    }
+  }
+</style>

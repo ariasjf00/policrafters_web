@@ -373,6 +373,8 @@ const countries = [
 <script>
   // Language subscriber. Header.astro owns `siteLang` and is the sole dispatcher of
   // `sitelangchange` — this file only reads and listens, never re-dispatches.
+  let isWagtailPreview = false;
+
   const MESSAGES = {
     en: {
       required: 'This field is required.',
@@ -422,6 +424,10 @@ const countries = [
     const renderedAt = Date.now();
 
     const applyContactLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
       activeLang = lang === 'es' ? 'es' : 'en';
       const key = activeLang;
 
@@ -455,6 +461,122 @@ const countries = [
       if (status && !status.hidden && status.dataset.rule) {
         renderStatus(status.dataset.rule, status.dataset.tone || 'error');
       }
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (typeof value !== 'string' || !value) return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace(
+          'http://localhost/media/',
+          'http://localhost:8000/media/'
+        );
+      }
+      return value;
+    };
+
+    const setCopyPair = (element, value) => {
+      if (!element || typeof value !== 'string') return;
+      element.textContent = value;
+      element.setAttribute('data-copy-en', value);
+      element.setAttribute('data-copy-es', value);
+    };
+
+    const setAltPair = (element, value) => {
+      if (!element || typeof value !== 'string') return;
+      element.setAttribute('alt', value);
+      element.setAttribute('data-alt-en', value);
+      element.setAttribute('data-alt-es', value);
+    };
+
+    const updateLocationsPreview = (locations = [], learnMoreLabel = '') => {
+      const grid = document.querySelector('.locations__grid');
+      const template = grid?.querySelector('.location-card');
+      if (!grid || !template) return;
+
+      grid.replaceChildren();
+      locations.forEach((location, index) => {
+        const card = template.cloneNode(true);
+        const image = card.querySelector('.location-card__image');
+        if (image) {
+          image.setAttribute('src', normalizePreviewAssetUrl(location?.image?.url || ''));
+          setAltPair(image, location?.image?.alt || `LOCATION ${index + 1}`);
+        }
+
+        setCopyPair(card.querySelector('.location-card__name'), location?.name || '');
+
+        const address = card.querySelector('.location-card__address');
+        if (address) {
+          const parts = address.querySelectorAll('[data-copy-en]');
+          if (parts[0]) setCopyPair(parts[0], location?.address_label || '');
+          if (parts[1]) setCopyPair(parts[1], location?.street || '');
+          if (parts[2]) setCopyPair(parts[2], location?.city || '');
+        }
+
+        const link = card.querySelector('.location-card__cta');
+        if (link) {
+          link.setAttribute('href', location?.url || '#');
+          setCopyPair(link, learnMoreLabel || link.textContent || '');
+        }
+
+        grid.appendChild(card);
+      });
+    };
+
+    const updateContactPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      setCopyPair(document.querySelector('.contact-intro h1'), fields.copy?.heading || '');
+      setCopyPair(document.querySelector('.contact-intro p'), fields.copy?.intro || '');
+      setCopyPair(document.querySelector('.contact-highlight__label'), fields.copy?.phone_label || '');
+
+      const phoneValue = fields.contact?.phone_display || '';
+      const phoneHref = fields.contact?.phone_href || `tel:${phoneValue.replace(/[^\d+]/g, '')}`;
+      const phoneLink = document.querySelector('.contact-highlight__value[href^="tel:"]');
+      if (phoneLink) {
+        phoneLink.textContent = phoneValue;
+        phoneLink.setAttribute('href', phoneHref);
+      }
+
+      setCopyPair(document.querySelector('.contact-highlight p.contact-highlight__label'), fields.copy?.email_label || '');
+      const emailLink = document.querySelector('.contact-highlight a[href^="mailto:"]');
+      if (emailLink && typeof fields.contact?.email === 'string') {
+        emailLink.textContent = fields.contact.email;
+        emailLink.setAttribute('href', `mailto:${fields.contact.email}`);
+      }
+
+      const projectButton = document.querySelector('.contact-highlight__action .submit-btn');
+      if (projectButton) {
+        setCopyPair(projectButton, fields.copy?.project_button_label || '');
+        if (typeof fields.contact?.url_contact === 'string') {
+          projectButton.setAttribute('href', fields.contact.url_contact);
+        }
+      }
+
+      setCopyPair(document.querySelector('.locations__heading'), fields.copy?.locations_heading || '');
+      const locationsSection = document.querySelector('.locations');
+      if (locationsSection && typeof fields.copy?.locations_aria === 'string') {
+        locationsSection.setAttribute('aria-label', fields.copy.locations_aria);
+      }
+
+      updateLocationsPreview(Array.isArray(fields.locations) ? fields.locations : [], fields.copy?.learn_more || '');
+
+      const previewLang = previewData?.locale === 'es' ? 'es' : 'en';
+      isWagtailPreview = true;
+      document.documentElement.lang = previewLang;
     };
 
     const renderStatus = (rule, tone) => {
@@ -673,6 +795,23 @@ const countries = [
 
     applyContactLanguage(activeLang);
     document.addEventListener('sitelangchange', (event) => applyContactLanguage(event.detail));
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.ContactPage')) {
+        return;
+      }
+
+      updateContactPreview(previewData);
+    });
   }
 </script>
 
