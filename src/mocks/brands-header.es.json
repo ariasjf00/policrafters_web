@@ -1,0 +1,30 @@
+{
+  "type": "brands.BrandsPage",
+  "title": "Marcas",
+  "locale": "es",
+  "fields": {
+    "brand_logos": [
+      {
+        "key": "crafters",
+        "placeholder_text": "LOGO DE CRAFTERS DESIGN & RENOVATIONS",
+        "image": null
+      },
+      {
+        "key": "alutech",
+        "placeholder_text": "",
+        "image": {
+          "url": "/images/pages/Logo-Alutech-USA.png",
+          "alt": "Logo de Alutech USA"
+        }
+      },
+      {
+        "key": "glasstech",
+        "placeholder_text": "",
+        "image": {
+          "url": "/images/pages/Logo-Glasstech.png",
+          "alt": "Logo de Glasstech USA"
+        }
+      }
+    ]
+  }
+}

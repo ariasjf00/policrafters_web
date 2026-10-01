@@ -4,6 +4,8 @@
 // and index.astro deliberately does not load Tailwind. Importing it would inject
 // preflight (margin/padding/border resets) into the homepage's hand-written CSS.
 
+import { loadBrandsPageContent } from '../lib/brands-content';
+
 interface Props {
 	lang?: 'es' | 'en';
 	logo?: { url: string; alt: string };
@@ -21,6 +23,7 @@ const {
 } = Astro.props;
 
 const isEs = lang === 'es';
+const { en: brandsEn, es: brandsEs } = await loadBrandsPageContent();
 
 // The one menu table. Its client-side twin lives in this file's <script>; keeping both
 // here is what prevents the 4-way drift this component exists to fix.
@@ -41,9 +44,16 @@ const navItems = isEs
 		];
 
 // English is the default, so it is never stamped into a URL; Spanish always is.
+const hasPreviewFlag = (value: string | null | undefined) => {
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+	return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
 const appendLang = (href: string, value: string) => {
 	const [path, query = ''] = href.split('?');
 	const params = new URLSearchParams(query);
+	if (hasPreviewFlag(Astro.url.searchParams.get('preview'))) params.set('preview', '1');
+	else params.delete('preview');
 	if (value === 'es') params.set('lang', 'es');
 	else params.delete('lang');
 	const queryString = params.toString();
@@ -58,35 +68,39 @@ const brandLinks: {
 	url: string;
 	image: { url: string; alt: { en: string; es: string } } | null;
 	placeholder: { en: string; es: string };
-}[] = [
-	{
-		key: 'crafters',
-		url: '#',
-		image: null,
-		placeholder: {
-			en: 'Crafters Design & Renovations logo',
-			es: 'Logo Crafters Design & Renovations',
-		},
-	},
-	{
-		key: 'alutech',
-		url: '#',
-		image: {
-			url: '/images/pages/Logo-Alutech-USA.png',
-			alt: { en: 'Alutech USA logo', es: 'Logo de Alutech USA' },
-		},
-		placeholder: { en: '', es: '' },
-	},
-	{
-		key: 'glasstech',
-		url: '#',
-		image: {
-			url: '/images/pages/Logo-Glasstech.png',
-			alt: { en: 'Glasstech USA logo', es: 'Logo de Glasstech USA' },
-		},
-		placeholder: { en: '', es: '' },
-	},
-];
+}[] = (() => {
+	const enLogos = Array.isArray(brandsEn.fields?.brand_logos) ? brandsEn.fields.brand_logos : [];
+	const esLogos = Array.isArray(brandsEs.fields?.brand_logos) ? brandsEs.fields.brand_logos : [];
+	const base = enLogos.length ? enLogos : esLogos;
+
+	const toSafeText = (value: unknown, fallback = '') =>
+		typeof value === 'string' && value.trim() ? value : fallback;
+
+	return base.map((logo, index) => {
+		const sameKeyEs = esLogos.find((candidate) => candidate?.key && candidate.key === logo?.key);
+		const byIndexEs = esLogos[index];
+		const esLogo = sameKeyEs ?? byIndexEs ?? logo;
+
+		const enPlaceholder = toSafeText(logo?.placeholder_text, 'Crafters Design & Renovations logo');
+		const esPlaceholder = toSafeText(esLogo?.placeholder_text, enPlaceholder);
+
+		const imageUrl = toSafeText(logo?.image?.url) || toSafeText(esLogo?.image?.url);
+		const enAlt = toSafeText(logo?.image?.alt);
+		const esAlt = toSafeText(esLogo?.image?.alt, enAlt);
+
+		return {
+			key: toSafeText(logo?.key, `brand-${index + 1}`),
+			url: '#',
+			image: imageUrl
+				? {
+					url: imageUrl,
+					alt: { en: enAlt || esAlt || enPlaceholder, es: esAlt || enAlt || esPlaceholder },
+				}
+				: null,
+			placeholder: { en: enPlaceholder, es: esPlaceholder },
+		};
+	});
+})();
 const isExternal = (url: string) => /^https?:\/\//.test(url);
 
 // Tolerate a trailing slash so /collections/ keeps its active-page highlight.
@@ -219,6 +233,22 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 
 	const header = document.querySelector('.site-header');
 
+	const hasPreviewFlag = (value) => {
+		const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+		return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+	};
+
+	const getPreviewState = () => {
+		const params = new URLSearchParams(window.location.search);
+		const previewInUrl = hasPreviewFlag(params.get('preview'));
+		if (previewInUrl) {
+			localStorage.setItem('sitePreview', '1');
+			return true;
+		}
+		const stored = localStorage.getItem('sitePreview');
+		return stored === '1' || stored === 'true';
+	};
+
 	const getLangFromUrl = () => {
 		const params = new URLSearchParams(window.location.search);
 		const lang = params.get('lang');
@@ -229,6 +259,8 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const appendLang = (href, lang) => {
 		const [path, query = ''] = href.split('?');
 		const params = new URLSearchParams(query);
+		if (getPreviewState()) params.set('preview', '1');
+		else params.delete('preview');
 		if (lang === 'es') params.set('lang', 'es');
 		else params.delete('lang');
 		const queryString = params.toString();
@@ -390,20 +422,105 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	// A redundant ?lang=en is stripped so shared links stay canonical.
 	const syncLangInUrl = (lang) => {
 		const nextUrl = new URL(window.location.href);
+		const previewEnabled = getPreviewState();
+		if (previewEnabled) nextUrl.searchParams.set('preview', '1');
+		else nextUrl.searchParams.delete('preview');
+
 		const current = nextUrl.searchParams.get('lang');
 		if (lang === 'en') {
-			if (current === null) return;
+			if (current === null && !previewEnabled) return;
 			nextUrl.searchParams.delete('lang');
 		} else {
-			if (current === 'es') return;
+			if (current === 'es' && previewEnabled) return;
 			nextUrl.searchParams.set('lang', 'es');
 		}
 		window.history.replaceState({}, '', nextUrl);
 	};
 
+	const brandsApiUrl = import.meta.env.PUBLIC_BRANDS_API_URL || '';
+	const readPreviewStatus = () => {
+		const previewEnabled = getPreviewState();
+		if (import.meta.env.DEV) {
+			console.debug('[header-preview]', {
+				preview: previewEnabled,
+				source: previewEnabled ? 'runtime' : 'static',
+				endpoint: previewEnabled ? brandsApiUrl : null,
+				lang: resolveActiveLang()
+			});
+		}
+		return previewEnabled;
+	};
+
+	const renderBrandsMenuFromPayload = (payload, lang) => {
+		const grid = document.querySelector('.brands-menu__grid');
+		if (!grid || !payload || typeof payload !== 'object') return;
+
+		const logos = Array.isArray(payload?.fields?.brand_logos) ? payload.fields.brand_logos : [];
+		if (!logos.length) return;
+
+		const buildCell = (logo, index) => {
+			const href = '#';
+			const cell = document.createElement('a');
+			cell.className = 'brands-menu__cell';
+			cell.href = href;
+			cell.dataset.brandKey = logo?.key || `brand-${index + 1}`;
+
+			const imageUrl = typeof logo?.image?.url === 'string' ? logo.image.url : '';
+			const altText = typeof logo?.image?.alt === 'string' ? logo.image.alt : (lang === 'es' ? logo?.placeholder_text ?? '' : logo?.placeholder_text ?? '');
+
+			if (imageUrl) {
+				const img = document.createElement('img');
+				img.className = 'brands-menu__image';
+				img.src = imageUrl;
+				img.alt = altText;
+				img.loading = 'lazy';
+				img.decoding = 'async';
+				cell.appendChild(img);
+			} else {
+				const placeholder = document.createElement('span');
+				placeholder.className = 'brands-menu__placeholder';
+				placeholder.textContent = logo?.placeholder_text || (lang === 'es' ? 'Marca' : 'Brand');
+				cell.appendChild(placeholder);
+			}
+
+			return cell;
+		};
+
+		grid.replaceChildren(...logos.map((logo, index) => buildCell(logo, index)));
+	};
+
+	const hydratePreviewBrands = async () => {
+		if (!readPreviewStatus() || !brandsApiUrl) return;
+
+		try {
+			const payloads = await Promise.all(['en', 'es'].map(async (lang) => {
+				const url = new URL(brandsApiUrl);
+				url.searchParams.set('lang', lang);
+				if (import.meta.env.DEV) {
+					console.debug('[brands-header-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
+				}
+				const response = await fetch(url.toString(), { cache: 'no-store' });
+				if (!response.ok) {
+					throw new Error(`Brands ${lang} status ${response.status}`);
+				}
+				return response.json();
+			}));
+
+			if (Array.isArray(payloads) && payloads.length === 2) {
+				const activeLang = resolveActiveLang();
+				renderBrandsMenuFromPayload(activeLang === 'es' ? payloads[1] : payloads[0], activeLang);
+			}
+		} catch (error) {
+			if (import.meta.env.DEV) {
+				console.warn('[brands-header-fetch] Preview runtime failed; keeping static content.', error);
+			}
+		}
+	};
+
 	const activeLang = resolveActiveLang();
 	syncLangInUrl(activeLang);
 	applyHeaderLanguage(activeLang);
+	void hydratePreviewBrands();
 </script>
 
 <style>

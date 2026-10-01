@@ -88,6 +88,24 @@ export const buildDirectContact = (
   es: resolvedLang === 'es' && resolved ? toDirectContactPayload(resolved, mocks.es) : mocks.es
 });
 
+const hasPreviewFlag = (value: string | null | undefined): boolean => {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
+const isPreviewRequest = (search?: string | URLSearchParams | null): boolean => {
+  if (!search) {
+    if (typeof window === 'undefined') return false;
+    return hasPreviewFlag(new URLSearchParams(window.location.search).get('preview'));
+  }
+
+  if (typeof search === 'string') {
+    return hasPreviewFlag(new URLSearchParams(search).get('preview'));
+  }
+
+  return hasPreviewFlag(search.get('preview'));
+};
+
 export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; es: DirectContactPayload }> => {
   const useApi = import.meta.env.PUBLIC_USE_API === 'true';
   const apiUrl = import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '';
@@ -97,10 +115,34 @@ export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; e
   }
 
   const fetchLocalized = async (lang: Lang): Promise<DirectContactPayload> => {
+    const previewRuntime = isPreviewRequest(typeof window !== 'undefined' ? window.location.search : '');
+    const runtimeMode = previewRuntime ? 'no-store' : 'default';
+    const requestUrl = (() => {
+      try {
+        const url = new URL(apiUrl);
+        url.searchParams.set('lang', lang);
+        return url.toString();
+      } catch {
+        const separator = apiUrl.includes('?') ? '&' : '?';
+        return `${apiUrl}${separator}lang=${lang}`;
+      }
+    })();
+
+    if (import.meta.env.DEV) {
+      console.debug('[direct-contact]', {
+        preview: previewRuntime,
+        source: previewRuntime ? 'runtime' : 'static',
+        endpoint: requestUrl,
+        lang,
+        cache: runtimeMode
+      });
+    }
+
     try {
-      const url = new URL(apiUrl);
-      url.searchParams.set('lang', lang);
-      const response = await fetch(url.toString());
+      const response = await fetch(requestUrl, {
+        cache: runtimeMode,
+        headers: { 'Cache-Control': runtimeMode === 'no-store' ? 'no-cache, no-store, must-revalidate' : 'max-age=300' }
+      });
 
       if (!response.ok) {
         return mocks[lang];
