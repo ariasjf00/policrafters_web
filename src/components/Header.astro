@@ -29,14 +29,14 @@ const navItems = isEs
 			{ key: 'collections', label: 'Colecciones', href: '/collections' },
 			{ key: 'renovations', label: 'Renovaciones', href: '/renovations' },
 			{ key: 'services', label: 'Servicios', href: '/services' },
-			{ key: 'brands', label: 'Marcas', href: '/brands' },
+			{ key: 'brands', label: 'Marcas', href: '' },
 			{ key: 'contact', label: 'Contáctanos', href: '/contact-us' },
 		]
 	: [
 			{ key: 'collections', label: 'Collections', href: '/collections' },
 			{ key: 'renovations', label: 'Renovations', href: '/renovations' },
 			{ key: 'services', label: 'Services', href: '/services' },
-			{ key: 'brands', label: 'Brands', href: '/brands' },
+			{ key: 'brands', label: 'Brands', href: '' },
 			{ key: 'contact', label: 'Contact Us', href: '/contact-us' },
 		];
 
@@ -49,6 +49,45 @@ const appendLang = (href: string, value: string) => {
 	const queryString = params.toString();
 	return queryString ? `${path}?${queryString}` : path;
 };
+
+// Brands mega menu. Both languages ship in data-* attributes so the client
+// script can swap them in place — no third copy of this table in <script>.
+// TODO: replace the '#' placeholders with each brand's real external URL.
+const brandLinks: {
+	key: string;
+	url: string;
+	image: { url: string; alt: { en: string; es: string } } | null;
+	placeholder: { en: string; es: string };
+}[] = [
+	{
+		key: 'crafters',
+		url: '#',
+		image: null,
+		placeholder: {
+			en: 'Crafters Design & Renovations logo',
+			es: 'Logo Crafters Design & Renovations',
+		},
+	},
+	{
+		key: 'alutech',
+		url: '#',
+		image: {
+			url: '/images/pages/Logo-Alutech-USA.png',
+			alt: { en: 'Alutech USA logo', es: 'Logo de Alutech USA' },
+		},
+		placeholder: { en: '', es: '' },
+	},
+	{
+		key: 'glasstech',
+		url: '#',
+		image: {
+			url: '/images/pages/Logo-Glasstech.png',
+			alt: { en: 'Glasstech USA logo', es: 'Logo de Glasstech USA' },
+		},
+		placeholder: { en: '', es: '' },
+	},
+];
+const isExternal = (url: string) => /^https?:\/\//.test(url);
 
 // Tolerate a trailing slash so /collections/ keeps its active-page highlight.
 const normalizedPath = currentPath.replace(/\/+$/, '') || '/';
@@ -78,15 +117,66 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	<nav id="primary-nav" aria-label="Main navigation">
 		<ul>
 			{navItems.map((item) => (
-				<li>
-					<a
-						href={appendLang(item.href, lang)}
-						data-menu-key={item.key}
-						class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
-					>
-						{item.label}
-					</a>
-				</li>
+				item.key === 'brands' ? (
+					<li class="brands-item">
+						<button
+							type="button"
+							class="nav-link nav-trigger"
+							data-menu-key={item.key}
+							aria-expanded="false"
+							aria-controls="brands-menu"
+						>
+							<span class="nav-trigger-label">{item.label}</span>
+							<svg class="nav-trigger-chevron" viewBox="0 0 10 6" width="10" height="6" fill="none" aria-hidden="true">
+								<path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</button>
+						<!-- Lives inside the <li> so one markup serves both layouts: on desktop it is
+						     absolutely positioned against .site-header (nav/ul/li stay unpositioned);
+						     inside the mobile drawer it flows as an accordion under the trigger. -->
+						<div id="brands-menu" class="brands-menu">
+							<div class="brands-menu__grid">
+								{brandLinks.map((brand) => (
+									<a
+										class="brands-menu__cell"
+										href={brand.url}
+										data-brand-key={brand.key}
+										target={isExternal(brand.url) ? '_blank' : undefined}
+										rel={isExternal(brand.url) ? 'noopener noreferrer' : undefined}
+									>
+										{brand.image ? (
+											<img
+												class="brands-menu__image"
+												src={brand.image.url}
+												alt={isEs ? brand.image.alt.es : brand.image.alt.en}
+												data-alt-en={brand.image.alt.en}
+												data-alt-es={brand.image.alt.es}
+												loading="lazy"
+												decoding="async"
+											/>
+										) : (
+											<span
+												class="brands-menu__placeholder"
+												data-copy-en={brand.placeholder.en}
+												data-copy-es={brand.placeholder.es}
+											>{isEs ? brand.placeholder.es : brand.placeholder.en}</span>
+										)}
+									</a>
+								))}
+							</div>
+						</div>
+					</li>
+				) : (
+					<li>
+						<a
+							href={appendLang(item.href, lang)}
+							data-menu-key={item.key}
+							class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
+						>
+							{item.label}
+						</a>
+					</li>
+				)
 			))}
 			<li class="search-item">
 				<button type="button" class="search-icon" aria-label={isEs ? 'Buscar' : 'Search'}>
@@ -115,14 +205,14 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			collections: { label: 'Colecciones', href: '/collections' },
 			renovations: { label: 'Renovaciones', href: '/renovations' },
 			services: { label: 'Servicios', href: '/services' },
-			brands: { label: 'Marcas', href: '/brands' },
+			brands: { label: 'Marcas', href: '' },
 			contact: { label: 'Contáctanos', href: '/contact-us' }
 		},
 		en: {
 			collections: { label: 'Collections', href: '/collections' },
 			renovations: { label: 'Renovations', href: '/renovations' },
 			services: { label: 'Services', href: '/services' },
-			brands: { label: 'Brands', href: '/brands' },
+			brands: { label: 'Brands', href: '' },
 			contact: { label: 'Contact Us', href: '/contact-us' }
 		}
 	};
@@ -166,8 +256,21 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			header.querySelectorAll('[data-menu-key]').forEach((link) => {
 				const key = link.getAttribute('data-menu-key');
 				if (!key || !copy[key]) return;
+				// The Brands trigger is a <button> with a chevron: only its label changes, no href.
+				if (link.tagName !== 'A') {
+					const label = link.querySelector('.nav-trigger-label');
+					if (label) label.textContent = copy[key as keyof typeof copy].label;
+					return;
+				}
 				link.textContent = copy[key].label;
 				link.setAttribute('href', appendLang(copy[key].href, activeLang));
+			});
+
+			header.querySelectorAll('.brands-menu [data-copy-en]').forEach((node) => {
+				node.textContent = node.getAttribute(`data-copy-${activeLang}`) ?? '';
+			});
+			header.querySelectorAll('.brands-menu [data-alt-en]').forEach((img) => {
+				img.setAttribute('alt', img.getAttribute(`data-alt-${activeLang}`) ?? '');
 			});
 
 			header.querySelectorAll('.lang-link').forEach((link) => {
@@ -193,7 +296,38 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const navBackdrop = header?.querySelector('.nav-backdrop');
 	const mobileNavQuery = window.matchMedia('(max-width: 900px)');
 
+	// Brands mega menu: a disclosure, not a link, so the visitor stays on their page.
+	const brandsTrigger = header?.querySelector<HTMLButtonElement>('.nav-trigger');
+	const brandsMenu = header?.querySelector<HTMLElement>('#brands-menu');
+
+	const setBrandsOpen = (open: boolean) => {
+		if (!brandsTrigger || !brandsMenu) return;
+		brandsTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+		brandsMenu.classList.toggle('is-open', open);
+	};
+	const closeBrands = () => setBrandsOpen(false);
+
+	if (brandsTrigger && brandsMenu) {
+		brandsTrigger.addEventListener('click', () => {
+			setBrandsOpen(brandsTrigger.getAttribute('aria-expanded') !== 'true');
+		});
+		brandsMenu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeBrands));
+		document.addEventListener('click', (event) => {
+			const target = event.target;
+			if (!(target instanceof Node)) return;
+			if (brandsTrigger.contains(target) || brandsMenu.contains(target)) return;
+			closeBrands();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || brandsTrigger.getAttribute('aria-expanded') !== 'true') return;
+			closeBrands();
+			brandsTrigger.focus();
+		});
+		mobileNavQuery.addEventListener('change', closeBrands);
+	}
+
 	const closeMenu = () => {
+		closeBrands();
 		if (!navToggle || !primaryNav || !navBackdrop) return;
 		navToggle.setAttribute('aria-expanded', 'false');
 		primaryNav.classList.remove('is-open');
@@ -341,7 +475,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		gap: 1.6rem;
 	}
 
-	nav a.nav-link {
+	nav .nav-link {
 		color: #2f3437;
 		text-decoration: none;
 		font-weight: 500;
@@ -352,15 +486,118 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		transition: background-color 0.2s ease, color 0.2s ease;
 	}
 
-	nav a.nav-link:hover,
-	nav a.nav-link:focus-visible {
+	nav .nav-link:hover,
+	nav .nav-link:focus-visible {
 		background: #b6ae99;
 		color: #ffffff;
 	}
 
-	nav a.nav-link.is-active-page {
+	nav .nav-link.is-active-page {
 		background: #c9a876;
 		color: #2f3437;
+	}
+
+	/* Brands trigger: a <button> dressed as a nav link. */
+	.nav-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border: none;
+		background: none;
+		font-family: inherit;
+		line-height: inherit;
+		cursor: pointer;
+	}
+
+	.nav-trigger[aria-expanded="true"] {
+		background: #b6ae99;
+		color: #ffffff;
+	}
+
+	.nav-trigger-chevron {
+		transition: transform 0.2s ease;
+	}
+
+	.nav-trigger[aria-expanded="true"] .nav-trigger-chevron {
+		transform: rotate(180deg);
+	}
+
+	/* Brands mega menu — full-width band dropping from under the header.
+	   Cell rules ported from the brands page's logo row. */
+	.brands-menu {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		background: #fff;
+		border-top: 1px solid #ececec;
+		border-bottom: 1px solid #2f3437;
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+		visibility: hidden;
+		opacity: 0;
+		transform: translateY(-6px);
+		transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+	}
+
+	.brands-menu.is-open {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+		transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+	}
+
+	.brands-menu__grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.brands-menu__cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3rem 2rem;
+		min-height: 160px;
+		text-decoration: none;
+		transition: background-color 0.2s ease;
+	}
+
+	.brands-menu__cell:hover,
+	.brands-menu__cell:focus-visible {
+		background: #f7f5f0;
+	}
+
+	/* Solid 1px vertical rule between cells. */
+	.brands-menu__cell + .brands-menu__cell {
+		border-left: 1px solid #2f3437;
+	}
+
+	.brands-menu__image {
+		width: 100%;
+		max-width: 220px;
+		height: 120px;
+		object-fit: contain;
+		display: block;
+	}
+
+	/* The Crafters Design & Renovations logo isn't ready yet — styled
+	   placeholder text stands in for it until the real artwork exists. */
+	.brands-menu__placeholder {
+		max-width: 22ch;
+		text-align: center;
+		font-size: clamp(1.1rem, 2vw, 1.6rem);
+		font-weight: 700;
+		letter-spacing: .04em;
+		text-transform: uppercase;
+		line-height: 1.35;
+		color: #b6ae99;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.brands-menu,
+		.brands-menu.is-open,
+		.nav-trigger-chevron {
+			transition: none;
+		}
 	}
 
 	.nav-toggle {
@@ -493,10 +730,57 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			font-size: .92rem;
 		}
 
-		nav a.nav-link {
+		nav .nav-link {
 			display: block;
 			width: 100%;
 			padding: 0.9rem 0.5rem;
+			font-size: 1rem;
+		}
+
+		/* Brands becomes an accordion inside the drawer. */
+		.brands-item {
+			width: 100%;
+		}
+
+		nav .nav-trigger {
+			display: flex;
+			justify-content: flex-start;
+			text-align: left;
+		}
+
+		.brands-menu {
+			position: static;
+			display: none;
+			border-top: none;
+			border-bottom: none;
+			box-shadow: none;
+			transform: none;
+		}
+
+		.brands-menu.is-open {
+			display: block;
+		}
+
+		.brands-menu__grid {
+			grid-template-columns: 1fr;
+		}
+
+		.brands-menu__cell {
+			padding: 1.25rem 1rem;
+			min-height: 0;
+		}
+
+		.brands-menu__cell + .brands-menu__cell {
+			border-left: none;
+			border-top: 1px solid #2f3437;
+		}
+
+		.brands-menu__image {
+			max-width: 160px;
+			height: 72px;
+		}
+
+		.brands-menu__placeholder {
 			font-size: 1rem;
 		}
 
