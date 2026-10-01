@@ -52,8 +52,6 @@ const hasPreviewFlag = (value: string | null | undefined) => {
 const appendLang = (href: string, value: string) => {
 	const [path, query = ''] = href.split('?');
 	const params = new URLSearchParams(query);
-	if (hasPreviewFlag(Astro.url.searchParams.get('preview'))) params.set('preview', '1');
-	else params.delete('preview');
 	if (value === 'es') params.set('lang', 'es');
 	else params.delete('lang');
 	const queryString = params.toString();
@@ -150,15 +148,33 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 						     inside the mobile drawer it flows as an accordion under the trigger. -->
 						<div id="brands-menu" class="brands-menu">
 							<div class="brands-menu__grid">
-								{brandLinks.map((brand) => (
-									<a
-										class="brands-menu__cell"
-										href={brand.url}
-										data-brand-key={brand.key}
-										target={isExternal(brand.url) ? '_blank' : undefined}
-										rel={isExternal(brand.url) ? 'noopener noreferrer' : undefined}
-									>
-										{brand.image ? (
+								{brandLinks.map((brand) => {
+									const isPlaceholder = !brand.image;
+									const cellClass = isPlaceholder
+										? 'brands-menu__cell brands-menu__cell--placeholder'
+										: 'brands-menu__cell';
+									const cellLabel = isEs ? brand.placeholder.es : brand.placeholder.en;
+
+									return isPlaceholder ? (
+										<div
+											class={cellClass}
+											data-brand-key={brand.key}
+											aria-label={cellLabel}
+										>
+											<span
+												class="brands-menu__placeholder"
+												data-copy-en={brand.placeholder.en}
+												data-copy-es={brand.placeholder.es}
+											>{cellLabel}</span>
+										</div>
+									) : (
+										<a
+											class={cellClass}
+											href={brand.url}
+											data-brand-key={brand.key}
+											target={isExternal(brand.url) ? '_blank' : undefined}
+											rel={isExternal(brand.url) ? 'noopener noreferrer' : undefined}
+										>
 											<img
 												class="brands-menu__image"
 												src={brand.image.url}
@@ -168,15 +184,9 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 												loading="lazy"
 												decoding="async"
 											/>
-										) : (
-											<span
-												class="brands-menu__placeholder"
-												data-copy-en={brand.placeholder.en}
-												data-copy-es={brand.placeholder.es}
-											>{isEs ? brand.placeholder.es : brand.placeholder.en}</span>
-										)}
-									</a>
-								))}
+										</a>
+									);
+								})}
 							</div>
 						</div>
 					</li>
@@ -267,8 +277,6 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const appendLang = (href, lang) => {
 		const [path, query = ''] = href.split('?');
 		const params = new URLSearchParams(query);
-		if (getPreviewState()) params.set('preview', '1');
-		else params.delete('preview');
 		if (lang === 'es') params.set('lang', 'es');
 		else params.delete('lang');
 		const queryString = params.toString();
@@ -430,23 +438,33 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	// A redundant ?lang=en is stripped so shared links stay canonical.
 	const syncLangInUrl = (lang) => {
 		const nextUrl = new URL(window.location.href);
-		const previewEnabled = getPreviewState();
-		if (previewEnabled) nextUrl.searchParams.set('preview', '1');
-		else nextUrl.searchParams.delete('preview');
-
 		const current = nextUrl.searchParams.get('lang');
 		if (lang === 'en') {
-			if (current === null && !previewEnabled) return;
+			if (current === null) return;
 			nextUrl.searchParams.delete('lang');
 		} else {
-			if (current === 'es' && previewEnabled) return;
+			if (current === 'es') return;
 			nextUrl.searchParams.set('lang', 'es');
 		}
 		window.history.replaceState({}, '', nextUrl);
 	};
 
 	const brandsApiUrl = import.meta.env.PUBLIC_BRANDS_API_URL || '';
+	const brandsGrid = document.querySelector('.brands-menu__grid');
+	const staticBrandMenuMarkup = brandsGrid ? brandsGrid.innerHTML : '';
+	const restoreStaticBrandsMenu = () => {
+		if (!brandsGrid || !staticBrandMenuMarkup) return;
+		brandsGrid.innerHTML = staticBrandMenuMarkup;
+	};
+
 	const readPreviewStatus = () => {
+		const apiEnabled = import.meta.env.PUBLIC_USE_API === 'true' && Boolean(brandsApiUrl);
+		if (!apiEnabled) {
+			setPreviewState(false);
+			restoreStaticBrandsMenu();
+			return false;
+		}
+
 		const previewEnabled = getPreviewState();
 		if (import.meta.env.DEV) {
 			console.debug('[header-preview]', {
@@ -459,6 +477,13 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		return previewEnabled;
 	};
 
+	const escapeHtml = (value) => String(value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+
 	const renderBrandsMenuFromPayload = (payload, lang) => {
 		const grid = document.querySelector('.brands-menu__grid');
 		if (!grid || !payload || typeof payload !== 'object') return;
@@ -466,39 +491,52 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		const logos = Array.isArray(payload?.fields?.brand_logos) ? payload.fields.brand_logos : [];
 		if (!logos.length) return;
 
-		const buildCell = (logo, index) => {
-			const href = '#';
-			const cell = document.createElement('a');
-			cell.className = 'brands-menu__cell';
-			cell.href = href;
-			cell.dataset.brandKey = logo?.key || `brand-${index + 1}`;
-
+		const html = logos.map((logo, index) => {
+			const key = encodeURIComponent(logo?.key || `brand-${index + 1}`);
 			const imageUrl = typeof logo?.image?.url === 'string' ? logo.image.url : '';
-			const altText = typeof logo?.image?.alt === 'string' ? logo.image.alt : (lang === 'es' ? logo?.placeholder_text ?? '' : logo?.placeholder_text ?? '');
+			const labelText = logo?.placeholder_text || (lang === 'es' ? 'Marca' : 'Brand');
+			const safeLabel = escapeHtml(labelText);
+			const altText = typeof logo?.image?.alt === 'string' ? logo.image.alt : labelText;
 
-			if (imageUrl) {
-				const img = document.createElement('img');
-				img.className = 'brands-menu__image';
-				img.src = imageUrl;
-				img.alt = altText;
-				img.loading = 'lazy';
-				img.decoding = 'async';
-				cell.appendChild(img);
-			} else {
-				const placeholder = document.createElement('span');
-				placeholder.className = 'brands-menu__placeholder';
-				placeholder.textContent = logo?.placeholder_text || (lang === 'es' ? 'Marca' : 'Brand');
-				cell.appendChild(placeholder);
+			if (!imageUrl) {
+				return `
+					<div
+						class="brands-menu__cell brands-menu__cell--placeholder"
+						data-brand-key="${key}"
+						aria-label="${safeLabel}"
+					>
+						<span class="brands-menu__placeholder">${safeLabel}</span>
+					</div>
+				`;
 			}
 
-			return cell;
-		};
+			return `
+				<a
+					class="brands-menu__cell"
+					href="#"
+					data-brand-key="${key}"
+					aria-label="${escapeHtml(altText)}"
+				>
+					<img
+						class="brands-menu__image"
+						src="${escapeHtml(imageUrl)}"
+						alt="${escapeHtml(altText)}"
+						loading="lazy"
+						decoding="async"
+						style="width:100%;max-width:220px;height:120px;object-fit:contain;"
+					/>
+				</a>
+			`;
+		}).join('');
 
-		grid.replaceChildren(...logos.map((logo, index) => buildCell(logo, index)));
+		grid.innerHTML = html;
 	};
 
 	const hydratePreviewBrands = async () => {
-		if (!readPreviewStatus() || !brandsApiUrl) return;
+		if (!readPreviewStatus() || !brandsApiUrl) {
+			restoreStaticBrandsMenu();
+			return;
+		}
 
 		try {
 			const payloads = await Promise.all(['en', 'es'].map(async (lang) => {
@@ -542,6 +580,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const activeLang = resolveActiveLang();
 	syncLangInUrl(activeLang);
 	applyHeaderLanguage(activeLang);
+	restoreStaticBrandsMenu();
 	void hydratePreviewBrands();
 </script>
 
@@ -696,13 +735,39 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		justify-content: center;
 		padding: 3rem 2rem;
 		min-height: 160px;
+		color: inherit;
 		text-decoration: none;
 		transition: background-color 0.2s ease;
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.brands-menu__cell:visited,
+	.brands-menu__cell:hover,
+	.brands-menu__cell:focus-visible,
+	.brands-menu__cell:active {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.brands-menu__cell--placeholder {
+		pointer-events: none;
+		cursor: default;
+		background: #f6f3ee;
+		border: 1px solid rgba(47, 52, 55, 0.12);
+		box-shadow: inset 0 0 0 1px rgba(182, 174, 153, 0.15);
+		color: inherit;
+		text-decoration: none;
 	}
 
 	.brands-menu__cell:hover,
 	.brands-menu__cell:focus-visible {
 		background: #f7f5f0;
+	}
+
+	.brands-menu__cell--placeholder:hover,
+	.brands-menu__cell--placeholder:focus-visible {
+		background: #f6f3ee;
 	}
 
 	/* Solid 1px vertical rule between cells. */
@@ -716,19 +781,29 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		height: 120px;
 		object-fit: contain;
 		display: block;
+		flex-shrink: 0;
+		transform: translateZ(0);
 	}
 
 	/* The Crafters Design & Renovations logo isn't ready yet — styled
 	   placeholder text stands in for it until the real artwork exists. */
 	.brands-menu__placeholder {
-		max-width: 22ch;
+		max-width: 20ch;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 72px;
+		padding: 0.8rem 1rem;
 		text-align: center;
-		font-size: clamp(1.1rem, 2vw, 1.6rem);
+		font-size: clamp(0.9rem, 1.4vw, 1.2rem);
 		font-weight: 700;
-		letter-spacing: .04em;
+		letter-spacing: .08em;
 		text-transform: uppercase;
-		line-height: 1.35;
+		line-height: 1.2;
 		color: #b6ae99;
+		background: rgba(182, 174, 153, 0.08);
+		border: 1px solid rgba(182, 174, 153, 0.35);
+		border-radius: 0.2rem;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
