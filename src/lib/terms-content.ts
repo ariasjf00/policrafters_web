@@ -29,8 +29,14 @@ const mocks: Record<Lang, TermsPagePayload> = {
   es: termsEsMock as TermsPagePayload
 };
 
-const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_TERMS_API_URL || '';
+const hasEnabledFlag = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
+const useApi = hasEnabledFlag(import.meta.env.PUBLIC_USE_API);
+const apiUrl = import.meta.env.PUBLIC_TERMS_API_URL || import.meta.env.PUBLIC_TERMS_AND_CONDITIONS_API_URL || '';
 
 // No image fields on this page, so unlike services-content.ts / brands-content.ts
 // there is no normalizeAssetUrl to carry over.
@@ -68,20 +74,44 @@ const fetchLang = async (lang: Lang): Promise<TermsPagePayload> => {
   if (!useApi || !apiUrl) return toPayload(fallback, fallback);
 
   let requestUrl = apiUrl;
+  let legacyLangUrl = apiUrl;
   try {
     const url = new URL(apiUrl);
     url.searchParams.set('locale', lang);
     requestUrl = url.toString();
+
+    const legacyUrl = new URL(apiUrl);
+    legacyUrl.searchParams.set('lang', lang);
+    legacyLangUrl = legacyUrl.toString();
   } catch {
     // Relative endpoint: send it as configured.
+    const separator = apiUrl.includes('?') ? '&' : '?';
+    requestUrl = `${apiUrl}${separator}locale=${lang}`;
+    legacyLangUrl = `${apiUrl}${separator}lang=${lang}`;
   }
 
   try {
-    const response = await fetch(requestUrl);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload && typeof payload === 'object') return toPayload(payload, fallback);
-    }
+    const unwrapPayload = (payload: any): any => {
+      if (!payload || typeof payload !== 'object') return null;
+      if (payload.fields) return payload;
+      if (Array.isArray(payload.items) && payload.items.length) return payload.items[0];
+      if (Array.isArray(payload.results) && payload.results.length) return payload.results[0];
+      return payload;
+    };
+
+    const tryParse = async (url: string): Promise<TermsPagePayload | null> => {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const raw = await response.json();
+      const payload = unwrapPayload(raw);
+      return payload && typeof payload === 'object' ? toPayload(payload, fallback) : null;
+    };
+
+    const fromLocale = await tryParse(requestUrl);
+    if (fromLocale) return fromLocale;
+
+    const fromLang = await tryParse(legacyLangUrl);
+    if (fromLang) return fromLang;
   } catch (error) {
     console.warn(`No se pudo cargar Terms desde ${requestUrl}. Usando mock local.`, error);
   }

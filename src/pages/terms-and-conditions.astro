@@ -108,6 +108,13 @@ const terms = enTerms.map((enItem: AnyRecord, index: number) => {
   const shell = document.querySelector('.terms-shell');
 
   if (shell) {
+    let isWagtailPreview = false;
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
     const getLangFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const lang = params.get('lang');
@@ -127,6 +134,10 @@ const terms = enTerms.map((enItem: AnyRecord, index: number) => {
     // All copy ships in the markup as data-copy-es/-en. document.title and the
     // meta description are swapped too, from data attributes on the shell.
     const applyTermsLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
       const key = lang === 'en' ? 'en' : 'es';
 
       shell.querySelectorAll('[data-copy-es]').forEach((el) => {
@@ -145,6 +156,87 @@ const terms = enTerms.map((enItem: AnyRecord, index: number) => {
 
       document.documentElement.lang = key;
     };
+
+    const setLocalizedCopy = (el, value) => {
+      el.textContent = value;
+      el.setAttribute('data-copy-es', value);
+      el.setAttribute('data-copy-en', value);
+    };
+
+    const applyTermsPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const headingEl = shell.querySelector('.terms-intro__heading');
+      if (headingEl && typeof fields.intro_heading === 'string') {
+        setLocalizedCopy(headingEl, fields.intro_heading);
+      }
+
+      const introBodyEl = shell.querySelector('.terms-intro__body');
+      if (introBodyEl && typeof fields.intro_body === 'string') {
+        setLocalizedCopy(introBodyEl, fields.intro_body);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const termsGrid = shell.querySelector('.terms-grid');
+      if (!termsGrid) {
+        document.documentElement.lang = previewData?.locale === 'es' ? 'es' : 'en';
+        return;
+      }
+
+      const previewTerms = Array.isArray(fields.terms) ? fields.terms : [];
+      termsGrid.querySelectorAll('.terms-item').forEach((item) => item.remove());
+
+      previewTerms.forEach((term, index) => {
+        const item = applyScope(document.createElement('div'));
+        item.className = 'terms-item';
+
+        const title = applyScope(document.createElement('h2'));
+        title.className = 'terms-item__title';
+        title.append(`${index + 1}. `);
+
+        const titleCopy = applyScope(document.createElement('span'));
+        setLocalizedCopy(titleCopy, typeof term?.title === 'string' ? term.title : '');
+        title.appendChild(titleCopy);
+        title.append(':');
+
+        const body = applyScope(document.createElement('p'));
+        body.className = 'terms-item__body';
+        setLocalizedCopy(body, typeof term?.body === 'string' ? term.body : '');
+
+        item.append(title, body);
+        termsGrid.appendChild(item);
+      });
+
+      document.documentElement.lang = previewData?.locale === 'es' ? 'es' : 'en';
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.TermsPage')) {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyTermsPreview(previewData);
+    });
 
     // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
     // sitelangchange dispatch. This script never dispatches sitelangchange and never
