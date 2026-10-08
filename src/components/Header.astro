@@ -25,7 +25,7 @@ const {
 const isEs = lang === 'es';
 const { en: brandsEn, es: brandsEs } = await loadBrandsPageContent();
 
-// The one menu table. Its client-side twin lives in this file's <script>; keeping both
+// The one menu table. Its client-side twin lives in this file's script block; keeping both
 // here is what prevents the 4-way drift this component exists to fix.
 const navItems = isEs
 	? [
@@ -59,7 +59,7 @@ const appendLang = (href: string, value: string) => {
 };
 
 // Brands mega menu. Both languages ship in data-* attributes so the client
-// script can swap them in place — no third copy of this table in <script>.
+// script can swap them in place — no third copy of this table in the script block.
 // TODO: replace the '#' placeholders with each brand's real external URL.
 const brandLinks: {
 	key: string;

@@ -1,0 +1,50 @@
+{
+  "type": "terms.TermsPage",
+  "title": "Términos y condiciones",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Términos y condiciones | Policrafters",
+    "search_description": "Lee los términos y condiciones que rigen el uso del sitio web de Policrafters y la solicitud de sistemas arquitectónicos a medida."
+  },
+  "fields": {
+    "intro_heading": "TÉRMINOS Y CONDICIONES",
+    "intro_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad.",
+    "terms": [
+      {
+        "key": "scope-acceptance",
+        "title": "ALCANCE Y ACEPTACIÓN",
+        "body": "Define la aplicabilidad de estos términos para el uso del sitio web y la solicitud de sistemas arquitectónicos a medida."
+      },
+      {
+        "key": "intellectual-property",
+        "title": "PROPIEDAD INTELECTUAL",
+        "body": "Protege los diseños, logotipos, renders y el contenido de catálogo propiedad de Policrafters."
+      },
+      {
+        "key": "quotes-orders",
+        "title": "COTIZACIONES Y PEDIDOS",
+        "body": "Aclara que las cotizaciones o pedidos realizados en línea están sujetos a revisión técnica y validación de ingeniería."
+      },
+      {
+        "key": "manufacturing-tolerances",
+        "title": "TOLERANCIAS DE FABRICACIÓN",
+        "body": "Establece las tolerancias estándar de la industria para vidrio, perfilería y acabados fabricados a medida."
+      },
+      {
+        "key": "shipping-lead-times",
+        "title": "ENVÍOS Y TIEMPOS DE ENTREGA",
+        "body": "Describe las condiciones y los plazos de entrega de los productos arquitectónicos fabricados a medida."
+      },
+      {
+        "key": "warranty-limitations",
+        "title": "GARANTÍA Y LIMITACIONES",
+        "body": "Detalla la cobertura de defectos de fabricación, sus exclusiones y el cumplimiento de los estándares de desempeño."
+      },
+      {
+        "key": "governing-law",
+        "title": "LEY APLICABLE",
+        "body": "Especifica la jurisdicción legal que rige las transacciones comerciales y las controversias."
+      }
+    ]
+  }
+}

@@ -505,6 +505,49 @@ Nota importante: igual que en los demás bloques bilingües, la API devuelve un 
 - Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
 - Este contrato es independiente de páginas como Services o Home: solo alimenta el submenú de marcas del header.
 
+## TermsPage
+
+Página de términos y condiciones referenciada por [terms-and-conditions.astro](../src/pages/terms-and-conditions.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer.
+
+Mocks de referencia: [src/mocks/terms-page.en.json](../src/mocks/terms-page.en.json) y [src/mocks/terms-page.es.json](../src/mocks/terms-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_TERMS_API_URL`.
+
+Nota importante: igual que ServicesPage y BrandsPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "terms.TermsPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "intro_heading": "string",
+    "intro_body": "string",
+    "terms": [
+      {
+        "key": "string",
+        "title": "string",
+        "body": "string"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `terms` es un array dinámico y ordenado; el frontend numera cada entrada según su posición (1-indexado), así que `title` no incluye el número ni los dos puntos finales — el frontend los agrega al renderizar. El diseño actual usa 7 entradas, pero el frontend no asume una cantidad fija.
+- `key` es un slug estable en kebab-case, igual en ambos idiomas, pensado para URLs con ancla (`#scope-acceptance`) aunque hoy no se use para eso.
+- `intro_heading` e `intro_body` alimentan el bloque superior de la página (título + párrafo introductorio con una regla vertical a la izquierda); no se repiten en `terms`.
+- Todo campo de imagen seguiría la convención general del documento, pero esta página no tiene imágenes.
+- El backend o mock devuelve `intro_heading`, `intro_body` y `terms` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`.
+- Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -850,5 +893,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 - [x] `RenovationIndexPage` (ver [RenovationIndexPage](#renovationindexpage))
 - [x] `ServicesPage` (ver [ServicesPage](#servicespage))
 - [x] `BrandsHeader` (ver [BrandsHeader](#brandsheader))
+- [x] `TermsPage` (ver [TermsPage](#termspage))
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

@@ -1,0 +1,50 @@
+{
+  "type": "terms.TermsPage",
+  "title": "Terms and Conditions",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Terms & Conditions | Policrafters",
+    "search_description": "Read the terms and conditions that govern the use of the Policrafters website and the ordering of custom architectural systems."
+  },
+  "fields": {
+    "intro_heading": "TERMS AND CONDITIONS",
+    "intro_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad.",
+    "terms": [
+      {
+        "key": "scope-acceptance",
+        "title": "SCOPE & ACCEPTANCE",
+        "body": "Defines the applicability of the terms for using the website and ordering custom architectural systems."
+      },
+      {
+        "key": "intellectual-property",
+        "title": "INTELLECTUAL PROPERTY",
+        "body": "Protects Policrafters designs, logos, renders, and proprietary catalog content."
+      },
+      {
+        "key": "quotes-orders",
+        "title": "QUOTES & ORDERS",
+        "body": "Clarifies that online estimates or orders are subject to technical review and engineering validation."
+      },
+      {
+        "key": "manufacturing-tolerances",
+        "title": "MANUFACTURING TOLERANCES",
+        "body": "Establishes industry-standard allowances for custom glass, framing, and surface finishes."
+      },
+      {
+        "key": "shipping-lead-times",
+        "title": "SHIPPING & LEAD TIMES",
+        "body": "Outlines delivery conditions and timelines for custom-manufactured architectural products."
+      },
+      {
+        "key": "warranty-limitations",
+        "title": "WARRANTY & LIMITATIONS",
+        "body": "Details manufacturing defect coverages, exclusions, and compliance with performance standards."
+      },
+      {
+        "key": "governing-law",
+        "title": "GOVERNING LAW",
+        "body": "Specifies the legal jurisdiction governing commercial transactions and disputes."
+      }
+    ]
+  }
+}
