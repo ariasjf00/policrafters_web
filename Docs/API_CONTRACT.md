@@ -467,6 +467,44 @@ Nota importante: igual que CollectionIndexPage y RenovationIndexPage, la API dev
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos ([DirectContactBlock](#directcontactblock--contacto-directo-compartido) y [CatalogIndex](#catalogindex--catálogos)).
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage, CollectionIndexPage y RenovationIndexPage.
 
+## BrandsHeader
+
+Contrato del submenú de marcas del [Header.astro](../src/components/Header.astro). Este payload es exclusivo para los logos del header.
+
+Mocks de referencia: [src/mocks/brands-header.en.json](../src/mocks/brands-header.en.json) y [src/mocks/brands-header.es.json](../src/mocks/brands-header.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_BRANDS_API_URL`.
+
+Nota importante: igual que en los demás bloques bilingües, la API devuelve un solo idioma por request. El frontend pide `?locale=en` y `?locale=es` por separado para poblar ambos idiomas en el markup y permitir cambio de idioma sin recarga.
+
+```json
+{
+  "type": "brands.BrandsHeader",
+  "title": "string",
+  "locale": "en | es",
+  "fields": {
+    "brand_logos": [
+      {
+        "key": "string",
+        "placeholder_text": "string",
+        "image": {
+          "url": "string",
+          "alt": "string"
+        } 
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `brand_logos` es un array ordenado; hoy se usa con 3 entradas (crafters, alutech, glasstech), pero el frontend no asume cantidad fija.
+- `image` puede ser `null`. Cuando no hay imagen, el frontend muestra `placeholder_text`.
+- Cada `key` debería ser estable entre idiomas para que el frontend pueda emparejar correctamente la versión `en` con `es`.
+- Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
+- Este contrato es independiente de páginas como Services o Home: solo alimenta el submenú de marcas del header.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -811,6 +849,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 
 - [x] `RenovationIndexPage` (ver [RenovationIndexPage](#renovationindexpage))
 - [x] `ServicesPage` (ver [ServicesPage](#servicespage))
-- [ ] `BrandPage`
+- [x] `BrandsHeader` (ver [BrandsHeader](#brandsheader))
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

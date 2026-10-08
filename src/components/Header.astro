@@ -4,6 +4,8 @@
 // and index.astro deliberately does not load Tailwind. Importing it would inject
 // preflight (margin/padding/border resets) into the homepage's hand-written CSS.
 
+import { loadBrandsPageContent } from '../lib/brands-content';
+
 interface Props {
 	lang?: 'es' | 'en';
 	logo?: { url: string; alt: string };
@@ -21,6 +23,7 @@ const {
 } = Astro.props;
 
 const isEs = lang === 'es';
+const { en: brandsEn, es: brandsEs } = await loadBrandsPageContent();
 
 // The one menu table. Its client-side twin lives in this file's <script>; keeping both
 // here is what prevents the 4-way drift this component exists to fix.
@@ -29,18 +32,23 @@ const navItems = isEs
 			{ key: 'collections', label: 'Colecciones', href: '/collections' },
 			{ key: 'renovations', label: 'Renovaciones', href: '/renovations' },
 			{ key: 'services', label: 'Servicios', href: '/services' },
-			{ key: 'brands', label: 'Marcas', href: '/brands' },
+			{ key: 'brands', label: 'Marcas', href: '' },
 			{ key: 'contact', label: 'Contáctanos', href: '/contact-us' },
 		]
 	: [
 			{ key: 'collections', label: 'Collections', href: '/collections' },
 			{ key: 'renovations', label: 'Renovations', href: '/renovations' },
 			{ key: 'services', label: 'Services', href: '/services' },
-			{ key: 'brands', label: 'Brands', href: '/brands' },
+			{ key: 'brands', label: 'Brands', href: '' },
 			{ key: 'contact', label: 'Contact Us', href: '/contact-us' },
 		];
 
 // English is the default, so it is never stamped into a URL; Spanish always is.
+const hasPreviewFlag = (value: string | null | undefined) => {
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+	return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
 const appendLang = (href: string, value: string) => {
 	const [path, query = ''] = href.split('?');
 	const params = new URLSearchParams(query);
@@ -49,6 +57,49 @@ const appendLang = (href: string, value: string) => {
 	const queryString = params.toString();
 	return queryString ? `${path}?${queryString}` : path;
 };
+
+// Brands mega menu. Both languages ship in data-* attributes so the client
+// script can swap them in place — no third copy of this table in <script>.
+// TODO: replace the '#' placeholders with each brand's real external URL.
+const brandLinks: {
+	key: string;
+	url: string;
+	image: { url: string; alt: { en: string; es: string } } | null;
+	placeholder: { en: string; es: string };
+}[] = (() => {
+	const enLogos = Array.isArray(brandsEn.fields?.brand_logos) ? brandsEn.fields.brand_logos : [];
+	const esLogos = Array.isArray(brandsEs.fields?.brand_logos) ? brandsEs.fields.brand_logos : [];
+	const base = enLogos.length ? enLogos : esLogos;
+
+	const toSafeText = (value: unknown, fallback = '') =>
+		typeof value === 'string' && value.trim() ? value : fallback;
+
+	return base.map((logo, index) => {
+		const sameKeyEs = esLogos.find((candidate) => candidate?.key && candidate.key === logo?.key);
+		const byIndexEs = esLogos[index];
+		const esLogo = sameKeyEs ?? byIndexEs ?? logo;
+
+		const enPlaceholder = toSafeText(logo?.placeholder_text, 'Crafters Design & Renovations logo');
+		const esPlaceholder = toSafeText(esLogo?.placeholder_text, enPlaceholder);
+
+		const imageUrl = toSafeText(logo?.image?.url) || toSafeText(esLogo?.image?.url);
+		const enAlt = toSafeText(logo?.image?.alt);
+		const esAlt = toSafeText(esLogo?.image?.alt, enAlt);
+
+		return {
+			key: toSafeText(logo?.key, `brand-${index + 1}`),
+			url: '#',
+			image: imageUrl
+				? {
+					url: imageUrl,
+					alt: { en: enAlt || esAlt || enPlaceholder, es: esAlt || enAlt || esPlaceholder },
+				}
+				: null,
+			placeholder: { en: enPlaceholder, es: esPlaceholder },
+		};
+	});
+})();
+const isExternal = (url: string) => /^https?:\/\//.test(url);
 
 // Tolerate a trailing slash so /collections/ keeps its active-page highlight.
 const normalizedPath = currentPath.replace(/\/+$/, '') || '/';
@@ -78,15 +129,78 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	<nav id="primary-nav" aria-label="Main navigation">
 		<ul>
 			{navItems.map((item) => (
-				<li>
-					<a
-						href={appendLang(item.href, lang)}
-						data-menu-key={item.key}
-						class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
-					>
-						{item.label}
-					</a>
-				</li>
+				item.key === 'brands' ? (
+					<li class="brands-item">
+						<button
+							type="button"
+							class="nav-link nav-trigger"
+							data-menu-key={item.key}
+							aria-expanded="false"
+							aria-controls="brands-menu"
+						>
+							<span class="nav-trigger-label">{item.label}</span>
+							<svg class="nav-trigger-chevron" viewBox="0 0 10 6" width="10" height="6" fill="none" aria-hidden="true">
+								<path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</button>
+						<!-- Lives inside the <li> so one markup serves both layouts: on desktop it is
+						     absolutely positioned against .site-header (nav/ul/li stay unpositioned);
+						     inside the mobile drawer it flows as an accordion under the trigger. -->
+						<div id="brands-menu" class="brands-menu">
+							<div class="brands-menu__grid">
+								{brandLinks.map((brand) => {
+									const isPlaceholder = !brand.image;
+									const cellClass = isPlaceholder
+										? 'brands-menu__cell brands-menu__cell--placeholder'
+										: 'brands-menu__cell';
+									const cellLabel = isEs ? brand.placeholder.es : brand.placeholder.en;
+
+									return isPlaceholder ? (
+										<div
+											class={cellClass}
+											data-brand-key={brand.key}
+											aria-label={cellLabel}
+										>
+											<span
+												class="brands-menu__placeholder"
+												data-copy-en={brand.placeholder.en}
+												data-copy-es={brand.placeholder.es}
+											>{cellLabel}</span>
+										</div>
+									) : (
+										<a
+											class={cellClass}
+											href={brand.url}
+											data-brand-key={brand.key}
+											target={isExternal(brand.url) ? '_blank' : undefined}
+											rel={isExternal(brand.url) ? 'noopener noreferrer' : undefined}
+										>
+											<img
+												class="brands-menu__image"
+												src={brand.image.url}
+												alt={isEs ? brand.image.alt.es : brand.image.alt.en}
+												data-alt-en={brand.image.alt.en}
+												data-alt-es={brand.image.alt.es}
+												loading="lazy"
+												decoding="async"
+											/>
+										</a>
+									);
+								})}
+							</div>
+						</div>
+					</li>
+				) : (
+					<li>
+						<a
+							href={appendLang(item.href, lang)}
+							data-menu-key={item.key}
+							class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
+						>
+							{item.label}
+						</a>
+					</li>
+				)
 			))}
 			<li class="search-item">
 				<button type="button" class="search-icon" aria-label={isEs ? 'Buscar' : 'Search'}>
@@ -115,19 +229,43 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			collections: { label: 'Colecciones', href: '/collections' },
 			renovations: { label: 'Renovaciones', href: '/renovations' },
 			services: { label: 'Servicios', href: '/services' },
-			brands: { label: 'Marcas', href: '/brands' },
+			brands: { label: 'Marcas', href: '' },
 			contact: { label: 'Contáctanos', href: '/contact-us' }
 		},
 		en: {
 			collections: { label: 'Collections', href: '/collections' },
 			renovations: { label: 'Renovations', href: '/renovations' },
 			services: { label: 'Services', href: '/services' },
-			brands: { label: 'Brands', href: '/brands' },
+			brands: { label: 'Brands', href: '' },
 			contact: { label: 'Contact Us', href: '/contact-us' }
 		}
 	};
 
 	const header = document.querySelector('.site-header');
+
+	const hasPreviewFlag = (value) => {
+		const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+		return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+	};
+
+	const setPreviewState = (value) => {
+		if (value) {
+			localStorage.setItem('sitePreview', '1');
+			return true;
+		}
+		localStorage.removeItem('sitePreview');
+		return false;
+	};
+
+	const getPreviewState = () => {
+		const params = new URLSearchParams(window.location.search);
+		const previewInUrl = hasPreviewFlag(params.get('preview'));
+		if (previewInUrl) {
+			return setPreviewState(true);
+		}
+		const stored = localStorage.getItem('sitePreview');
+		return stored === '1' || stored === 'true';
+	};
 
 	const getLangFromUrl = () => {
 		const params = new URLSearchParams(window.location.search);
@@ -166,8 +304,21 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			header.querySelectorAll('[data-menu-key]').forEach((link) => {
 				const key = link.getAttribute('data-menu-key');
 				if (!key || !copy[key]) return;
+				// The Brands trigger is a <button> with a chevron: only its label changes, no href.
+				if (link.tagName !== 'A') {
+					const label = link.querySelector('.nav-trigger-label');
+					if (label) label.textContent = copy[key as keyof typeof copy].label;
+					return;
+				}
 				link.textContent = copy[key].label;
 				link.setAttribute('href', appendLang(copy[key].href, activeLang));
+			});
+
+			header.querySelectorAll('.brands-menu [data-copy-en]').forEach((node) => {
+				node.textContent = node.getAttribute(`data-copy-${activeLang}`) ?? '';
+			});
+			header.querySelectorAll('.brands-menu [data-alt-en]').forEach((img) => {
+				img.setAttribute('alt', img.getAttribute(`data-alt-${activeLang}`) ?? '');
 			});
 
 			header.querySelectorAll('.lang-link').forEach((link) => {
@@ -193,7 +344,38 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const navBackdrop = header?.querySelector('.nav-backdrop');
 	const mobileNavQuery = window.matchMedia('(max-width: 900px)');
 
+	// Brands mega menu: a disclosure, not a link, so the visitor stays on their page.
+	const brandsTrigger = header?.querySelector<HTMLButtonElement>('.nav-trigger');
+	const brandsMenu = header?.querySelector<HTMLElement>('#brands-menu');
+
+	const setBrandsOpen = (open: boolean) => {
+		if (!brandsTrigger || !brandsMenu) return;
+		brandsTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+		brandsMenu.classList.toggle('is-open', open);
+	};
+	const closeBrands = () => setBrandsOpen(false);
+
+	if (brandsTrigger && brandsMenu) {
+		brandsTrigger.addEventListener('click', () => {
+			setBrandsOpen(brandsTrigger.getAttribute('aria-expanded') !== 'true');
+		});
+		brandsMenu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeBrands));
+		document.addEventListener('click', (event) => {
+			const target = event.target;
+			if (!(target instanceof Node)) return;
+			if (brandsTrigger.contains(target) || brandsMenu.contains(target)) return;
+			closeBrands();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || brandsTrigger.getAttribute('aria-expanded') !== 'true') return;
+			closeBrands();
+			brandsTrigger.focus();
+		});
+		mobileNavQuery.addEventListener('change', closeBrands);
+	}
+
 	const closeMenu = () => {
+		closeBrands();
 		if (!navToggle || !primaryNav || !navBackdrop) return;
 		navToggle.setAttribute('aria-expanded', 'false');
 		primaryNav.classList.remove('is-open');
@@ -267,9 +449,139 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		window.history.replaceState({}, '', nextUrl);
 	};
 
+	const brandsApiUrl = import.meta.env.PUBLIC_BRANDS_API_URL || '';
+	const brandsGrid = document.querySelector('.brands-menu__grid');
+	const staticBrandMenuMarkup = brandsGrid ? brandsGrid.innerHTML : '';
+	const restoreStaticBrandsMenu = () => {
+		if (!brandsGrid || !staticBrandMenuMarkup) return;
+		brandsGrid.innerHTML = staticBrandMenuMarkup;
+	};
+
+	const readPreviewStatus = () => {
+		const apiEnabled = import.meta.env.PUBLIC_USE_API === 'true' && Boolean(brandsApiUrl);
+		if (!apiEnabled) {
+			setPreviewState(false);
+			restoreStaticBrandsMenu();
+			return false;
+		}
+
+		const previewEnabled = getPreviewState();
+		if (import.meta.env.DEV) {
+			console.debug('[header-preview]', {
+				preview: previewEnabled,
+				source: previewEnabled ? 'runtime' : 'static',
+				endpoint: previewEnabled ? brandsApiUrl : null,
+				lang: resolveActiveLang()
+			});
+		}
+		return previewEnabled;
+	};
+
+	const escapeHtml = (value) => String(value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+
+	const renderBrandsMenuFromPayload = (payload, lang) => {
+		const grid = document.querySelector('.brands-menu__grid');
+		if (!grid || !payload || typeof payload !== 'object') return;
+
+		const logos = Array.isArray(payload?.fields?.brand_logos) ? payload.fields.brand_logos : [];
+		if (!logos.length) return;
+
+		const html = logos.map((logo, index) => {
+			const key = encodeURIComponent(logo?.key || `brand-${index + 1}`);
+			const imageUrl = typeof logo?.image?.url === 'string' ? logo.image.url : '';
+			const labelText = logo?.placeholder_text || (lang === 'es' ? 'Marca' : 'Brand');
+			const safeLabel = escapeHtml(labelText);
+			const altText = typeof logo?.image?.alt === 'string' ? logo.image.alt : labelText;
+
+			if (!imageUrl) {
+				return `
+					<div
+						class="brands-menu__cell brands-menu__cell--placeholder"
+						data-brand-key="${key}"
+						aria-label="${safeLabel}"
+					>
+						<span class="brands-menu__placeholder">${safeLabel}</span>
+					</div>
+				`;
+			}
+
+			return `
+				<a
+					class="brands-menu__cell"
+					href="#"
+					data-brand-key="${key}"
+					aria-label="${escapeHtml(altText)}"
+				>
+					<img
+						class="brands-menu__image"
+						src="${escapeHtml(imageUrl)}"
+						alt="${escapeHtml(altText)}"
+						loading="lazy"
+						decoding="async"
+						style="width:100%;max-width:220px;height:120px;object-fit:contain;"
+					/>
+				</a>
+			`;
+		}).join('');
+
+		grid.innerHTML = html;
+	};
+
+	const hydratePreviewBrands = async () => {
+		if (!readPreviewStatus() || !brandsApiUrl) {
+			restoreStaticBrandsMenu();
+			return;
+		}
+
+		try {
+			const payloads = await Promise.all(['en', 'es'].map(async (lang) => {
+				const url = new URL(brandsApiUrl);
+				url.searchParams.set('lang', lang);
+				if (import.meta.env.DEV) {
+					console.debug('[brands-header-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
+				}
+				const response = await fetch(url.toString(), { cache: 'no-store' });
+				if (!response.ok) {
+					throw new Error(`Brands ${lang} status ${response.status}`);
+				}
+				return response.json();
+			}));
+
+			if (Array.isArray(payloads) && payloads.length === 2) {
+				const activeLang = resolveActiveLang();
+				renderBrandsMenuFromPayload(activeLang === 'es' ? payloads[1] : payloads[0], activeLang);
+			}
+		} catch (error) {
+			if (import.meta.env.DEV) {
+				console.warn('[brands-header-fetch] Preview runtime failed; keeping static content.', error);
+			}
+		}
+	};
+
+	window.addEventListener('message', (event) => {
+		if (event.data?.type !== 'policrafters-preview') return;
+		const previewEnabled = setPreviewState(true);
+		if (import.meta.env.DEV) {
+			console.debug('[header-preview]', {
+				preview: previewEnabled,
+				source: 'runtime-message',
+				endpoint: brandsApiUrl || null,
+				lang: resolveActiveLang()
+			});
+		}
+		void hydratePreviewBrands();
+	});
+
 	const activeLang = resolveActiveLang();
 	syncLangInUrl(activeLang);
 	applyHeaderLanguage(activeLang);
+	restoreStaticBrandsMenu();
+	void hydratePreviewBrands();
 </script>
 
 <style>
@@ -341,7 +653,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		gap: 1.6rem;
 	}
 
-	nav a.nav-link {
+	nav .nav-link {
 		color: #2f3437;
 		text-decoration: none;
 		font-weight: 500;
@@ -352,15 +664,154 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		transition: background-color 0.2s ease, color 0.2s ease;
 	}
 
-	nav a.nav-link:hover,
-	nav a.nav-link:focus-visible {
+	nav .nav-link:hover,
+	nav .nav-link:focus-visible {
 		background: #b6ae99;
 		color: #ffffff;
 	}
 
-	nav a.nav-link.is-active-page {
+	nav .nav-link.is-active-page {
 		background: #c9a876;
 		color: #2f3437;
+	}
+
+	/* Brands trigger: a <button> dressed as a nav link. */
+	.nav-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border: none;
+		background: none;
+		font-family: inherit;
+		line-height: inherit;
+		cursor: pointer;
+	}
+
+	.nav-trigger[aria-expanded="true"] {
+		background: #b6ae99;
+		color: #ffffff;
+	}
+
+	.nav-trigger-chevron {
+		transition: transform 0.2s ease;
+	}
+
+	.nav-trigger[aria-expanded="true"] .nav-trigger-chevron {
+		transform: rotate(180deg);
+	}
+
+	/* Brands mega menu — full-width band dropping from under the header.
+	   Cell rules ported from the brands page's logo row. */
+	.brands-menu {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		background: #fff;
+		border-top: 1px solid #ececec;
+		border-bottom: 1px solid #2f3437;
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+		visibility: hidden;
+		opacity: 0;
+		transform: translateY(-6px);
+		transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+	}
+
+	.brands-menu.is-open {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+		transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+	}
+
+	.brands-menu__grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.brands-menu__cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3rem 2rem;
+		min-height: 160px;
+		color: inherit;
+		text-decoration: none;
+		transition: background-color 0.2s ease;
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.brands-menu__cell:visited,
+	.brands-menu__cell:hover,
+	.brands-menu__cell:focus-visible,
+	.brands-menu__cell:active {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.brands-menu__cell--placeholder {
+		pointer-events: none;
+		cursor: default;
+		background: #f6f3ee;
+		border: 1px solid rgba(47, 52, 55, 0.12);
+		box-shadow: inset 0 0 0 1px rgba(182, 174, 153, 0.15);
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.brands-menu__cell:hover,
+	.brands-menu__cell:focus-visible {
+		background: #f7f5f0;
+	}
+
+	.brands-menu__cell--placeholder:hover,
+	.brands-menu__cell--placeholder:focus-visible {
+		background: #f6f3ee;
+	}
+
+	/* Solid 1px vertical rule between cells. */
+	.brands-menu__cell + .brands-menu__cell {
+		border-left: 1px solid #2f3437;
+	}
+
+	.brands-menu__image {
+		width: 100%;
+		max-width: 220px;
+		height: 120px;
+		object-fit: contain;
+		display: block;
+		flex-shrink: 0;
+		transform: translateZ(0);
+	}
+
+	/* The Crafters Design & Renovations logo isn't ready yet — styled
+	   placeholder text stands in for it until the real artwork exists. */
+	.brands-menu__placeholder {
+		max-width: 20ch;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 72px;
+		padding: 0.8rem 1rem;
+		text-align: center;
+		font-size: clamp(0.9rem, 1.4vw, 1.2rem);
+		font-weight: 700;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		line-height: 1.2;
+		color: #b6ae99;
+		background: rgba(182, 174, 153, 0.08);
+		border: 1px solid rgba(182, 174, 153, 0.35);
+		border-radius: 0.2rem;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.brands-menu,
+		.brands-menu.is-open,
+		.nav-trigger-chevron {
+			transition: none;
+		}
 	}
 
 	.nav-toggle {
@@ -493,10 +944,57 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 			font-size: .92rem;
 		}
 
-		nav a.nav-link {
+		nav .nav-link {
 			display: block;
 			width: 100%;
 			padding: 0.9rem 0.5rem;
+			font-size: 1rem;
+		}
+
+		/* Brands becomes an accordion inside the drawer. */
+		.brands-item {
+			width: 100%;
+		}
+
+		nav .nav-trigger {
+			display: flex;
+			justify-content: flex-start;
+			text-align: left;
+		}
+
+		.brands-menu {
+			position: static;
+			display: none;
+			border-top: none;
+			border-bottom: none;
+			box-shadow: none;
+			transform: none;
+		}
+
+		.brands-menu.is-open {
+			display: block;
+		}
+
+		.brands-menu__grid {
+			grid-template-columns: 1fr;
+		}
+
+		.brands-menu__cell {
+			padding: 1.25rem 1rem;
+			min-height: 0;
+		}
+
+		.brands-menu__cell + .brands-menu__cell {
+			border-left: none;
+			border-top: 1px solid #2f3437;
+		}
+
+		.brands-menu__image {
+			max-width: 160px;
+			height: 72px;
+		}
+
+		.brands-menu__placeholder {
 			font-size: 1rem;
 		}
 

@@ -84,6 +84,21 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
   const section = document.querySelector('.direct-contact');
 
   if (section) {
+    const hasPreviewFlag = (value) => {
+      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+      return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+    };
+
+    const getPreviewState = () => {
+      const previewInUrl = hasPreviewFlag(new URLSearchParams(window.location.search).get('preview'));
+      if (previewInUrl) {
+        localStorage.setItem('sitePreview', '1');
+        return true;
+      }
+      const stored = localStorage.getItem('sitePreview');
+      return stored === '1' || stored === 'true';
+    };
+
     const getLangFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const lang = params.get('lang');
@@ -110,10 +125,60 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
       });
     };
 
+    const applyRuntimeDirectContact = (payload, lang) => {
+      const key = lang === 'es' ? 'es' : 'en';
+      const heading = section.querySelector('#contact-heading');
+      const copy = payload?.copy ?? {};
+      if (heading) {
+        heading.setAttribute('data-copy-' + key, copy.contact_heading ?? '');
+      }
+
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      const columns = Array.from(section.querySelectorAll('.contact-col'));
+      columns.forEach((column, index) => {
+        const item = items[index] ?? {};
+        const title = column.querySelector('.contact-col__title');
+        const description = column.querySelector('.contact-col__description');
+        const button = column.querySelector('.contact-col__btn');
+
+        if (title) title.setAttribute('data-copy-' + key, item.title ?? '');
+        if (description) description.setAttribute('data-copy-' + key, item.description ?? '');
+        if (button) button.setAttribute('data-copy-' + key, copy.contact_cta ?? '');
+      });
+
+      applyDirectContactLanguage(resolveActiveLang());
+    };
+
+    const runtimeDirectContactApiUrl = import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '';
+    const hydratePreviewDirectContact = async () => {
+      if (!getPreviewState() || !runtimeDirectContactApiUrl) return;
+
+      try {
+        const results = await Promise.all(['en', 'es'].map(async (lang) => {
+          const url = new URL(runtimeDirectContactApiUrl);
+          url.searchParams.set('lang', lang);
+          if (import.meta.env.DEV) {
+            console.debug('[direct-contact-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
+          }
+          const response = await fetch(url.toString(), { cache: 'no-store' });
+          if (!response.ok) throw new Error(`Direct contact ${lang} status ${response.status}`);
+          return response.json();
+        }));
+
+        if (results[0]) applyRuntimeDirectContact(results[0], 'en');
+        if (results[1]) applyRuntimeDirectContact(results[1], 'es');
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('[direct-contact-fetch] Preview runtime failed; keeping static content.', error);
+        }
+      }
+    };
+
     // Subscriber only: self-boot first, since Header's boot dispatch fires before
     // this script runs (same pattern as Footer.astro and CatalogsCarousel.astro).
     applyDirectContactLanguage(resolveActiveLang());
     document.addEventListener('sitelangchange', (event) => applyDirectContactLanguage(event.detail));
+    void hydratePreviewDirectContact();
   }
 </script>
 
