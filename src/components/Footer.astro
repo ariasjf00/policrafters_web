@@ -82,6 +82,25 @@ const footerCopy = {
 
 const t = footerCopy[lang] ?? footerCopy.en;
 
+// English is the default, so it is never stamped into a URL; Spanish always is.
+// Mirrors Header.astro's appendLang so an internal footer link carries the
+// current language the same way the top nav does.
+const appendLang = (href: string, value: string) => {
+  const [path, query = ''] = href.split('?');
+  const params = new URLSearchParams(query);
+  if (value === 'es') params.set('lang', 'es');
+  else params.delete('lang');
+  const queryString = params.toString();
+  return queryString ? `${path}?${queryString}` : path;
+};
+
+// Most footer links are placeholders (href="#") until their pages exist.
+// `linkHrefs` only overrides the ones that are real today, by index into
+// `t.links` / `footerCopy[lang].links` above — "Terms & Conditions" is index 3.
+const linkHrefs: Record<number, string> = {
+  3: appendLang('/terms-and-conditions', lang)
+};
+
 const socialLinks = [
   { name: 'facebook', icon: 'simple-icons:facebook', label: 'Policrafters on Facebook' },
   { name: 'instagram', icon: 'simple-icons:instagram', label: 'Policrafters on Instagram' },
@@ -110,7 +129,7 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     <div class="footer-col">
       <ul class="footer-links">
         {t.links.map((label, index) => (
-          <li><a href="#" class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
+          <li><a href={linkHrefs[index] ?? '#'} class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
         ))}
       </ul>
     </div>
@@ -272,6 +291,24 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     return 'en';
   };
 
+  // Same appendLang as the frontmatter above (duplicated, not imported — this
+  // script block has no access to the component's module scope) and the same
+  // Header.astro convention: English is never stamped into the URL.
+  const appendLang = (href: string, value: string) => {
+    const [path, query = ''] = href.split('?');
+    const params = new URLSearchParams(query);
+    if (value === 'es') params.set('lang', 'es');
+    else params.delete('lang');
+    const queryString = params.toString();
+    return queryString ? `${path}?${queryString}` : path;
+  };
+
+  // Mirrors the frontmatter's linkHrefs: index 3 ("Terms & Conditions") is the
+  // only real link today; the rest stay href="#".
+  const linkHrefs: Record<number, (activeLang: string) => string> = {
+    3: (activeLang) => appendLang('/terms-and-conditions', activeLang)
+  };
+
   const applyFooterLanguage = (lang) => {
     const activeLang = lang === 'en' ? 'en' : 'es';
     const copy = footerCopy[activeLang];
@@ -287,7 +324,10 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     document.querySelector('#footer-copyright-text')?.replaceChildren(copy.copyrightText);
 
     copy.links.forEach((label, index) => {
-      document.querySelector(`[data-footer-key="link-${index}"]`)?.replaceChildren(label);
+      const link = document.querySelector(`[data-footer-key="link-${index}"]`);
+      link?.replaceChildren(label);
+      const hrefForIndex = linkHrefs[index];
+      if (hrefForIndex) link?.setAttribute('href', hrefForIndex(activeLang));
     });
     copy.residentialLinks.forEach((label, index) => {
       document.querySelector(`[data-footer-key="residential-link-${index}"]`)?.replaceChildren(label);
