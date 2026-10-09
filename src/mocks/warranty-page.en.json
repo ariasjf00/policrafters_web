@@ -1,0 +1,115 @@
+{
+  "type": "warranty.WarrantyPage",
+  "title": "Warranty",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Warranty | Policrafters",
+    "search_description": "Review the coverage, exclusions, claim process, and remedy options under the Policrafters product warranty."
+  },
+  "fields": {
+    "intro_heading": "WARRANTY",
+    "intro_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad.",
+    "sections": [
+      {
+        "key": "coverage-duration",
+        "title": "COVERAGE & DURATION",
+        "column": "left",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "Structural Integrity",
+            "text": "Warranty against structural failure of frames, profiles, and welded joints (e.g., 10 years)."
+          },
+          {
+            "label": "Insulated Glass Units (IGUs / Double Glazing)",
+            "text": "Coverage against internal seal failure, condensation between panes, or premature delamination (e.g., 5 to 10 years)."
+          },
+          {
+            "label": "Hardware & Mechanisms",
+            "text": "Warranty for handles, hinges, sliding tracks, and locking mechanisms against mechanical defects (e.g., 2 to 5 years)."
+          },
+          {
+            "label": "Finishes & Coatings",
+            "text": "Coverage for powder coating, anodizing, or specialized surface treatments against peeling, cracking, or severe fading under normal environmental exposure (e.g., 5 years)."
+          }
+        ]
+      },
+      {
+        "key": "what-is-covered",
+        "title": "WHAT IS COVERED",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Defects originating directly from factory manufacturing, fabrication errors, or raw material flaws."
+          },
+          {
+            "label": "",
+            "text": "Failure of components to perform according to their stated technical parameters and official Declaration of Performance (DoP)."
+          }
+        ]
+      },
+      {
+        "key": "exclusions-limitations",
+        "title": "EXCLUSIONS & LIMITATIONS",
+        "column": "left",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "Improper Installation",
+            "text": "Damage resulting from installation performed by unauthorized third parties or failure to follow engineering guidelines."
+          },
+          {
+            "label": "Site Conditions & Structural Movement",
+            "text": "Issues caused by building settlement, structural shifts, or sub-base movements of the civil works."
+          },
+          {
+            "label": "Lack of Maintenance",
+            "text": "Damage resulting from the absence of regular cleaning, lack of lubrication on hardware, or exposure to harsh unapproved chemical cleaners."
+          },
+          {
+            "label": "Accidents & External Forces",
+            "text": "Damage caused by extreme weather events exceeding design limits (hurricanes, floods), vandalism, abuse, or unauthorized modifications."
+          },
+          {
+            "label": "Normal Wear and Tear",
+            "text": "Minor cosmetic weathering, scratches, or natural patina changes on moving parts over extended use."
+          }
+        ]
+      },
+      {
+        "key": "claim-process",
+        "title": "CLAIM PROCESS",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Notification timeline (e.g., reporting a defect within a specific window after discovery)."
+          },
+          {
+            "label": "",
+            "text": "Requirement to provide proof of purchase, project reference, photos/videos of the issue, and original technical documentation."
+          },
+          {
+            "label": "",
+            "text": "Inspection rights (Policrafters or an authorized representative reserves the right to inspect the product on-site)."
+          }
+        ]
+      },
+      {
+        "key": "remedy-options",
+        "title": "REMEDY OPTIONS",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Discretionary right to repair, replace the defective component/product, or issue a proportional refund based on the depreciated value of the item."
+          }
+        ]
+      }
+    ]
+  }
+}

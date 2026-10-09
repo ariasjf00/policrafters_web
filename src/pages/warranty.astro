@@ -1,0 +1,278 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import WarrantySection from '../components/WarrantySection.astro';
+import { loadWarrantyPageContent } from '../lib/warranty-content';
+
+type AnyRecord = Record<string, any>;
+
+// Both languages fetched at build time, same as terms-and-conditions.astro: this
+// page ships every string twice (data-copy-es/-en) so Header's toggle can switch it
+// without a reload, which means one localized response isn't enough.
+const { en: warrantyEn, es: warrantyEs } = await loadWarrantyPageContent();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n).
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const activeContent = isEs ? warrantyEs : warrantyEn;
+const enFields = warrantyEn.fields;
+const esFields = warrantyEs.fields;
+
+const esSeoTitle = warrantyEs.meta?.seo_title || 'Garantía | Policrafters';
+const enSeoTitle = warrantyEn.meta?.seo_title || 'Warranty | Policrafters';
+const esSearchDescription = warrantyEs.meta?.search_description || '';
+const enSearchDescription = warrantyEn.meta?.search_description || esSearchDescription;
+
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? esSeoTitle : enSeoTitle),
+  search_description: activeContent.meta?.search_description || (isEs ? esSearchDescription : enSearchDescription)
+};
+
+const esIntroHeading = esFields.intro_heading || '';
+const enIntroHeading = enFields.intro_heading || esIntroHeading;
+const esIntroBody = esFields.intro_body || '';
+const enIntroBody = enFields.intro_body || esIntroBody;
+
+// Sections are paired by index (same shared-URL convention as
+// terms-and-conditions.astro's `terms` array); English drives the length. The
+// number shown before each title comes from this array position, not from the
+// payload, and `column` is read from EN only — it's language-independent (see
+// Docs/API_CONTRACT.md § WarrantyPage).
+const enSections = Array.isArray(enFields.sections) ? enFields.sections : [];
+const esSections = Array.isArray(esFields.sections) ? esFields.sections : [];
+const sections = enSections.map((enItem: AnyRecord, index: number) => {
+  const esItem = esSections[index] ?? enItem;
+
+  const enItems = Array.isArray(enItem.items) ? enItem.items : [];
+  const esItems = Array.isArray(esItem.items) ? esItem.items : [];
+  const items = enItems.map((enRow: AnyRecord, itemIndex: number) => {
+    const esRow = esItems[itemIndex] ?? enRow;
+    // The trailing colon lives in the label itself (not added at render time)
+    // so an empty label produces an empty <strong>, never a stray ": ".
+    const esLabel = esRow.label ? `${esRow.label}:` : '';
+    const enLabel = enRow.label ? `${enRow.label}:` : '';
+    return {
+      labelEs: esLabel,
+      labelEn: enLabel,
+      textEs: esRow.text ?? enRow.text ?? '',
+      textEn: enRow.text ?? esRow.text ?? ''
+    };
+  });
+
+  // Fallback when `column` is missing/invalid: even index (0-based) -> left,
+  // odd -> right. Matches the contract's documented fallback rule.
+  const column = enItem.column === 'left' || enItem.column === 'right'
+    ? enItem.column
+    : (index % 2 === 0 ? 'left' : 'right');
+
+  return {
+    key: enItem.key ?? esItem.key ?? String(index),
+    number: index + 1,
+    column,
+    titleEs: esItem.title ?? enItem.title ?? '',
+    titleEn: enItem.title ?? esItem.title ?? '',
+    introEs: esItem.intro ?? enItem.intro ?? '',
+    introEn: enItem.intro ?? esItem.intro ?? '',
+    items
+  };
+});
+
+// Two independent stacks, not a row grid: left holds sections 1, 3; right
+// holds 2, 4, 5, so section 4 sits directly under section 2 with no gap even
+// though section 1 (left) is much taller. See .warranty-columns below.
+const leftSections = sections.filter((section: AnyRecord) => section.column === 'left');
+const rightSections = sections.filter((section: AnyRecord) => section.column === 'right');
+---
+
+<PageLayout
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
+  showHero={false}
+>
+  <section
+    class="warranty-shell"
+    data-seo-title-es={esSeoTitle}
+    data-seo-title-en={enSeoTitle}
+    data-seo-description-es={esSearchDescription}
+    data-seo-description-en={enSearchDescription}
+  >
+    <!-- 1. Intro — identical markup/CSS to terms-and-conditions.astro's
+         .terms-intro (h1 + italic lead, left vertical rule spanning both).
+         Duplicated rather than shared per the plan: the block is small and
+         scoped, and this keeps the Terms page untouched. -->
+    <div class="warranty-intro">
+      <h1
+        class="warranty-intro__heading"
+        data-copy-es={esIntroHeading}
+        data-copy-en={enIntroHeading}
+      >{pick(esIntroHeading, enIntroHeading)}</h1>
+      <p
+        class="warranty-intro__body"
+        data-copy-es={esIntroBody}
+        data-copy-en={enIntroBody}
+      >{pick(esIntroBody, enIntroBody)}</p>
+    </div>
+
+    <!-- 2. Warranty sections — each WarrantySection carries its own 1-based
+         `order` (see the component), so at <=900px .warranty-columns switches
+         to a single flex-direction:column flow and .warranty-column becomes
+         `display: contents`, letting `order` alone restore numeric order
+         1->5 across both former columns with no JS and no duplicated markup. -->
+    <div class="warranty-columns">
+      <div class="warranty-column">
+        {leftSections.map((section: AnyRecord) => (
+          <WarrantySection
+            lang={selectedLang}
+            number={section.number}
+            titleEs={section.titleEs}
+            titleEn={section.titleEn}
+            introEs={section.introEs}
+            introEn={section.introEn}
+            items={section.items}
+          />
+        ))}
+      </div>
+      <div class="warranty-column">
+        {rightSections.map((section: AnyRecord) => (
+          <WarrantySection
+            lang={selectedLang}
+            number={section.number}
+            titleEs={section.titleEs}
+            titleEn={section.titleEn}
+            introEs={section.introEs}
+            introEn={section.introEn}
+            items={section.items}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.warranty-shell');
+
+  if (shell) {
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    // All copy ships in the markup as data-copy-es/-en, including each
+    // bullet's label and text as separate elements (see WarrantySection.astro).
+    // document.title and the meta description are swapped too, from data
+    // attributes on the shell.
+    const applyWarrantyLanguage = (lang) => {
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      const title = shell.getAttribute('data-seo-title-' + key);
+      if (title) document.title = title;
+
+      const description = shell.getAttribute('data-seo-description-' + key);
+      if (description !== null) {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) metaDescription.setAttribute('content', description);
+      }
+
+      document.documentElement.lang = key;
+    };
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. This script never dispatches sitelangchange and never
+    // writes localStorage.siteLang — re-dispatching would turn Header's boot into a
+    // feedback loop. Self-boot first, since Header's boot dispatch fires before this
+    // page script runs (see terms-and-conditions.astro for the same pattern).
+    applyWarrantyLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyWarrantyLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .warranty-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Section 1: intro heading + lead, left vertical rule spans both — same
+     recipe as terms-and-conditions.astro's .terms-intro. */
+  .warranty-intro {
+    margin-bottom: 3rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .warranty-intro__heading {
+    margin: 0 0 .75rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .warranty-intro__body {
+    margin: 0;
+    max-width: 70ch;
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    color: #333;
+  }
+
+  /* Section 2: two INDEPENDENT stacks, not a row grid — a CSS grid with
+     row-wise auto-placement would size row 1 to the taller of its two cells
+     and push row 2 down by that same amount on both sides, leaving a gap
+     under the short right-hand section. Two separate flex columns avoid
+     that: each stack's height is its own. */
+  .warranty-columns {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+  }
+
+  .warranty-column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  @media (max-width: 900px) {
+    /* `display: contents` dissolves the two column wrappers so every
+       .warranty-section becomes a direct child of .warranty-columns; with
+       flex-direction switched to column, the `order` each WarrantySection
+       carries (its 1-based number) alone puts them back into 1,2,3,4,5 —
+       no JS, no duplicated markup. */
+    .warranty-columns {
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .warranty-column {
+      display: contents;
+    }
+  }
+</style>
