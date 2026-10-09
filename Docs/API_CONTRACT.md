@@ -548,6 +548,56 @@ Nota importante: igual que ServicesPage y BrandsPage, la API devuelve un solo id
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
 
+## WarrantyPage
+
+Página de garantía referenciada por [warranty.astro](../src/pages/warranty.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer. Misma estructura de intro (título + párrafo con regla vertical) que [TermsPage](#termspage), seguida de secciones numeradas con viñetas en vez de un párrafo simple.
+
+Mocks de referencia: [src/mocks/warranty-page.en.json](../src/mocks/warranty-page.en.json) y [src/mocks/warranty-page.es.json](../src/mocks/warranty-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_WARRANTY_API_URL`.
+
+Nota importante: igual que TermsPage, ServicesPage y BrandsPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "warranty.WarrantyPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "intro_heading": "string",
+    "intro_body": "string",
+    "sections": [
+      {
+        "key": "string",
+        "title": "string",
+        "column": "left | right",
+        "intro": "string",
+        "items": [
+          { "label": "string", "text": "string" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `sections` es un array dinámico y ordenado; el frontend numera cada entrada según su posición (1-indexado), así que `title` no incluye el número — el frontend lo agrega al renderizar. El diseño actual usa 5 entradas, pero el frontend no asume una cantidad fija.
+- `column` determina en qué columna visual cae la sección en escritorio (`"left"` o `"right"`); el frontend conserva el orden del payload dentro de cada columna. En mobile todas las secciones vuelven al orden numérico 1→n. Si `column` falta o trae un valor inválido, el frontend usa un fallback por índice: posición par (0-indexada) → `left`, impar → `right`.
+- `column` y `key` son independientes del idioma; el frontend los lee siempre de la respuesta en inglés.
+- `items[].label` puede ser una cadena vacía; en ese caso el frontend no renderiza la etiqueta en negrita para esa viñeta.
+- `key` es un slug estable en kebab-case, igual en ambos idiomas.
+- `intro_heading` e `intro_body` alimentan el bloque superior de la página (título + párrafo introductorio con una regla vertical a la izquierda), igual que en TermsPage; no se repiten en `sections`.
+- Todo campo de imagen seguiría la convención general del documento, pero esta página no tiene imágenes.
+- El backend o mock devuelve `intro_heading`, `intro_body` y `sections` (incluyendo `items`) ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. `sections` e `items` se emparejan entre idiomas por índice, y el inglés determina la cantidad.
+- Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+
 ## ModelPage
 
 Página de un modelo/producto individual dentro de una colección (referencia: falper.it).
@@ -894,5 +944,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 - [x] `ServicesPage` (ver [ServicesPage](#servicespage))
 - [x] `BrandsHeader` (ver [BrandsHeader](#brandsheader))
 - [x] `TermsPage` (ver [TermsPage](#termspage))
+- [x] `WarrantyPage` (ver [WarrantyPage](#warrantypage))
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.

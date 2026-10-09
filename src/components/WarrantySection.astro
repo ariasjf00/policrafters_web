@@ -1,0 +1,105 @@
+---
+// One numbered warranty section (heading + intro + bulleted items). Pulled out
+// of warranty.astro because the page needs to render this same block twice —
+// once per independent column stack (see .warranty-columns in warranty.astro's
+// <style>) — and a shared component beats duplicating the JSX inline.
+//
+// Purely presentational: it ships both languages as data-copy-es/-en but does
+// NOT subscribe to sitelangchange itself. warranty.astro's own script already
+// walks `.warranty-shell [data-copy-es]` on every language change, and this
+// component's markup lands inside that shell, so one subscriber covers it —
+// unlike DirectContact.astro/CatalogsCarousel.astro, which stand outside any
+// page shell and so own their own subscription.
+interface WarrantyItemProp {
+  labelEs: string;
+  labelEn: string;
+  textEs: string;
+  textEn: string;
+}
+
+interface Props {
+  lang?: 'en' | 'es';
+  number: number;
+  titleEs: string;
+  titleEn: string;
+  introEs: string;
+  introEn: string;
+  items: WarrantyItemProp[];
+}
+
+const { lang = 'en', number, titleEs, titleEn, introEs, introEn, items } = Astro.props;
+const isEs = lang === 'es';
+const pick = (es: string, en: string) => (isEs ? es : en);
+---
+
+<div class="warranty-section" style={`order: ${number}`}>
+  <h2 class="warranty-section__title">
+    {`${number}. `}<span data-copy-es={titleEs} data-copy-en={titleEn}>{pick(titleEs, titleEn)}</span>
+  </h2>
+  <p
+    class="warranty-section__intro"
+    data-copy-es={introEs}
+    data-copy-en={introEn}
+  >{pick(introEs, introEn)}</p>
+  <ul class="warranty-section__list">
+    {items.map((item) => (
+      <li><strong
+        data-copy-es={item.labelEs}
+        data-copy-en={item.labelEn}
+      >{pick(item.labelEs, item.labelEn)}</strong><span
+        data-copy-es={item.textEs}
+        data-copy-en={item.textEn}
+      >{pick(item.textEs, item.textEn)}</span></li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .warranty-section__title {
+    margin: 0 0 .6rem;
+    font-size: clamp(1.4rem, 2.4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+    /* Titles like "EXCLUSIONS & LIMITATIONS" must not overflow a narrow
+       column at ~500-550px (the 901-1100px range before the 900px
+       breakpoint kicks in). */
+    overflow-wrap: anywhere;
+  }
+
+  .warranty-section__intro {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .warranty-section__list {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .warranty-section__list li {
+    margin-bottom: .9rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .warranty-section__list li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Labelled bullets ("Structural Integrity: …") get a bold label followed by
+     the text; unlabelled bullets (sections 2, 4, 5) render the <strong> empty,
+     per warranty.astro — :not(:empty) keeps the gap from appearing when there's
+     no label, in either language, without a literal space in the markup that
+     would survive an empty label. */
+  .warranty-section__list strong:not(:empty) {
+    font-weight: 700;
+    color: #111;
+    margin-right: .35em;
+  }
+</style>

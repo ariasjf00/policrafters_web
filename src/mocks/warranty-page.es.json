@@ -1,0 +1,115 @@
+{
+  "type": "warranty.WarrantyPage",
+  "title": "Garantía",
+  "locale": "es",
+  "meta": {
+    "seo_title": "Garantía | Policrafters",
+    "search_description": "Consulta la cobertura, exclusiones, proceso de reclamación y opciones de solución de la garantía de productos Policrafters."
+  },
+  "fields": {
+    "intro_heading": "GARANTÍA",
+    "intro_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad.",
+    "sections": [
+      {
+        "key": "coverage-duration",
+        "title": "COBERTURA Y DURACIÓN",
+        "column": "left",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "Integridad Estructural",
+            "text": "Garantía contra fallas estructurales en marcos, perfiles y uniones soldadas (p. ej., 10 años)."
+          },
+          {
+            "label": "Unidades de Vidrio Aislante (IGU / Doble Acristalamiento)",
+            "text": "Cobertura contra fallas de sello interno, condensación entre paneles o delaminación prematura (p. ej., de 5 a 10 años)."
+          },
+          {
+            "label": "Herrajes y Mecanismos",
+            "text": "Garantía para manijas, bisagras, rieles corredizos y mecanismos de cierre contra defectos mecánicos (p. ej., de 2 a 5 años)."
+          },
+          {
+            "label": "Acabados y Recubrimientos",
+            "text": "Cobertura para pintura en polvo, anodizado o tratamientos superficiales especializados contra desprendimiento, agrietamiento o decoloración severa bajo exposición ambiental normal (p. ej., 5 años)."
+          }
+        ]
+      },
+      {
+        "key": "what-is-covered",
+        "title": "QUÉ ESTÁ CUBIERTO",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Defectos originados directamente en la fabricación de fábrica, errores de producción o fallas en la materia prima."
+          },
+          {
+            "label": "",
+            "text": "Falla de los componentes para desempeñarse según sus parámetros técnicos declarados y la Declaración de Prestaciones (DoP) oficial."
+          }
+        ]
+      },
+      {
+        "key": "exclusions-limitations",
+        "title": "EXCLUSIONES Y LIMITACIONES",
+        "column": "left",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "Instalación Inadecuada",
+            "text": "Daños resultantes de una instalación realizada por terceros no autorizados o por no seguir las guías de ingeniería."
+          },
+          {
+            "label": "Condiciones del Sitio y Movimiento Estructural",
+            "text": "Problemas causados por asentamientos del edificio, movimientos estructurales o desplazamientos de la subbase de la obra civil."
+          },
+          {
+            "label": "Falta de Mantenimiento",
+            "text": "Daños derivados de la ausencia de limpieza regular, falta de lubricación en los herrajes o exposición a limpiadores químicos no aprobados."
+          },
+          {
+            "label": "Accidentes y Fuerzas Externas",
+            "text": "Daños causados por eventos climáticos extremos que superan los límites de diseño (huracanes, inundaciones), vandalismo, abuso o modificaciones no autorizadas."
+          },
+          {
+            "label": "Desgaste Normal por Uso",
+            "text": "Deterioro cosmético menor, rayones o cambios naturales de pátina en las partes móviles por uso prolongado."
+          }
+        ]
+      },
+      {
+        "key": "claim-process",
+        "title": "PROCESO DE RECLAMACIÓN",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Plazo de notificación (p. ej., reportar un defecto dentro de una ventana específica tras su descubrimiento)."
+          },
+          {
+            "label": "",
+            "text": "Requisito de presentar comprobante de compra, referencia del proyecto, fotos/videos del problema y documentación técnica original."
+          },
+          {
+            "label": "",
+            "text": "Derecho de inspección (Policrafters o un representante autorizado se reserva el derecho de inspeccionar el producto en sitio)."
+          }
+        ]
+      },
+      {
+        "key": "remedy-options",
+        "title": "OPCIONES DE SOLUCIÓN",
+        "column": "right",
+        "intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore.",
+        "items": [
+          {
+            "label": "",
+            "text": "Derecho discrecional de reparar, reemplazar el componente/producto defectuoso, o emitir un reembolso proporcional basado en el valor depreciado del artículo."
+          }
+        ]
+      }
+    ]
+  }
+}
