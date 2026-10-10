@@ -12,8 +12,37 @@
       "catalogs_heading": "EXPLORE OUR COLLECTIONS AND SOLUTIONS",
       "catalogs_prev_aria": "Previous",
       "catalogs_next_aria": "Next",
-      "catalogs_dot_aria": "Go to page"
+      "catalogs_dot_aria": "Go to page",
+      "filter_heading": "Catalogs filter by",
+      "filter_all_label": "All",
+      "empty_state_text": "No catalogs match the selected filters."
     },
+    "categories": [
+      {
+        "key": "architecture",
+        "label": "Architecture"
+      },
+      {
+        "key": "glass",
+        "label": "Glass"
+      },
+      {
+        "key": "wood",
+        "label": "Wood"
+      },
+      {
+        "key": "design",
+        "label": "Design"
+      },
+      {
+        "key": "steel",
+        "label": "Steel"
+      },
+      {
+        "key": "aluminum",
+        "label": "Aluminum"
+      }
+    ],
     "catalogs": [
       {
         "title": "Catalog 1",
@@ -21,7 +50,11 @@
           "url": "/images/pages/1_pergola.png",
           "alt": "Policrafters catalog 1"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "architecture",
+          "aluminum"
+        ]
       },
       {
         "title": "Catalog 2",
@@ -29,7 +62,10 @@
           "url": "/images/pages/2_pergola.png",
           "alt": "Policrafters catalog 2"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "glass"
+        ]
       },
       {
         "title": "Catalog 3",
@@ -37,7 +73,10 @@
           "url": "/images/pages/3_pergola.png",
           "alt": "Policrafters catalog 3"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "wood"
+        ]
       },
       {
         "title": "Catalog 4",
@@ -45,7 +84,10 @@
           "url": "/images/pages/4_pergola.png",
           "alt": "Policrafters catalog 4"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "design"
+        ]
       },
       {
         "title": "Catalog 5",
@@ -53,7 +95,10 @@
           "url": "/images/pages/5_pergola.png",
           "alt": "Policrafters catalog 5"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "steel"
+        ]
       },
       {
         "title": "Catalog 6",
@@ -61,7 +106,10 @@
           "url": "/images/pages/6_pergola.png",
           "alt": "Policrafters catalog 6"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "aluminum"
+        ]
       },
       {
         "title": "Catalog 7",
@@ -69,7 +117,10 @@
           "url": "/images/pages/7_pergola.png",
           "alt": "Policrafters catalog 7"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "architecture"
+        ]
       },
       {
         "title": "Catalog 8",
@@ -77,7 +128,11 @@
           "url": "/images/pages/8_pergola.png",
           "alt": "Policrafters catalog 8"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "glass",
+          "steel"
+        ]
       },
       {
         "title": "Catalog 9",
@@ -85,7 +140,11 @@
           "url": "/images/pages/9_pergola.png",
           "alt": "Policrafters catalog 9"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "wood",
+          "design"
+        ]
       },
       {
         "title": "Catalog 10",
@@ -93,7 +152,10 @@
           "url": "/images/pages/10_pergola.png",
           "alt": "Policrafters catalog 10"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "design"
+        ]
       },
       {
         "title": "Catalog 11",
@@ -101,7 +163,10 @@
           "url": "/images/pages/11_pergola.png",
           "alt": "Policrafters catalog 11"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "steel"
+        ]
       },
       {
         "title": "Catalog 12",
@@ -109,7 +174,11 @@
           "url": "/images/pages/12_pergola.png",
           "alt": "Policrafters catalog 12"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "aluminum",
+          "glass"
+        ]
       },
       {
         "title": "Catalog 13",
@@ -117,7 +186,10 @@
           "url": "/images/pages/13_pergola.png",
           "alt": "Policrafters catalog 13"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "architecture"
+        ]
       },
       {
         "title": "Catalog 14",
@@ -125,7 +197,10 @@
           "url": "/images/pages/14_pergola.png",
           "alt": "Policrafters catalog 14"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "glass"
+        ]
       },
       {
         "title": "Catalog 15",
@@ -133,7 +208,10 @@
           "url": "/images/pages/15_pergola.png",
           "alt": "Policrafters catalog 15"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "wood"
+        ]
       },
       {
         "title": "Catalog 16",
@@ -141,7 +219,10 @@
           "url": "/images/pages/16_pergola.png",
           "alt": "Policrafters catalog 16"
         },
-        "file_url": "#"
+        "file_url": "#",
+        "categories": [
+          "aluminum"
+        ]
       }
     ]
   }
