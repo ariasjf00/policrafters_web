@@ -174,7 +174,7 @@ Importante:
 
 ## CatalogIndex — Catálogos
 
-Fuente única de la lista de catálogos descargables. La renderizan tanto [index.astro](../src/pages/index.astro) como [contact-us.astro](../src/pages/contact-us.astro) a través del componente compartido [CatalogsCarousel.astro](../src/components/CatalogsCarousel.astro), por eso vive en su propio endpoint en lugar de repetirse dentro de cada página.
+Fuente única de la lista de catálogos descargables. La renderizan tanto [index.astro](../src/pages/index.astro) como [contact-us.astro](../src/pages/contact-us.astro) a través del componente compartido [CatalogsCarousel.astro](../src/components/CatalogsCarousel.astro), por eso vive en su propio endpoint en lugar de repetirse dentro de cada página. La página [catalogs.astro](../src/pages/catalogs.astro) (`/catalogs`) consume este mismo endpoint para mostrar todos los catálogos en una grilla filtrable por categoría.
 
 Mocks: [src/mocks/catalogs.en.json](../src/mocks/catalogs.en.json) y [src/mocks/catalogs.es.json](../src/mocks/catalogs.es.json).
 
@@ -195,8 +195,15 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
       "catalogs_heading": "string",
       "catalogs_prev_aria": "string",
       "catalogs_next_aria": "string",
-      "catalogs_dot_aria": "string"
+      "catalogs_dot_aria": "string",
+      "filter_heading": "string",
+      "filter_all_label": "string",
+      "empty_state_text": "string"
     },
+
+    "categories": [
+      { "key": "string", "label": "string" }
+    ],
 
     "catalogs": [
       {
@@ -205,7 +212,8 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
           "url": "string",
           "alt": "string"
         },
-        "file_url": "string | null"
+        "file_url": "string | null",
+        "categories": ["string"]
       }
     ]
   }
@@ -218,6 +226,10 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
 - `catalogs_dot_aria` es un prefijo: el frontend le agrega el número de página (`"Go to page" → "Go to page 3"`).
 - `file_url` es el PDF descargable. Si viene `null` o vacío, la tarjeta se renderiza igual pero sin destino útil.
 - El orden del array es el orden de presentación; el frontend no reordena.
+- `categories` (a nivel de `fields`) es la lista ordenada de filtros de la página `/catalogs`; `label` viene localizado y `key` es un slug estable en kebab-case, igual en ambos idiomas. El frontend agrega por su cuenta la opción "todos" usando `copy.filter_all_label`, así que el backend no la incluye en `categories`.
+- `catalogs[].categories` es un array de `key`s de `categories` (un catálogo puede pertenecer a varias). Es independiente del idioma; el frontend lo lee siempre de la respuesta en inglés. Un catálogo sin categorías solo aparece cuando el filtro "todos" está activo.
+- `filter_heading`, `filter_all_label` y `empty_state_text` solo los usa la página `/catalogs` (título de la barra de filtros, etiqueta de la opción "todos" y mensaje cuando ningún catálogo coincide). El carrusel los ignora, igual que ignora `categories`.
+- Estos campos son aditivos: un backend que todavía no los envíe no rompe el carrusel, y la página `/catalogs` cae al mock local campo por campo.
 
 ## DirectContactBlock — Contacto directo compartido
 
