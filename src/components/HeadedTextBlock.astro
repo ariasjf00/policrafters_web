@@ -1,0 +1,73 @@
+---
+// Shared layout for why-policrafters.astro's "Why choose us" and "Corporate
+// Identity" sections: a large uppercase heading set off by a 1px left rule
+// (same recipe as service-row__title / warranty-intro), with body paragraphs
+// below at full width, outside the bordered block.
+interface Props {
+  lang: 'en' | 'es';
+  headingEs: string;
+  headingEn: string;
+  body: { es: string; en: string }[];
+}
+
+const { lang, headingEs, headingEn, body } = Astro.props;
+const isEs = lang === 'es';
+const pick = (es: string, en: string) => (isEs ? es : (en ?? es));
+---
+
+<div class="headed-text-block">
+  <div class="headed-text-block__title">
+    <h3
+      class="headed-text-block__heading"
+      data-copy-es={headingEs}
+      data-copy-en={headingEn}
+    >{pick(headingEs, headingEn)}</h3>
+  </div>
+  {body.map((para) => (
+    <p
+      class="headed-text-block__body"
+      data-copy-es={para.es}
+      data-copy-en={para.en}
+    >{pick(para.es, para.en)}</p>
+  ))}
+</div>
+
+<style>
+  .headed-text-block {
+    margin-bottom: 3rem;
+  }
+
+  .headed-text-block:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Same 1px left-border recipe as .service-row__title (services.astro) and
+     .warranty-intro (warranty.astro). */
+  .headed-text-block__title {
+    margin-bottom: 1rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .headed-text-block__heading {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .headed-text-block__body {
+    margin: 0 0 1.25rem;
+    line-height: 1.6;
+    color: #333;
+    font-size: .95rem;
+  }
+
+  .headed-text-block__body:last-child {
+    margin-bottom: 0;
+  }
+</style>
