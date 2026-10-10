@@ -96,9 +96,10 @@ const appendLang = (href: string, value: string) => {
 
 // Most footer links are placeholders (href="#") until their pages exist.
 // `linkHrefs` only overrides the ones that are real today, by index into
-// `t.links` / `footerCopy[lang].links` above — "Terms & Conditions" is index 3,
-// "Warranty" is index 4.
+// `t.links` / `footerCopy[lang].links` above — "Why Policrafters" is index 1,
+// "Terms & Conditions" is index 3, "Warranty" is index 4.
 const linkHrefs: Record<number, string> = {
+  1: appendLang('/why-policrafters', lang),
   3: appendLang('/terms-and-conditions', lang),
   4: appendLang('/warranty', lang)
 };
@@ -305,9 +306,11 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     return queryString ? `${path}?${queryString}` : path;
   };
 
-  // Mirrors the frontmatter's linkHrefs: index 3 ("Terms & Conditions") and
-  // index 4 ("Warranty") are the only real links today; the rest stay href="#".
+  // Mirrors the frontmatter's linkHrefs: index 1 ("Why Policrafters"), index 3
+  // ("Terms & Conditions") and index 4 ("Warranty") are the only real links
+  // today; the rest stay href="#".
   const linkHrefs: Record<number, (activeLang: string) => string> = {
+    1: (activeLang) => appendLang('/why-policrafters', activeLang),
     3: (activeLang) => appendLang('/terms-and-conditions', activeLang),
     4: (activeLang) => appendLang('/warranty', activeLang)
   };
