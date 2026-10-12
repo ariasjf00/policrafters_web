@@ -1,0 +1,444 @@
+---
+import { Icon } from 'astro-icon/components';
+import PageLayout from '../layouts/PageLayout.astro';
+import { loadCatalogs } from '../lib/catalogs';
+
+type AnyRecord = Record<string, any>;
+
+// Same shared endpoint the homepage/contact/services carousel reads (see
+// Docs/API_CONTRACT.md § CatalogIndex), so this grid and the slider always show the
+// same catalogs and images. Both languages are fetched at build time because every
+// string ships in the markup twice (data-copy-es/-en) for Header's no-reload toggle.
+const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n).
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const enCopy = catalogsEn.copy ?? {};
+const esCopy = catalogsEs.copy ?? {};
+
+const esSeoTitle = catalogsEs.meta?.seo_title || 'Catálogos | Policrafters';
+const enSeoTitle = catalogsEn.meta?.seo_title || 'Catalogs | Policrafters';
+const esSearchDescription = catalogsEs.meta?.search_description || '';
+const enSearchDescription = catalogsEn.meta?.search_description || esSearchDescription;
+
+// The visible design has no page title, only the sidebar heading; the h1 below is
+// visually hidden so the page still has one for screen readers and SEO. Derived from
+// seo_title so the CMS has a single place to name the page.
+const stripSuffix = (value: string) => value.replace(/\s*\|\s*Policrafters\s*$/i, '');
+const esPageHeading = stripSuffix(esSeoTitle);
+const enPageHeading = stripSuffix(enSeoTitle);
+
+const esFilterHeading = esCopy.filter_heading || 'Filtrar catálogos por';
+const enFilterHeading = enCopy.filter_heading || 'Catalogs filter by';
+const esAllLabel = esCopy.filter_all_label || 'Todos';
+const enAllLabel = enCopy.filter_all_label || 'All';
+const esEmptyState = esCopy.empty_state_text || '';
+const enEmptyState = enCopy.empty_state_text || esEmptyState;
+
+// Category list paired by index; English drives the length. `key` is
+// language-independent (read from EN), only `label` localizes.
+const enCategories = Array.isArray(catalogsEn.categories) ? catalogsEn.categories : [];
+const esCategories = Array.isArray(catalogsEs.categories) ? catalogsEs.categories : [];
+const categories = enCategories.map((enCategory: AnyRecord, index: number) => {
+  const esCategory = esCategories[index] ?? enCategory;
+  return {
+    key: enCategory.key,
+    labelEs: esCategory.label ?? enCategory.label ?? '',
+    labelEn: enCategory.label ?? esCategory.label ?? ''
+  };
+});
+
+// Catalogs paired by index, same as CatalogsCarousel.astro: images, file URLs and
+// category keys are language-neutral (read from EN); title and alt localize.
+const enItems = Array.isArray(catalogsEn.items) ? catalogsEn.items : [];
+const esItems = Array.isArray(catalogsEs.items) ? catalogsEs.items : [];
+const catalogs = enItems.map((enItem: AnyRecord, index: number) => {
+  const esItem = esItems[index] ?? enItem;
+  const href = enItem.file_url || '#';
+  return {
+    href,
+    opensNewTab: href !== '#',
+    imageUrl: enItem.image?.url ?? '',
+    altEs: esItem.image?.alt ?? enItem.image?.alt ?? '',
+    altEn: enItem.image?.alt ?? '',
+    titleEs: esItem.title ?? enItem.title ?? '',
+    titleEn: enItem.title ?? esItem.title ?? '',
+    categories: (Array.isArray(enItem.categories) ? enItem.categories : []).join(' ')
+  };
+});
+---
+
+<PageLayout
+  title={isEs ? esSeoTitle : enSeoTitle}
+  description={isEs ? esSearchDescription : enSearchDescription}
+  showHero={false}
+>
+  <section
+    class="catalogs-shell"
+    data-seo-title-es={esSeoTitle}
+    data-seo-title-en={enSeoTitle}
+    data-seo-description-es={esSearchDescription}
+    data-seo-description-en={enSearchDescription}
+  >
+    <h1
+      class="visually-hidden"
+      data-copy-es={esPageHeading}
+      data-copy-en={enPageHeading}
+    >{pick(esPageHeading, enPageHeading)}</h1>
+
+    <div class="catalogs-layout">
+      <!-- Sidebar: a flat checkbox list rather than collections.astro's accordion,
+           since catalogs have one level of categories. "All" is a frontend-only
+           option (not in the payload) — see the script for how it interacts with
+           the category checkboxes. -->
+      <aside class="catalog-filters">
+        <fieldset class="catalog-filters__fieldset">
+          <legend
+            class="catalog-filters__heading"
+            data-copy-es={esFilterHeading}
+            data-copy-en={enFilterHeading}
+          >{pick(esFilterHeading, enFilterHeading)}</legend>
+
+          <ul class="catalog-filters__list">
+            <li>
+              <label class="catalog-filter">
+                <input
+                  type="checkbox"
+                  class="catalog-filter__checkbox"
+                  data-filter-all
+                  checked
+                />
+                <span data-copy-es={esAllLabel} data-copy-en={enAllLabel}>{pick(esAllLabel, enAllLabel)}</span>
+              </label>
+            </li>
+            {categories.map((category: AnyRecord) => (
+              <li>
+                <label class="catalog-filter">
+                  <input
+                    type="checkbox"
+                    class="catalog-filter__checkbox"
+                    data-filter-category={category.key}
+                  />
+                  <span
+                    data-copy-es={category.labelEs}
+                    data-copy-en={category.labelEn}
+                  >{pick(category.labelEs, category.labelEn)}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
+      </aside>
+
+      <div class="catalog-gallery" aria-live="polite">
+        <ul class="catalog-grid">
+          {catalogs.map((catalog: AnyRecord) => (
+            <li class="catalog-grid__item" data-categories={catalog.categories}>
+              <a
+                class="catalog-tile"
+                href={catalog.href}
+                target={catalog.opensNewTab ? '_blank' : undefined}
+                rel={catalog.opensNewTab ? 'noopener noreferrer' : undefined}
+              >
+                <img
+                  class="catalog-tile__image"
+                  src={catalog.imageUrl}
+                  alt={pick(catalog.altEs, catalog.altEn)}
+                  data-alt-es={catalog.altEs}
+                  data-alt-en={catalog.altEn}
+                  width="600"
+                  height="800"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="catalog-tile__label">
+                  <span
+                    class="catalog-tile__title"
+                    data-copy-es={catalog.titleEs}
+                    data-copy-en={catalog.titleEn}
+                  >{pick(catalog.titleEs, catalog.titleEn)}</span>
+                  <Icon name="mdi:download" class="catalog-tile__icon" aria-hidden="true" />
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <p
+          class="catalog-empty"
+          hidden
+          data-copy-es={esEmptyState}
+          data-copy-en={enEmptyState}
+        >{pick(esEmptyState, enEmptyState)}</p>
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.catalogs-shell');
+
+  if (shell) {
+    const allCheckbox = shell.querySelector('[data-filter-all]');
+    const categoryCheckboxes = Array.from(shell.querySelectorAll('[data-filter-category]'));
+    const items = Array.from(shell.querySelectorAll('.catalog-grid__item'));
+    const emptyState = shell.querySelector('.catalog-empty');
+
+    // A catalog shows when "All" is on, or when any of its categories is checked
+    // (OR across categories — a catalog in Glass and Steel shows for either).
+    const applyFilter = () => {
+      const checked = categoryCheckboxes
+        .filter((checkbox) => checkbox.checked)
+        .map((checkbox) => checkbox.dataset.filterCategory);
+      const showAll = allCheckbox?.checked || checked.length === 0;
+
+      items.forEach((item) => {
+        const itemCategories = (item.dataset.categories || '').split(' ').filter(Boolean);
+        item.hidden = !showAll && !itemCategories.some((key) => checked.includes(key));
+      });
+
+      if (emptyState) emptyState.hidden = items.some((item) => !item.hidden);
+    };
+
+    // "All" and the categories are mutually exclusive: checking "All" clears the
+    // categories, checking a category clears "All", and clearing the last category
+    // falls back to "All" so the grid is never filtered down to nothing by accident.
+    allCheckbox?.addEventListener('change', () => {
+      if (allCheckbox.checked) {
+        categoryCheckboxes.forEach((checkbox) => { checkbox.checked = false; });
+      } else if (!categoryCheckboxes.some((checkbox) => checkbox.checked)) {
+        allCheckbox.checked = true;
+      }
+      applyFilter();
+    });
+
+    categoryCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener('change', () => {
+        const anyChecked = categoryCheckboxes.some((other) => other.checked);
+        if (allCheckbox) allCheckbox.checked = !anyChecked;
+        applyFilter();
+      });
+    });
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    // All copy ships as data-copy-es/-en and data-alt-es/-en, so switching language
+    // only rewrites text and never touches checkbox/filter state.
+    const applyCatalogsLanguage = (lang) => {
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      const title = shell.getAttribute('data-seo-title-' + key);
+      if (title) document.title = title;
+
+      const description = shell.getAttribute('data-seo-description-' + key);
+      if (description !== null) {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) metaDescription.setAttribute('content', description);
+      }
+
+      document.documentElement.lang = key;
+    };
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. This script never dispatches sitelangchange and never
+    // writes localStorage.siteLang — re-dispatching would turn Header's boot into a
+    // feedback loop. Self-boot first, since Header's boot dispatch fires before this
+    // page script runs (see warranty.astro for the same pattern).
+    applyFilter();
+    applyCatalogsLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyCatalogsLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Same wider stage as collections.astro/renovations.astro: break out of the
+     ~1100px .page-shell (PageLayout's :root --max) with the full-bleed technique
+     PageLayout's body { overflow-x: clip } allows, then re-cap at 1440px. */
+  .catalogs-layout {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-inline: max(1.5rem, calc((100vw - 1440px) / 2));
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .catalog-filters__fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  /* Heading + short rule underneath, per the design. The rule is the legend's own
+     bottom border, so it tracks the text width in either language. */
+  .catalog-filters__heading {
+    display: inline-block;
+    padding: 0 1.25rem .4rem 0;
+    margin-bottom: 1.1rem;
+    border-bottom: 1px solid #2f3437;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #161616;
+  }
+
+  .catalog-filters__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: .5rem;
+  }
+
+  .catalog-filter {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: .95rem;
+    color: #2f2f2f;
+    cursor: pointer;
+  }
+
+  .catalog-filter__checkbox {
+    width: .9rem;
+    height: .9rem;
+    margin: 0;
+    accent-color: #161616;
+    cursor: pointer;
+  }
+
+  /* Three per row. Capped so covers stay catalog-sized on wide screens instead of
+     stretching across the whole 1440px stage — the design leaves the right side
+     open rather than growing the covers. */
+  .catalog-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4.5rem 2.75rem;
+  }
+
+  .catalog-tile {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity .2s ease;
+  }
+
+  .catalog-tile:hover {
+    opacity: .85;
+  }
+
+  .catalog-tile:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 4px;
+  }
+
+  /* 3:4, same as CatalogsCarousel.astro's .catalog-card__image. */
+  .catalog-tile__image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+  }
+
+  .catalog-tile__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-top: .9rem;
+  }
+
+  .catalog-tile__title {
+    font-variant: small-caps;
+    letter-spacing: .04em;
+    font-size: 1rem;
+    color: #161616;
+  }
+
+  .catalog-tile__icon {
+    width: 1rem;
+    height: 1rem;
+    color: #161616;
+  }
+
+  .catalog-empty {
+    margin: 0;
+    padding: 4rem 0;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #777;
+  }
+
+  @media (max-width: 980px) {
+    .catalogs-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .catalog-grid {
+      max-width: none;
+      gap: 3rem 1.75rem;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .catalogs-layout {
+      padding-inline: 1.25rem;
+    }
+
+    .catalog-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem 1.25rem;
+    }
+  }
+</style>
