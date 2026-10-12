@@ -88,7 +88,7 @@ const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((
   showHero={false}
 >
   <section class="collections-shell">
-    <h2 id="collections-title" data-copy-es={collectionsEs.fields.hero_title} data-copy-en={collectionsEn.fields.hero_title}>{pageTitle}</h2>
+    <h1 id="collections-title" data-copy-es={collectionsEs.fields.hero_title} data-copy-en={collectionsEn.fields.hero_title}>{pageTitle}</h1>
     <p id="collections-intro" class="collections-copy" data-copy-es={collectionsEs.fields.intro_text} data-copy-en={collectionsEn.fields.intro_text}>{introText}</p>
 
     <div class="collections-layout">
@@ -546,7 +546,7 @@ const showerDoorProducts = showerDoorTypes.flatMap((type) => type.products.map((
     gap: 1.5rem;
   }
 
-  .collections-shell h2 {
+  .collections-shell h1 {
     margin: 0;
     font-size: clamp(1.8rem, 3vw, 2.5rem);
     letter-spacing: 0.02em;
