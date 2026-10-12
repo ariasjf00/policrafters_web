@@ -13,6 +13,14 @@ services:
       - traefik.http.routers.policrafters.tls=true
       - traefik.http.routers.policrafters.tls.certresolver=mytlschallenge
       - traefik.http.services.policrafters.loadbalancer.server.port=80
+      # This host is staging, not the production domain: keep it out of search
+      # engines at the proxy layer too, on top of robots.txt and the noindex
+      # meta tag (both default-off via PUBLIC_ALLOW_INDEXING — see
+      # src/pages/robots.txt.ts, src/components/SeoHead.astro). Remove this
+      # middleware when this router is pointed at the real production host —
+      # see Docs/SEO_phase1_prod_changes_pending.md.
+      - traefik.http.middlewares.policrafters-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow
+      - traefik.http.routers.policrafters.middlewares=policrafters-noindex
 
 networks:
   traefik_proxy:
