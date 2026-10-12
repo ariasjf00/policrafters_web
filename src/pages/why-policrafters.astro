@@ -429,6 +429,7 @@ const partners = enPartners.map((enPartner: AnyRecord, index: number) => {
 <script>
   // @ts-nocheck
   const shell = document.querySelector('.why-shell');
+  let isWagtailPreview = false;
 
   if (shell) {
     const getLangFromUrl = () => {
@@ -447,12 +448,27 @@ const partners = enPartners.map((enPartner: AnyRecord, index: number) => {
       return 'en';
     };
 
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
     // All copy ships in the markup as data-copy-es/-en and data-alt-es/-en
     // (images), including inside HeadedTextBlock.astro — its markup lands
     // inside this shell, so this one subscriber covers it too (see
     // WarrantySection.astro for the same rationale). document.title and the
     // meta description are swapped too, from data attributes on the shell.
     const applyWhyPolicraftersLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
       const key = lang === 'en' ? 'en' : 'es';
 
       shell.querySelectorAll('[data-copy-es]').forEach((el) => {
@@ -476,6 +492,262 @@ const partners = enPartners.map((enPartner: AnyRecord, index: number) => {
 
       document.documentElement.lang = key;
     };
+
+    const applyWhyPolicraftersPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const hero = shell.querySelector('.why-bleed img');
+      if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        const heroAlt = fields.hero_image.alt || '';
+        if (heroUrl) hero.setAttribute('src', heroUrl);
+        hero.setAttribute('alt', heroAlt);
+        hero.setAttribute('data-alt-es', heroAlt);
+        hero.setAttribute('data-alt-en', heroAlt);
+      }
+
+      const introEyebrow = shell.querySelector('.why-intro .section-eyebrow');
+      if (introEyebrow && typeof fields.intro_eyebrow === 'string') {
+        introEyebrow.textContent = fields.intro_eyebrow;
+        introEyebrow.setAttribute('data-copy-es', fields.intro_eyebrow);
+        introEyebrow.setAttribute('data-copy-en', fields.intro_eyebrow);
+      }
+
+      const introHeading = shell.querySelector('.why-intro .section-heading');
+      if (introHeading && typeof fields.intro_heading === 'string') {
+        introHeading.textContent = fields.intro_heading;
+        introHeading.setAttribute('data-copy-es', fields.intro_heading);
+        introHeading.setAttribute('data-copy-en', fields.intro_heading);
+      }
+
+      const introParagraphs = Array.from(shell.querySelectorAll('.why-intro__body'));
+      const previewIntroBody = Array.isArray(fields.intro_body) ? fields.intro_body : [];
+      introParagraphs.forEach((paragraph, index) => {
+        const value = previewIntroBody[index] ?? previewIntroBody[0] ?? '';
+        paragraph.textContent = value;
+        paragraph.setAttribute('data-copy-es', value);
+        paragraph.setAttribute('data-copy-en', value);
+      });
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const whySections = Array.from(shell.querySelectorAll('.why-section'));
+      const whySection = whySections[0];
+      const whyBlocks = whySection ? Array.from(whySection.querySelectorAll('.headed-text-block')) : [];
+      const whyItems = Array.isArray(fields.why_items) ? fields.why_items : [];
+      whyBlocks.forEach((block, index) => {
+        const item = whyItems[index] ?? whyItems[0] ?? {};
+        const heading = block.querySelector('.headed-text-block__heading');
+        if (heading && typeof item.heading === 'string') {
+          heading.textContent = item.heading;
+          heading.setAttribute('data-copy-es', item.heading);
+          heading.setAttribute('data-copy-en', item.heading);
+        }
+
+        const bodies = Array.from(block.querySelectorAll('.headed-text-block__body'));
+        const itemBodies = Array.isArray(item.body) ? item.body : [];
+        bodies.forEach((paragraph, paragraphIndex) => {
+          const value = itemBodies[paragraphIndex] ?? itemBodies[0] ?? '';
+          paragraph.textContent = value;
+          paragraph.setAttribute('data-copy-es', value);
+          paragraph.setAttribute('data-copy-en', value);
+        });
+      });
+
+      const certSection = whySections[1];
+      const certImage = certSection ? certSection.querySelector('.why-cert-image') : null;
+      if (certImage && fields.certifications_image && typeof fields.certifications_image === 'object') {
+        const certUrl = normalizePreviewAssetUrl(fields.certifications_image.url || '');
+        const certAlt = fields.certifications_image.alt || '';
+        if (certUrl) certImage.setAttribute('src', certUrl);
+        certImage.setAttribute('alt', certAlt);
+        certImage.setAttribute('data-alt-es', certAlt);
+        certImage.setAttribute('data-alt-en', certAlt);
+      }
+
+      const certEyebrow = certSection ? certSection.querySelector('.why-cert-eyebrow') : null;
+      if (certEyebrow && typeof fields.certifications_eyebrow === 'string') {
+        certEyebrow.textContent = fields.certifications_eyebrow;
+        certEyebrow.setAttribute('data-copy-es', fields.certifications_eyebrow);
+        certEyebrow.setAttribute('data-copy-en', fields.certifications_eyebrow);
+      }
+
+      const certHeading = certSection ? certSection.querySelector('.section-heading') : null;
+      if (certHeading && typeof fields.certifications_heading === 'string') {
+        certHeading.textContent = fields.certifications_heading;
+        certHeading.setAttribute('data-copy-es', fields.certifications_heading);
+        certHeading.setAttribute('data-copy-en', fields.certifications_heading);
+      }
+
+      const certBodies = certSection ? Array.from(certSection.querySelectorAll('.why-cert-body')) : [];
+      const previewCertBodies = Array.isArray(fields.certifications_body) ? fields.certifications_body : [];
+      certBodies.forEach((paragraph, index) => {
+        const value = previewCertBodies[index] ?? previewCertBodies[0] ?? '';
+        paragraph.textContent = value;
+        paragraph.setAttribute('data-copy-es', value);
+        paragraph.setAttribute('data-copy-en', value);
+      });
+
+      const issuerEls = certSection ? Array.from(certSection.querySelectorAll('.why-credentials__issuer')) : [];
+      const previewIssuers = Array.isArray(fields.issuers) ? fields.issuers : [];
+      issuerEls.forEach((issuerEl, index) => {
+        const issuer = previewIssuers[index] ?? previewIssuers[0] ?? {};
+        const logo = issuerEl.querySelector('.why-credentials__logo');
+        if (logo && issuer.logo && typeof issuer.logo === 'object') {
+          const logoUrl = normalizePreviewAssetUrl(issuer.logo.url || '');
+          const logoAlt = issuer.logo.alt || '';
+          if (logoUrl) logo.setAttribute('src', logoUrl);
+          logo.setAttribute('alt', logoAlt);
+          logo.setAttribute('data-alt-es', logoAlt);
+          logo.setAttribute('data-alt-en', logoAlt);
+        }
+
+        const licenseEls = Array.from(issuerEl.querySelectorAll('.why-credentials__license'));
+        const previewLicenses = Array.isArray(issuer.licenses) ? issuer.licenses : [];
+        licenseEls.forEach((licenseEl, licenseIndex) => {
+          const license = previewLicenses[licenseIndex] ?? previewLicenses[0] ?? {};
+          const label = licenseEl.querySelector('.why-credentials__label');
+          if (label && typeof license.label === 'string') {
+            label.textContent = license.label;
+            label.setAttribute('data-copy-es', license.label);
+            label.setAttribute('data-copy-en', license.label);
+          }
+
+          const number = licenseEl.querySelector('.why-credentials__number');
+          if (number && typeof license.number === 'string') {
+            number.textContent = license.number;
+          }
+
+          const caption = licenseEl.querySelector('.why-credentials__caption');
+          if (caption && typeof license.caption === 'string') {
+            caption.textContent = license.caption;
+            caption.setAttribute('data-copy-es', license.caption);
+            caption.setAttribute('data-copy-en', license.caption);
+          }
+        });
+      });
+
+      const identitySection = whySections[2];
+      const identityBlocks = identitySection ? Array.from(identitySection.querySelectorAll('.headed-text-block')) : [];
+      const identityItems = Array.isArray(fields.identity_items) ? fields.identity_items : [];
+      identityBlocks.forEach((block, index) => {
+        const item = identityItems[index] ?? identityItems[0] ?? {};
+        const heading = block.querySelector('.headed-text-block__heading');
+        if (heading && typeof item.heading === 'string') {
+          heading.textContent = item.heading;
+          heading.setAttribute('data-copy-es', item.heading);
+          heading.setAttribute('data-copy-en', item.heading);
+        }
+
+        const bodies = Array.from(block.querySelectorAll('.headed-text-block__body'));
+        const itemBodies = Array.isArray(item.body) ? item.body : [];
+        bodies.forEach((paragraph, paragraphIndex) => {
+          const value = itemBodies[paragraphIndex] ?? itemBodies[0] ?? '';
+          paragraph.textContent = value;
+          paragraph.setAttribute('data-copy-es', value);
+          paragraph.setAttribute('data-copy-en', value);
+        });
+      });
+
+      const identityIntro = identitySection ? identitySection.querySelector('.why-section__intro') : null;
+      const identityEyebrow = identityIntro ? identityIntro.querySelector('.section-eyebrow') : null;
+      if (identityEyebrow && typeof fields.identity_eyebrow === 'string') {
+        identityEyebrow.textContent = fields.identity_eyebrow;
+        identityEyebrow.setAttribute('data-copy-es', fields.identity_eyebrow);
+        identityEyebrow.setAttribute('data-copy-en', fields.identity_eyebrow);
+      }
+
+      const identityHeading = identityIntro ? identityIntro.querySelector('.section-heading') : null;
+      if (identityHeading && typeof fields.identity_heading === 'string') {
+        identityHeading.textContent = fields.identity_heading;
+        identityHeading.setAttribute('data-copy-es', fields.identity_heading);
+        identityHeading.setAttribute('data-copy-en', fields.identity_heading);
+      }
+
+      const partnersSection = whySections[3];
+      const partnersIntro = partnersSection ? partnersSection.querySelector('.why-section__intro') : null;
+      const partnersEyebrow = partnersIntro ? partnersIntro.querySelector('.section-eyebrow') : null;
+      if (partnersEyebrow && typeof fields.partners_eyebrow === 'string') {
+        partnersEyebrow.textContent = fields.partners_eyebrow;
+        partnersEyebrow.setAttribute('data-copy-es', fields.partners_eyebrow);
+        partnersEyebrow.setAttribute('data-copy-en', fields.partners_eyebrow);
+      }
+
+      const partnersHeading = partnersIntro ? partnersIntro.querySelector('.section-heading') : null;
+      if (partnersHeading && typeof fields.partners_heading === 'string') {
+        partnersHeading.textContent = fields.partners_heading;
+        partnersHeading.setAttribute('data-copy-es', fields.partners_heading);
+        partnersHeading.setAttribute('data-copy-en', fields.partners_heading);
+      }
+
+      const partnersIntroText = partnersSection ? partnersSection.querySelector('.why-partners-intro') : null;
+      if (partnersIntroText && typeof fields.partners_intro === 'string') {
+        partnersIntroText.textContent = fields.partners_intro;
+        partnersIntroText.setAttribute('data-copy-es', fields.partners_intro);
+        partnersIntroText.setAttribute('data-copy-en', fields.partners_intro);
+      }
+
+      const partnerRows = partnersSection ? Array.from(partnersSection.querySelectorAll('.service-row')) : [];
+      const previewPartners = Array.isArray(fields.partners) ? fields.partners : [];
+      partnerRows.forEach((row, index) => {
+        const partner = previewPartners[index] ?? previewPartners[0] ?? {};
+        const image = row.querySelector('.service-row__image');
+        if (image && partner.image && typeof partner.image === 'object') {
+          const imageUrl = normalizePreviewAssetUrl(partner.image.url || '');
+          const imageAlt = partner.image.alt || '';
+          if (imageUrl) image.setAttribute('src', imageUrl);
+          image.setAttribute('alt', imageAlt);
+          image.setAttribute('data-alt-es', imageAlt);
+          image.setAttribute('data-alt-en', imageAlt);
+        }
+
+        const logo = row.querySelector('.why-partner-logo');
+        if (logo && partner.logo && typeof partner.logo === 'object') {
+          const logoUrl = normalizePreviewAssetUrl(partner.logo.url || '');
+          const logoAlt = partner.logo.alt || '';
+          if (logoUrl) logo.setAttribute('src', logoUrl);
+          logo.setAttribute('alt', logoAlt);
+          logo.setAttribute('data-alt-es', logoAlt);
+          logo.setAttribute('data-alt-en', logoAlt);
+        }
+
+        const bodyEls = Array.from(row.querySelectorAll('.service-row__body'));
+        const partnerBody = Array.isArray(partner.body) ? partner.body : [];
+        bodyEls.forEach((paragraph, paragraphIndex) => {
+          const value = partnerBody[paragraphIndex] ?? partnerBody[0] ?? '';
+          paragraph.textContent = value;
+          paragraph.setAttribute('data-copy-es', value);
+          paragraph.setAttribute('data-copy-en', value);
+        });
+      });
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (previewData.type !== 'why_policrafters.WhyPolicraftersPage') {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyWhyPolicraftersPreview(previewData);
+    });
 
     // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
     // sitelangchange dispatch. This script never dispatches sitelangchange and never
