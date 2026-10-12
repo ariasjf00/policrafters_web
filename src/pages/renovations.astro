@@ -19,6 +19,7 @@ const activeContent = isEs ? renovationsEs : renovationsEn;
 const fallbackContent = isEs ? renovationsEn : renovationsEs;
 
 const pageTitle = activeContent.title || activeContent.fields.hero_title || fallbackContent.title || 'Renovations';
+const pageSeoTitle = activeContent.meta?.seo_title || fallbackContent.meta?.seo_title || pageTitle;
 const pageDescription = activeContent.meta.search_description || fallbackContent.meta.search_description || 'Policrafters renovation work';
 const introText = activeContent.fields.intro_text || fallbackContent.fields.intro_text || '';
 const emptyStateEn = renovationsEn.fields.empty_state_text || 'Coming soon';
@@ -99,7 +100,7 @@ const galleryByCategory = Object.fromEntries(
 ---
 
 <PageLayout
-  title={pageTitle ? `${pageTitle} | Policrafters` : 'Renovations | Policrafters'}
+  title={pageSeoTitle}
   description={pageDescription}
   showHero={false}
 >
