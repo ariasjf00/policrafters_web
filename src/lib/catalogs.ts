@@ -1,7 +1,10 @@
 import catalogsEnMock from '../mocks/catalogs.en.json';
 import catalogsEsMock from '../mocks/catalogs.es.json';
 
-// Shared loader for the catalogs endpoint, used by index.astro and contact-us.astro.
+// Shared loader for the catalogs endpoint, used by index.astro, contact-us.astro and
+// services.astro (through CatalogsCarousel.astro) and by catalogs.astro (the /catalogs
+// grid). The carousel only reads `copy` and `items`; `meta`, `categories` and each
+// item's `categories` exist for the /catalogs page's filter.
 //
 // Unlike the page loaders, this fetches BOTH languages at build time: the carousel
 // ships every string in the markup twice (data-copy-es/-en) so Header's toggle can
@@ -15,16 +18,30 @@ export interface CatalogsCopy {
   catalogs_prev_aria?: string;
   catalogs_next_aria?: string;
   catalogs_dot_aria?: string;
+  filter_heading?: string;
+  filter_all_label?: string;
+  empty_state_text?: string;
+}
+
+export interface CatalogCategory {
+  key: string;
+  label: string;
 }
 
 export interface CatalogItem {
   title?: string;
   image?: { url?: string; alt?: string };
   file_url?: string;
+  categories: string[];
 }
 
 export interface CatalogsPayload {
+  meta: {
+    seo_title?: string;
+    search_description?: string;
+  };
   copy: CatalogsCopy;
+  categories: CatalogCategory[];
   items: CatalogItem[];
 }
 
@@ -49,18 +66,30 @@ const normalizeAssetUrl = (value: unknown): string => {
 const toPayload = (source: any, isRemote: boolean, fallback: any): CatalogsPayload => {
   const fields = source?.fields ?? {};
   const fallbackFields = fallback?.fields ?? {};
-  const items: CatalogItem[] = Array.isArray(fields.catalogs) && fields.catalogs.length
+  const items: any[] = Array.isArray(fields.catalogs) && fields.catalogs.length
     ? fields.catalogs
     : (fallbackFields.catalogs ?? []);
+  // Per-key fallback like `copy`: a backend that predates the /catalogs filter
+  // fields still serves the carousel, and the page falls back to the mock's list.
+  const categories: any[] = Array.isArray(fields.categories) && fields.categories.length
+    ? fields.categories
+    : (fallbackFields.categories ?? []);
 
   return {
+    meta: { ...(fallback?.meta ?? {}), ...(source?.meta ?? {}) },
     copy: { ...(fallbackFields.copy ?? {}), ...(fields.copy ?? {}) },
+    categories: categories
+      .filter((category) => typeof category?.key === 'string' && category.key)
+      .map((category) => ({ key: category.key, label: category.label ?? category.key })),
     items: items.map((item) => ({
       ...item,
       image: {
         url: isRemote ? normalizeAssetUrl(item.image?.url) : (item.image?.url ?? ''),
         alt: item.image?.alt ?? ''
-      }
+      },
+      categories: Array.isArray(item.categories)
+        ? item.categories.filter((key: unknown): key is string => typeof key === 'string')
+        : []
     }))
   };
 };

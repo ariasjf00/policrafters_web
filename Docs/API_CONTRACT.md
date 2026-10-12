@@ -174,7 +174,7 @@ Importante:
 
 ## CatalogIndex — Catálogos
 
-Fuente única de la lista de catálogos descargables. La renderizan tanto [index.astro](../src/pages/index.astro) como [contact-us.astro](../src/pages/contact-us.astro) a través del componente compartido [CatalogsCarousel.astro](../src/components/CatalogsCarousel.astro), por eso vive en su propio endpoint en lugar de repetirse dentro de cada página.
+Fuente única de la lista de catálogos descargables. La renderizan tanto [index.astro](../src/pages/index.astro) como [contact-us.astro](../src/pages/contact-us.astro) a través del componente compartido [CatalogsCarousel.astro](../src/components/CatalogsCarousel.astro), por eso vive en su propio endpoint en lugar de repetirse dentro de cada página. La página [catalogs.astro](../src/pages/catalogs.astro) (`/catalogs`) consume este mismo endpoint para mostrar todos los catálogos en una grilla filtrable por categoría.
 
 Mocks: [src/mocks/catalogs.en.json](../src/mocks/catalogs.en.json) y [src/mocks/catalogs.es.json](../src/mocks/catalogs.es.json).
 
@@ -195,8 +195,15 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
       "catalogs_heading": "string",
       "catalogs_prev_aria": "string",
       "catalogs_next_aria": "string",
-      "catalogs_dot_aria": "string"
+      "catalogs_dot_aria": "string",
+      "filter_heading": "string",
+      "filter_all_label": "string",
+      "empty_state_text": "string"
     },
+
+    "categories": [
+      { "key": "string", "label": "string" }
+    ],
 
     "catalogs": [
       {
@@ -205,7 +212,8 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
           "url": "string",
           "alt": "string"
         },
-        "file_url": "string | null"
+        "file_url": "string | null",
+        "categories": ["string"]
       }
     ]
   }
@@ -218,6 +226,10 @@ Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang
 - `catalogs_dot_aria` es un prefijo: el frontend le agrega el número de página (`"Go to page" → "Go to page 3"`).
 - `file_url` es el PDF descargable. Si viene `null` o vacío, la tarjeta se renderiza igual pero sin destino útil.
 - El orden del array es el orden de presentación; el frontend no reordena.
+- `categories` (a nivel de `fields`) es la lista ordenada de filtros de la página `/catalogs`; `label` viene localizado y `key` es un slug estable en kebab-case, igual en ambos idiomas. El frontend agrega por su cuenta la opción "todos" usando `copy.filter_all_label`, así que el backend no la incluye en `categories`.
+- `catalogs[].categories` es un array de `key`s de `categories` (un catálogo puede pertenecer a varias). Es independiente del idioma; el frontend lo lee siempre de la respuesta en inglés. Un catálogo sin categorías solo aparece cuando el filtro "todos" está activo.
+- `filter_heading`, `filter_all_label` y `empty_state_text` solo los usa la página `/catalogs` (título de la barra de filtros, etiqueta de la opción "todos" y mensaje cuando ningún catálogo coincide). El carrusel los ignora, igual que ignora `categories`.
+- Estos campos son aditivos: un backend que todavía no los envíe no rompe el carrusel, y la página `/catalogs` cae al mock local campo por campo.
 
 ## DirectContactBlock — Contacto directo compartido
 
@@ -597,6 +609,85 @@ Nota importante: igual que TermsPage, ServicesPage y BrandsPage, la API devuelve
 - El backend o mock devuelve `intro_heading`, `intro_body` y `sections` (incluyendo `items`) ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. `sections` e `items` se emparejan entre idiomas por índice, y el inglés determina la cantidad.
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+
+## WhyPolicraftersPage
+
+Página "Why Policrafters" referenciada por [why-policrafters.astro](../src/pages/why-policrafters.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer. Cinco secciones fijas: banner + intro, "por qué elegirnos", certificaciones/licencias, identidad corporativa, y socios fabricantes (con el mismo layout de fila alternada imagen/texto que [ServicesPage](#servicespage)).
+
+Mocks de referencia: [src/mocks/why-policrafters-page.en.json](../src/mocks/why-policrafters-page.en.json) y [src/mocks/why-policrafters-page.es.json](../src/mocks/why-policrafters-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_WHY_POLICRAFTERS_API_URL`.
+
+Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "why_policrafters.WhyPolicraftersPage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_image": { "url": "string", "alt": "string" },
+    "intro_eyebrow": "string",
+    "intro_heading": "string",
+    "intro_body": ["string"],
+
+    "why_eyebrow": "string",
+    "why_heading": "string",
+    "why_items": [
+      { "key": "string", "heading": "string", "body": ["string"] }
+    ],
+
+    "certifications_image": { "url": "string", "alt": "string" },
+    "certifications_eyebrow": "string",
+    "certifications_heading": "string",
+    "certifications_body": ["string"],
+    "issuers": [
+      {
+        "key": "string",
+        "logo": { "url": "string", "alt": "string" },
+        "licenses": [
+          { "label": "string", "number": "string", "caption": "string" }
+        ]
+      }
+    ],
+
+    "identity_eyebrow": "string",
+    "identity_heading": "string",
+    "identity_items": [
+      { "key": "string", "heading": "string", "body": ["string"] }
+    ],
+
+    "partners_eyebrow": "string",
+    "partners_heading": "string",
+    "partners_intro": "string",
+    "partners": [
+      {
+        "key": "string",
+        "logo": { "url": "string", "alt": "string" },
+        "image": { "url": "string", "alt": "string" },
+        "body": ["string"]
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- Las cinco secciones (`hero`/intro, `why_items`, certificaciones, `identity_items`, `partners`) son fijas en el diseño actual; el frontend no asume que el backend pueda omitir una de ellas, pero sí trata `why_items`, `issuers`, `identity_items` y `partners` como arrays dinámicos.
+- `why_items` e `identity_items` comparten la misma forma (`key`, `heading`, `body[]`) porque ambas secciones usan el mismo componente de bloque con regla vertical izquierda (`HeadedTextBlock.astro`); el diseño actual usa 3 entradas en cada una, pero el frontend no asume una cantidad fija.
+- `issuers` modela la sección de certificaciones: cada emisor (`dbpr`, `aia`, `nga`) trae su propio logo y uno o más `licenses`. El diseño actual tiene 3 logos pero 4 licencias en total porque DBPR agrupa 2 licencias bajo un mismo logo — el frontend calcula el total de columnas sumando `licenses.length` de todos los `issuers`, y cada logo ocupa tantas columnas como licencias tenga su emisor.
+- `licenses[].number` es independiente del idioma (un número de licencia no se traduce); el frontend lo lee siempre de la respuesta en inglés, igual que `column`/`key` en WarrantyPage. `label` y `caption` sí vienen localizados.
+- `partners` empareja un logo (`logo`, sustituye al título/subtítulo de la fila) con una foto (`image`) y un cuerpo de texto (`body[]`), reutilizando el layout de fila alternada de [ServicesPage](#servicespage) (`services[]`). El orden del array determina la alternancia izquierda/derecha empezando por imagen a la izquierda en el primer elemento.
+- `key` en `why_items`, `issuers`, `identity_items` y `partners` es un slug estable en kebab-case, igual en ambos idiomas e independiente del idioma.
+- Todo campo de imagen sigue la convención general del documento (`{ "url", "alt" }`); las URLs relativas que vienen del CMS se normalizan con el origen de la API en el frontend, igual que en ServicesPage — las rutas `/images/...` de los mocks locales no se tocan.
+- El backend o mock devuelve todos los campos de texto ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. Los arrays se emparejan entre idiomas por índice, y el inglés determina la cantidad.
+- Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, WarrantyPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
 
 ## ModelPage
 

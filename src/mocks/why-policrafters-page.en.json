@@ -1,0 +1,177 @@
+{
+  "type": "why_policrafters.WhyPolicraftersPage",
+  "title": "Why Policrafters",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Why Policrafters | Policrafters",
+    "search_description": "Discover why Policrafters is South Florida's trusted name in custom glass, aluminum and architectural solutions — our experience, certifications and manufacturing partners."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/why-policrafters-banner.webp",
+      "alt": "Policrafters architectural interior with glass staircase and loft"
+    },
+    "intro_eyebrow": "Welcome to Policrafters",
+    "intro_heading": "ELEVATING ARCHITECTURAL STANDARDS",
+    "intro_body": [
+      "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions. Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond.",
+      "Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life."
+    ],
+
+    "why_eyebrow": "Why choose us?",
+    "why_heading": "EXCELLENCE IN ARCHITECTURAL SOLUTIONS",
+    "why_items": [
+      {
+        "key": "20-years-experience",
+        "heading": "20+ YEARS OF EXPERIENCE",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat."
+        ]
+      },
+      {
+        "key": "finest-materials",
+        "heading": "FINEST MATERIALS THAT STANDS THE TEST OF TIME",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat."
+        ]
+      },
+      {
+        "key": "competitive-edge",
+        "heading": "COMPETITIVE EDGE OVER EUROPEAN BRANDS",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat."
+        ]
+      }
+    ],
+
+    "certifications_image": {
+      "url": "/images/pages/why-policrafters-banner-certifications.webp",
+      "alt": "Policrafters team reviewing plans in a glass-walled conference room"
+    },
+    "certifications_eyebrow": "Certifications & Professional Licenses",
+    "certifications_heading": "INDUSTRY ACCREDITATIONS AND OFFICIAL QUALIFICATIONS",
+    "certifications_body": [
+      "At Policrafters, we take pride in delivering solutions that are not only innovative but also highly customizable to meet the unique needs of each client. Our commitment to excellence is reflected in every project we undertake, from concept to completion. A distinguished name in Interior Design and Architecture Solutions. Crafted in the United States using premium-quality materials and cutting-edge technology, our products are a testament to the expertise and dedication of our seasoned team. Our workforce brings a wealth of experience to the table, enabling us to design, manufacture, and install bespoke solutions across South Florida and beyond.",
+      "Whether you're in the market for intricate glasswork, aluminum, other metals, or wood craftsmanship, Policrafters is equipped to bring your vision to life."
+    ],
+    "issuers": [
+      {
+        "key": "dbpr",
+        "logo": {
+          "url": "/images/pages/dbpr-logo.webp",
+          "alt": "Florida Department of Business & Professional Regulation"
+        },
+        "licenses": [
+          { "label": "LICENSE NUMBER:", "number": "CGC1538339", "caption": "General Contractor License" },
+          { "label": "LICENSE NUMBER:", "number": "CCC1336161", "caption": "Roofing Contractor License" }
+        ]
+      },
+      {
+        "key": "aia",
+        "logo": {
+          "url": "/images/pages/aia-logo.webp",
+          "alt": "American Institute of Architects"
+        },
+        "licenses": [
+          { "label": "LICENSE NUMBER:", "number": "0000000000", "caption": "AIA / American Institute of Architects" }
+        ]
+      },
+      {
+        "key": "nga",
+        "logo": {
+          "url": "/images/pages/nga-logo.webp",
+          "alt": "National Glass Association"
+        },
+        "licenses": [
+          { "label": "LICENSE NUMBER:", "number": "0000000000", "caption": "National Glass Association (NGA)" }
+        ]
+      }
+    ],
+
+    "identity_eyebrow": "Corporate Identity",
+    "identity_heading": "DEFINING BRAND ESSENCE THROUGH COHESIVE VISUAL DESIGN",
+    "identity_items": [
+      {
+        "key": "mission",
+        "heading": "OUR MISSION",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat."
+        ]
+      },
+      {
+        "key": "vision",
+        "heading": "OUR VISION",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+        ]
+      },
+      {
+        "key": "values",
+        "heading": "OUR VALUES",
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+        ]
+      }
+    ],
+
+    "partners_eyebrow": "About our specialized Manufacturers",
+    "partners_heading": "PARTNERING WITH MASTER CRAFTSMEN AND ADVANCED PRODUCTION FACILITIES",
+    "partners_intro": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+    "partners": [
+      {
+        "key": "alutech",
+        "logo": {
+          "url": "/images/pages/alu-logo.webp",
+          "alt": "Alutech USA"
+        },
+        "image": {
+          "url": "/images/pages/why-policrafters-banner-partners-alu.webp",
+          "alt": "Hands reviewing architectural blueprints on a drafting table"
+        },
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.",
+          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat."
+        ]
+      },
+      {
+        "key": "crafters",
+        "logo": {
+          "url": "/images/pages/crafters-logo.webp",
+          "alt": "Crafters Design + Renovations"
+        },
+        "image": {
+          "url": "/images/pages/why-policrafters-banner-partners-cra.webp",
+          "alt": "Warehouse team packing boxes for delivery"
+        },
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+          "Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut"
+        ]
+      },
+      {
+        "key": "glasstech",
+        "logo": {
+          "url": "/images/pages/wp-glasstech-logo.webp",
+          "alt": "Glasstech USA"
+        },
+        "image": {
+          "url": "/images/pages/why-policrafters-banner-partners-gla.webp",
+          "alt": "Technician working with aluminum framing on site"
+        },
+        "body": [
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+          "Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.",
+          "Lorem ipsum dolor sit amet, cons ectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut"
+        ]
+      }
+    ]
+  }
+}
