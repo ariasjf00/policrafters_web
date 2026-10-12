@@ -173,6 +173,10 @@ const galleryByCategory = Object.fromEntries(
       <div class="gallery" aria-live="polite">
         <div class="gallery-grid" id="renovations-grid">
           {commercialProducts.map((product) => (
+            // Every product.slug in src/mocks/renovations-page.*.json is the literal
+            // string "#" today — there's no renovation detail route yet, and the API
+            // contract doesn't define one either, so there's no real path to build here.
+            // See Docs/SEO_phase1_prod_changes_pending.md.
             <a href={product.slug || '#'} class="gallery-card" data-product-type={product.typeKey}>
               <img
                 src={product.image?.url || ''}
