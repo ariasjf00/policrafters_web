@@ -129,6 +129,8 @@ const { en: directContactEn, es: directContactEs } = await loadDirectContact();
   title={resolvedMeta.seo_title}
   description={resolvedMeta.search_description}
   showHero={false}
+  image={{ url: heroImageUrl, alt: isEs ? esHeroAlt : enHeroAlt }}
+  ogType="product"
 >
   <section class="product-shell">
     <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative

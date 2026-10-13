@@ -19,6 +19,7 @@ const activeContent = isEs ? renovationsEs : renovationsEn;
 const fallbackContent = isEs ? renovationsEn : renovationsEs;
 
 const pageTitle = activeContent.title || activeContent.fields.hero_title || fallbackContent.title || 'Renovations';
+const pageSeoTitle = activeContent.meta?.seo_title || fallbackContent.meta?.seo_title || pageTitle;
 const pageDescription = activeContent.meta.search_description || fallbackContent.meta.search_description || 'Policrafters renovation work';
 const introText = activeContent.fields.intro_text || fallbackContent.fields.intro_text || '';
 const emptyStateEn = renovationsEn.fields.empty_state_text || 'Coming soon';
@@ -99,12 +100,12 @@ const galleryByCategory = Object.fromEntries(
 ---
 
 <PageLayout
-  title={pageTitle ? `${pageTitle} | Policrafters` : 'Renovations | Policrafters'}
+  title={pageSeoTitle}
   description={pageDescription}
   showHero={false}
 >
   <section class="renovations-shell">
-    <h2 id="renovations-title" data-copy-es={renovationsEs.fields.hero_title} data-copy-en={renovationsEn.fields.hero_title}>{pageTitle}</h2>
+    <h1 id="renovations-title" data-copy-es={renovationsEs.fields.hero_title} data-copy-en={renovationsEn.fields.hero_title}>{pageTitle}</h1>
     <p id="renovations-intro" class="renovations-copy" data-copy-es={renovationsEs.fields.intro_text} data-copy-en={renovationsEn.fields.intro_text}>{introText}</p>
 
     <div class="renovations-layout">
@@ -172,6 +173,10 @@ const galleryByCategory = Object.fromEntries(
       <div class="gallery" aria-live="polite">
         <div class="gallery-grid" id="renovations-grid">
           {commercialProducts.map((product) => (
+            // Every product.slug in src/mocks/renovations-page.*.json is the literal
+            // string "#" today — there's no renovation detail route yet, and the API
+            // contract doesn't define one either, so there's no real path to build here.
+            // See Docs/SEO_phase1_prod_changes_pending.md.
             <a href={product.slug || '#'} class="gallery-card" data-product-type={product.typeKey}>
               <img
                 src={product.image?.url || ''}
@@ -630,7 +635,7 @@ const galleryByCategory = Object.fromEntries(
     gap: 1.5rem;
   }
 
-  .renovations-shell h2 {
+  .renovations-shell h1 {
     margin: 0;
     font-size: clamp(1.8rem, 3vw, 2.5rem);
     letter-spacing: 0.02em;

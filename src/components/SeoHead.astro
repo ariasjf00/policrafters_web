@@ -1,0 +1,64 @@
+---
+// Single source of truth for every page's <head> metadata: title, description,
+// canonical, Open Graph/Twitter, favicons and the robots meta tag. Used by both
+// PageLayout.astro (interior pages) and index.astro (which writes its own <head>
+// and deliberately does not load Tailwind — see CLAUDE.md). No <style> block here
+// on purpose, for the same reason: this component also renders on the homepage.
+import { buildTitle, buildDescription, absoluteUrl, isIndexingAllowed, SITE_NAME } from '../lib/seo';
+
+interface Props {
+	title?: string;
+	description?: string;
+	lang?: 'en' | 'es';
+	image?: { url: string; alt: string };
+	noindex?: boolean;
+	type?: 'website' | 'article' | 'product';
+}
+
+const {
+	title,
+	description,
+	lang = 'en',
+	image,
+	noindex = false,
+	type = 'website',
+} = Astro.props;
+
+const resolvedTitle = buildTitle(title);
+const resolvedDescription = buildDescription(description);
+const canonicalUrl = absoluteUrl(Astro.url.pathname, Astro.site);
+
+// No dedicated OG image yet — see Docs/SEO_phase1_prod_changes_pending.md.
+// This poster is already shipped as the homepage hero's fallback image
+// (src/pages/index.astro), so it's at least a real, on-brand placeholder.
+const DEFAULT_OG_IMAGE = { url: '/images/pages/horizontal_video_static_image.png', alt: SITE_NAME };
+const resolvedImage = image?.url ? image : DEFAULT_OG_IMAGE;
+const resolvedImageUrl = absoluteUrl(resolvedImage.url, Astro.site);
+
+const ogLocale = lang === 'es' ? 'es_US' : 'en_US';
+const shouldNoindex = noindex || !isIndexingAllowed();
+---
+
+<title>{resolvedTitle}</title>
+<meta name="description" content={resolvedDescription} />
+<link rel="canonical" href={canonicalUrl} />
+
+{shouldNoindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:type" content={type} />
+<meta property="og:title" content={resolvedTitle} />
+<meta property="og:description" content={resolvedDescription} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={resolvedImageUrl} />
+<meta property="og:image:alt" content={resolvedImage.alt || SITE_NAME} />
+<meta property="og:locale" content={ogLocale} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={resolvedTitle} />
+<meta name="twitter:description" content={resolvedDescription} />
+<meta name="twitter:image" content={resolvedImageUrl} />
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<!-- No apple-touch-icon file yet — see Docs/SEO_phase1_prod_changes_pending.md -->

@@ -8,6 +8,7 @@ import Footer from "../components/Footer.astro";
 import ScrollToTop from "../components/ScrollToTop.astro";
 import CatalogsCarousel from "../components/CatalogsCarousel.astro";
 import DirectContact from "../components/DirectContact.astro";
+import SeoHead from "../components/SeoHead.astro";
 import "../styles/links.css";
 
 type AnyRecord = Record<string, any>;
@@ -160,8 +161,12 @@ const heroCtaUrl = '/contact-us';
 				document.documentElement.lang = lang;
 			})();
 		</script>
-		<title>{resolvedMeta.seo_title || resolvedData.title || home.title}</title>
-		<meta name="description" content={resolvedMeta.search_description || ""} />
+		<SeoHead
+			title={resolvedMeta.seo_title || resolvedData.title}
+			description={resolvedMeta.search_description}
+			lang={selectedLang}
+			image={{ url: heroImageHorizontal, alt: heroImageAlt }}
+		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
