@@ -1,0 +1,68 @@
+---
+// Custom 404. Always noindex — a missing-page response should never be
+// indexed regardless of PUBLIC_ALLOW_INDEXING (see src/components/SeoHead.astro).
+// Both languages render in the markup (no script needed): whoever lands here
+// came from a dead/mistyped link, not a page that ships a lang toggle.
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="Page Not Found"
+  description="The page you're looking for doesn't exist."
+  showHero={false}
+  noindex
+>
+  <section class="not-found">
+    <div class="not-found__block">
+      <h1 class="not-found__heading">Page not found</h1>
+      <p class="not-found__body">
+        The page you're looking for doesn't exist or may have moved. Head back to the <a href="/">homepage</a> or browse our <a href="/collections">collections</a>.
+      </p>
+    </div>
+
+    <div class="not-found__block">
+      <h2 class="not-found__heading">Página no encontrada</h2>
+      <p class="not-found__body">
+        La página que buscas no existe o fue movida. Vuelve a la <a href="/">página de inicio</a> o explora nuestras <a href="/collections">colecciones</a>.
+      </p>
+    </div>
+  </section>
+</PageLayout>
+
+<style>
+  /* Same left-rule recipe as terms-and-conditions.astro's .terms-intro. */
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .not-found__block {
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .not-found__heading {
+    margin: 0 0 .75rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .not-found__body {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .not-found__body a {
+    color: #111;
+    text-decoration: underline;
+  }
+</style>

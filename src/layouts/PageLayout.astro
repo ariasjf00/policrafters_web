@@ -3,6 +3,7 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ScrollToTop from '../components/ScrollToTop.astro';
+import SeoHead from '../components/SeoHead.astro';
 
 interface Props {
   title?: string;
@@ -16,11 +17,15 @@ interface Props {
   heroTitleEn?: string;
   heroSubtitleEs?: string;
   heroSubtitleEn?: string;
+  /* Passed straight through to SeoHead.astro. */
+  image?: { url: string; alt: string };
+  noindex?: boolean;
+  ogType?: 'website' | 'article' | 'product';
 }
 
 const {
-  title = 'Policrafters',
-  description = 'Policrafters',
+  title,
+  description,
   heroTitle = 'Policrafters',
   heroSubtitle = '',
   showHero = true,
@@ -28,6 +33,9 @@ const {
   heroTitleEn,
   heroSubtitleEs,
   heroSubtitleEn,
+  image,
+  noindex = false,
+  ogType,
 } = Astro.props;
 
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
@@ -38,8 +46,7 @@ const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en'
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <title>{title}</title>
+    <SeoHead title={title} description={description} lang={selectedLang} image={image} noindex={noindex} type={ogType} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />

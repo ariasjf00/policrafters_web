@@ -1,8 +1,10 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 
+// English is the default everywhere else on the site (see CLAUDE.md); this
+// page used to default to Spanish instead.
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
-const lang = langParam === 'en' ? 'en' : 'es';
+const lang = langParam === 'es' ? 'es' : 'en';
 const copy = lang === 'en'
   ? {
       title: 'Projects | Policrafters',
@@ -27,6 +29,7 @@ const copy = lang === 'en'
   description={copy.description}
   heroTitle={copy.heroTitle}
   heroSubtitle={copy.heroSubtitle}
+  noindex
 >
   <section>
     <h2>{copy.sectionTitle}</h2>
