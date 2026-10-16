@@ -1,0 +1,73 @@
+---
+// One numbered financing step (title + subtitle + plain body paragraph, no
+// bullet list — unlike WarrantySection.astro). Pulled out of finance.astro
+// for the same reason WarrantySection was pulled out of warranty.astro: the
+// page needs to render this same block twice, once per independent column
+// stack (see .finance-columns in finance.astro's <style>), and a shared
+// component beats duplicating the JSX inline.
+//
+// Purely presentational: it ships both languages as data-copy-es/-en but does
+// NOT subscribe to sitelangchange itself. finance.astro's own script already
+// walks `.finance-shell [data-copy-es]` on every language change, and this
+// component's markup lands inside that shell, so one subscriber covers it —
+// same pattern as WarrantySection.astro.
+interface Props {
+  lang?: 'en' | 'es';
+  number: number;
+  titleEs: string;
+  titleEn: string;
+  subtitleEs: string;
+  subtitleEn: string;
+  bodyEs: string;
+  bodyEn: string;
+}
+
+const { lang = 'en', number, titleEs, titleEn, subtitleEs, subtitleEn, bodyEs, bodyEn } = Astro.props;
+const isEs = lang === 'es';
+const pick = (es: string, en: string) => (isEs ? es : en);
+---
+
+<div class="finance-step" style={`order: ${number}`}>
+  <h2 class="finance-step__title">
+    {`${number}. `}<span data-copy-es={titleEs} data-copy-en={titleEn}>{pick(titleEs, titleEn)}</span>
+  </h2>
+  <p
+    class="finance-step__subtitle"
+    data-copy-es={subtitleEs}
+    data-copy-en={subtitleEn}
+  >{pick(subtitleEs, subtitleEn)}</p>
+  <p
+    class="finance-step__body"
+    data-copy-es={bodyEs}
+    data-copy-en={bodyEn}
+  >{pick(bodyEs, bodyEn)}</p>
+</div>
+
+<style>
+  /* Same recipe as .warranty-section__title (WarrantySection.astro). */
+  .finance-step__title {
+    margin: 0 0 .4rem;
+    font-size: clamp(1.4rem, 2.4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+    overflow-wrap: anywhere;
+  }
+
+  .finance-step__subtitle {
+    margin: 0 0 .75rem;
+    font-style: italic;
+    font-variant: small-caps;
+    font-size: .85rem;
+    color: #555;
+  }
+
+  /* Same recipe as .warranty-section__intro (WarrantySection.astro). */
+  .finance-step__body {
+    margin: 1rem 0 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+  }
+</style>
