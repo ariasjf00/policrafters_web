@@ -343,7 +343,7 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     6: (activeLang) => appendLang('/finance', activeLang)
   };
 
-  const applyFooterLanguage = (lang) => {
+  const applyFooterLanguage = (lang: 'es' | 'en') => {
     const activeLang = lang === 'en' ? 'en' : 'es';
     const copy = footerCopy[activeLang];
 
@@ -372,8 +372,8 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
   };
 
   applyFooterLanguage(resolveActiveLang());
-  document.addEventListener('sitelangchange', (event) => {
-    applyFooterLanguage(event.detail);
+  document.addEventListener('sitelangchange', (event: Event) => {
+    applyFooterLanguage((event as CustomEvent<'es' | 'en'>).detail);
   });
 
   const yearEl = document.querySelector('[data-footer-year]');

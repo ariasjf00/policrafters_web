@@ -130,7 +130,10 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
       const heading = section.querySelector('#contact-heading');
       const copy = payload?.copy ?? {};
       if (heading) {
-        heading.setAttribute('data-copy-' + key, copy.contact_heading ?? '');
+        const headingValue = typeof copy.contact_heading === 'string' ? copy.contact_heading : '';
+        if (headingValue.trim()) {
+          heading.setAttribute('data-copy-' + key, headingValue);
+        }
       }
 
       const items = Array.isArray(payload?.items) ? payload.items : [];
@@ -141,9 +144,13 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
         const description = column.querySelector('.contact-col__description');
         const button = column.querySelector('.contact-col__btn');
 
-        if (title) title.setAttribute('data-copy-' + key, item.title ?? '');
-        if (description) description.setAttribute('data-copy-' + key, item.description ?? '');
-        if (button) button.setAttribute('data-copy-' + key, copy.contact_cta ?? '');
+        const titleValue = typeof item.title === 'string' ? item.title : '';
+        const descriptionValue = typeof item.description === 'string' ? item.description : '';
+        const ctaValue = typeof copy.contact_cta === 'string' ? copy.contact_cta : '';
+
+        if (title && titleValue.trim()) title.setAttribute('data-copy-' + key, titleValue);
+        if (description && descriptionValue.trim()) description.setAttribute('data-copy-' + key, descriptionValue);
+        if (button && ctaValue.trim()) button.setAttribute('data-copy-' + key, ctaValue);
       });
 
       applyDirectContactLanguage(resolveActiveLang());
