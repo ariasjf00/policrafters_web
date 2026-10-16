@@ -102,7 +102,8 @@ const linkHrefs: Record<number, string> = {
   1: appendLang('/why-policrafters', lang),
   2: appendLang('/catalogs', lang),
   3: appendLang('/terms-and-conditions', lang),
-  4: appendLang('/warranty', lang)
+  4: appendLang('/warranty', lang),
+  7: 'https://policrafters.ancous.tech/'
 };
 
 const socialLinks = [
@@ -133,7 +134,17 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     <div class="footer-col">
       <ul class="footer-links">
         {t.links.map((label, index) => (
-          <li><a href={linkHrefs[index] ?? '#'} class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
+          <li>
+            <a
+              href={linkHrefs[index] ?? '#'}
+              class="link-underline"
+              data-footer-key={`link-${index}`}
+              target={index === 7 ? '_blank' : undefined}
+              rel={index === 7 ? 'noopener noreferrer' : undefined}
+            >
+              {label}
+            </a>
+          </li>
         ))}
       </ul>
     </div>
@@ -310,14 +321,15 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
   // Mirrors the frontmatter's linkHrefs: index 1 ("Why Policrafters"), index 2
   // ("Catalogs"), index 3 ("Terms & Conditions") and index 4 ("Warranty") are the
   // only real links today; the rest stay href="#".
-  const linkHrefs: Record<number, (activeLang: string) => string> = {
+  const linkHrefs: Record<number, (activeLang: 'es' | 'en') => string> = {
     1: (activeLang) => appendLang('/why-policrafters', activeLang),
     2: (activeLang) => appendLang('/catalogs', activeLang),
     3: (activeLang) => appendLang('/terms-and-conditions', activeLang),
-    4: (activeLang) => appendLang('/warranty', activeLang)
+    4: (activeLang) => appendLang('/warranty', activeLang),
+    7: () => 'https://policrafters.ancous.tech/'
   };
 
-  const applyFooterLanguage = (lang) => {
+  const applyFooterLanguage = (lang: 'es' | 'en') => {
     const activeLang = lang === 'en' ? 'en' : 'es';
     const copy = footerCopy[activeLang];
 
@@ -346,8 +358,8 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
   };
 
   applyFooterLanguage(resolveActiveLang());
-  document.addEventListener('sitelangchange', (event) => {
-    applyFooterLanguage(event.detail);
+  document.addEventListener('sitelangchange', (event: Event) => {
+    applyFooterLanguage((event as CustomEvent<'es' | 'en'>).detail);
   });
 
   const yearEl = document.querySelector('[data-footer-year]');
