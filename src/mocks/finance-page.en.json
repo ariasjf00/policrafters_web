@@ -1,0 +1,54 @@
+{
+  "type": "finance.FinancePage",
+  "title": "Financing Options",
+  "locale": "en",
+  "meta": {
+    "seo_title": "Financing Options | Policrafters",
+    "search_description": "Explore the financing options available for your Policrafters project, from application to approval."
+  },
+  "fields": {
+    "hero_image": {
+      "url": "/images/pages/values_1.webp",
+      "alt": "Custom kitchen and living space crafted by Policrafters"
+    },
+    "intro_heading": "FINANCING OPTIONS",
+    "intro_body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad.",
+    "steps": [
+      {
+        "key": "step-1",
+        "title": "STEP",
+        "subtitle": "Lorem ipsum",
+        "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "column": "left"
+      },
+      {
+        "key": "step-2",
+        "title": "STEP",
+        "subtitle": "Lorem ipsum",
+        "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "column": "right"
+      },
+      {
+        "key": "step-3",
+        "title": "STEP",
+        "subtitle": "Lorem ipsum",
+        "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "column": "left"
+      },
+      {
+        "key": "step-4",
+        "title": "STEP",
+        "subtitle": "Lorem ipsum",
+        "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.",
+        "column": "right"
+      }
+    ],
+    "contact": {
+      "heading": "ANY QUESTIONS?",
+      "phone_display": "+1 (813) 812-0650",
+      "phone_href": "tel:+18138120650",
+      "email_label": "EMAIL",
+      "email": "info@policrafters.com"
+    }
+  }
+}

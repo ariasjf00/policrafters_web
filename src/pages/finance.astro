@@ -1,0 +1,631 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import FinanceStep from '../components/FinanceStep.astro';
+import { loadFinancePageContent } from '../lib/finance-content';
+
+type AnyRecord = Record<string, any>;
+
+// Both languages fetched at build time, same as warranty.astro: this page
+// ships every string twice (data-copy-es/-en) so Header's toggle can switch
+// it without a reload, which means one localized response isn't enough.
+const { en: financeEn, es: financeEs } = await loadFinancePageContent();
+
+// Mirrors Header.astro's resolver: ?lang= wins, English is the default (see
+// CLAUDE.md — there is no route-based i18n).
+const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();
+const selectedLang = langParam === 'en' || langParam === 'es' ? langParam : 'en';
+const isEs = selectedLang === 'es';
+const pick = (es: string, en?: string) => (isEs ? es : (en ?? es));
+
+const activeContent = isEs ? financeEs : financeEn;
+const enFields = financeEn.fields;
+const esFields = financeEs.fields;
+
+const esSeoTitle = financeEs.meta?.seo_title || 'Opciones de financiamiento | Policrafters';
+const enSeoTitle = financeEn.meta?.seo_title || 'Financing Options | Policrafters';
+const esSearchDescription = financeEs.meta?.search_description || '';
+const enSearchDescription = financeEn.meta?.search_description || esSearchDescription;
+
+const resolvedMeta = {
+  seo_title: activeContent.meta?.seo_title || (isEs ? esSeoTitle : enSeoTitle),
+  search_description: activeContent.meta?.search_description || (isEs ? esSearchDescription : enSearchDescription)
+};
+
+// Hero image — language-independent URL (same asset either way), alt text
+// is localized. Falls back to the EN alt when the ES mock is missing one.
+const heroImageUrl = enFields.hero_image?.url || esFields.hero_image?.url || '/images/pages/values_1.webp';
+const esHeroAlt = esFields.hero_image?.alt || '';
+const enHeroAlt = enFields.hero_image?.alt || esHeroAlt;
+
+const esIntroHeading = esFields.intro_heading || '';
+const enIntroHeading = enFields.intro_heading || esIntroHeading;
+const esIntroBody = esFields.intro_body || '';
+const enIntroBody = enFields.intro_body || esIntroBody;
+
+// Steps are paired by index (same shared-URL convention as warranty.astro's
+// `sections` array); English drives the length. The number shown before each
+// title comes from this array position, not from the payload, and `column`
+// is read from EN only — it's language-independent (see
+// Docs/API_CONTRACT.md § FinancePage).
+const enSteps = Array.isArray(enFields.steps) ? enFields.steps : [];
+const esSteps = Array.isArray(esFields.steps) ? esFields.steps : [];
+const steps = enSteps.map((enItem: AnyRecord, index: number) => {
+  const esItem = esSteps[index] ?? enItem;
+
+  // Fallback when `column` is missing/invalid: even index (0-based) -> left,
+  // odd -> right. Matches the contract's documented fallback rule.
+  const column = enItem.column === 'left' || enItem.column === 'right'
+    ? enItem.column
+    : (index % 2 === 0 ? 'left' : 'right');
+
+  return {
+    key: enItem.key ?? esItem.key ?? String(index),
+    number: index + 1,
+    column,
+    titleEs: esItem.title ?? enItem.title ?? '',
+    titleEn: enItem.title ?? esItem.title ?? '',
+    subtitleEs: esItem.subtitle ?? enItem.subtitle ?? '',
+    subtitleEn: enItem.subtitle ?? esItem.subtitle ?? '',
+    bodyEs: esItem.body ?? enItem.body ?? '',
+    bodyEn: enItem.body ?? esItem.body ?? ''
+  };
+});
+
+// Two independent stacks, not a row grid — same reasoning as
+// .warranty-columns in warranty.astro: left holds steps 1, 3; right holds
+// 2, 4, so step 3 sits directly under step 1 with no gap even if step 2
+// (right) is a different height. See .finance-columns below.
+const leftSteps = steps.filter((step: AnyRecord) => step.column === 'left');
+const rightSteps = steps.filter((step: AnyRecord) => step.column === 'right');
+
+// Contact block. Phone href falls back to tel: + the display string
+// stripped to digits and "+", same as contact-us.astro and Footer.astro.
+const enContact = enFields.contact ?? {};
+const esContact = esFields.contact ?? {};
+const esContactHeading = esContact.heading || '';
+const enContactHeading = enContact.heading || esContactHeading;
+const esContactPhoneDisplay = esContact.phone_display || enContact.phone_display || '+1 (813) 812-0650';
+const enContactPhoneDisplay = enContact.phone_display || esContactPhoneDisplay;
+const esContactPhoneHref = esContact.phone_href || `tel:${esContactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const enContactPhoneHref = enContact.phone_href || `tel:${enContactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const esEmailLabel = esContact.email_label || '';
+const enEmailLabel = enContact.email_label || esEmailLabel;
+const esContactEmail = esContact.email || enContact.email || 'info@policrafters.com';
+const enContactEmail = enContact.email || esContactEmail;
+---
+
+<PageLayout
+  title={resolvedMeta.seo_title}
+  description={resolvedMeta.search_description}
+  showHero={false}
+  image={{ url: heroImageUrl, alt: pick(esHeroAlt, enHeroAlt) }}
+>
+  <section
+    class="finance-shell"
+    data-seo-title-es={esSeoTitle}
+    data-seo-title-en={enSeoTitle}
+    data-seo-description-es={esSearchDescription}
+    data-seo-description-en={enSearchDescription}
+  >
+    <!-- 0. Hero image — full-bleed, flush under the sticky nav. Same
+         technique as collections/product.astro's .product-bleed/.product-hero:
+         the negative top margin cancels PageLayout.astro's
+         `.page-shell { padding: 3rem 0 4rem }` so the image sits directly
+         against the Header with no gap. No text overlay. -->
+    <div class="finance-bleed finance-hero">
+      <img
+        src={heroImageUrl}
+        alt={pick(esHeroAlt, enHeroAlt)}
+        data-alt-es={esHeroAlt}
+        data-alt-en={enHeroAlt}
+        width="2160"
+        height="1440"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <!-- 1. Intro — identical markup/CSS to warranty.astro's .warranty-intro
+         (h1 + italic lead, left vertical rule spanning both). Duplicated
+         rather than shared, same reasoning as warranty.astro: the block is
+         small and scoped, and this keeps the Warranty page untouched. -->
+    <div class="finance-intro">
+      <h1
+        class="finance-intro__heading"
+        data-copy-es={esIntroHeading}
+        data-copy-en={enIntroHeading}
+      >{pick(esIntroHeading, enIntroHeading)}</h1>
+      <p
+        class="finance-intro__body"
+        data-copy-es={esIntroBody}
+        data-copy-en={enIntroBody}
+      >{pick(esIntroBody, enIntroBody)}</p>
+    </div>
+
+    <!-- 2. Financing steps — each FinanceStep carries its own 1-based
+         `order` (see the component), so at <=900px .finance-columns switches
+         to a single flex-direction:column flow and .finance-column becomes
+         `display: contents`, letting `order` alone restore numeric order
+         1->4 across both former columns with no JS and no duplicated markup.
+         Same technique as .warranty-columns in warranty.astro. -->
+    <div class="finance-columns">
+      <div class="finance-column">
+        {leftSteps.map((step: AnyRecord) => (
+          <FinanceStep
+            lang={selectedLang}
+            number={step.number}
+            titleEs={step.titleEs}
+            titleEn={step.titleEn}
+            subtitleEs={step.subtitleEs}
+            subtitleEn={step.subtitleEn}
+            bodyEs={step.bodyEs}
+            bodyEn={step.bodyEn}
+          />
+        ))}
+      </div>
+      <div class="finance-column">
+        {rightSteps.map((step: AnyRecord) => (
+          <FinanceStep
+            lang={selectedLang}
+            number={step.number}
+            titleEs={step.titleEs}
+            titleEn={step.titleEn}
+            subtitleEs={step.subtitleEs}
+            subtitleEn={step.subtitleEn}
+            bodyEs={step.bodyEs}
+            bodyEn={step.bodyEn}
+          />
+        ))}
+      </div>
+    </div>
+
+    <hr class="finance-rule" />
+
+    <!-- 3. Contact block — same markup/CSS recipe as contact-us.astro's
+         .contact-highlight (label + large link, centered), reused directly
+         rather than shared via a component since this page has no form
+         around it. No contact form here by design — see Docs/API_CONTRACT.md
+         § FinancePage. -->
+    <div class="finance-contact">
+      <h2
+        class="finance-contact__label"
+        data-contact-field="phone-label"
+        data-copy-es={esContactHeading}
+        data-copy-en={enContactHeading}
+      >{pick(esContactHeading, enContactHeading)}</h2>
+      <a
+        class="finance-contact__value"
+        data-contact-field="phone-value"
+        data-copy-es={esContactPhoneDisplay}
+        data-copy-en={enContactPhoneDisplay}
+        data-href-es={esContactPhoneHref}
+        data-href-en={enContactPhoneHref}
+        href={pick(esContactPhoneHref, enContactPhoneHref)}
+      >{pick(esContactPhoneDisplay, enContactPhoneDisplay)}</a>
+    </div>
+
+    <div class="finance-contact">
+      <p
+        class="finance-contact__label"
+        data-contact-field="email-label"
+        data-copy-es={esEmailLabel}
+        data-copy-en={enEmailLabel}
+      >{pick(esEmailLabel, enEmailLabel)}</p>
+      <a
+        class="finance-contact__value"
+        data-contact-field="email-value"
+        data-copy-es={esContactEmail}
+        data-copy-en={enContactEmail}
+        data-href-es={`mailto:${esContactEmail}`}
+        data-href-en={`mailto:${enContactEmail}`}
+        href={pick(`mailto:${esContactEmail}`, `mailto:${enContactEmail}`)}
+      >{pick(esContactEmail, enContactEmail)}</a>
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  const shell = document.querySelector('.finance-shell');
+
+  if (shell) {
+    let isWagtailPreview = false;
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
+    const getLangFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      return lang === 'en' || lang === 'es' ? lang : null;
+    };
+
+    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
+    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
+    const getActiveLang = () => {
+      const inUrl = getLangFromUrl();
+      if (inUrl) return inUrl;
+      const stored = localStorage.getItem('siteLang');
+      if (stored === 'en' || stored === 'es') return stored;
+      return 'en';
+    };
+
+    // All copy ships in the markup as data-copy-es/-en, and the hero image's
+    // alt text as data-alt-es/-en (see collections/product.astro for the same
+    // pattern). document.title and the meta description are swapped too,
+    // from data attributes on the shell.
+    const applyFinanceLanguage = (lang) => {
+      if (isWagtailPreview) {
+        return;
+      }
+
+      const key = lang === 'en' ? 'en' : 'es';
+
+      shell.querySelectorAll('[data-copy-es]').forEach((el) => {
+        const value = el.getAttribute('data-copy-' + key);
+        if (value !== null) el.textContent = value;
+      });
+
+      shell.querySelectorAll('[data-alt-es]').forEach((el) => {
+        const value = el.getAttribute('data-alt-' + key);
+        if (value !== null) el.setAttribute('alt', value);
+      });
+
+      shell.querySelectorAll('[data-href-es]').forEach((el) => {
+        const value = el.getAttribute('data-href-' + key);
+        if (value !== null) el.setAttribute('href', value);
+      });
+
+      const title = shell.getAttribute('data-seo-title-' + key);
+      if (title) document.title = title;
+
+      const description = shell.getAttribute('data-seo-description-' + key);
+      if (description !== null) {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) metaDescription.setAttribute('content', description);
+      }
+
+      document.documentElement.lang = key;
+    };
+
+    const setLocalizedCopy = (el, value) => {
+      el.textContent = value;
+      el.setAttribute('data-copy-es', value);
+      el.setAttribute('data-copy-en', value);
+    };
+
+    const setLocalizedHref = (el, value) => {
+      el.setAttribute('href', value);
+      el.setAttribute('data-href-es', value);
+      el.setAttribute('data-href-en', value);
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    const toStepColumn = (value, index) => {
+      if (value === 'left' || value === 'right') return value;
+      return index % 2 === 0 ? 'left' : 'right';
+    };
+
+    const ensureFinanceStep = (columnEl, fallbackTemplate) => {
+      const step = fallbackTemplate
+        ? fallbackTemplate.cloneNode(true)
+        : applyScope(document.createElement('div'));
+      if (!fallbackTemplate) {
+        step.className = 'finance-step';
+      }
+      columnEl.appendChild(step);
+      return step;
+    };
+
+    const setFinanceStepContent = (stepEl, stepData, number) => {
+      let title = stepEl.querySelector('.finance-step__title');
+      if (!title) {
+        title = applyScope(document.createElement('h2'));
+        title.className = 'finance-step__title';
+        stepEl.appendChild(title);
+      }
+
+      let titleCopy = title.querySelector('span');
+      if (!titleCopy) {
+        titleCopy = applyScope(document.createElement('span'));
+      }
+      setLocalizedCopy(titleCopy, typeof stepData?.title === 'string' ? stepData.title : '');
+      title.replaceChildren(document.createTextNode(`${number}. `), titleCopy);
+
+      let subtitle = stepEl.querySelector('.finance-step__subtitle');
+      if (!subtitle) {
+        subtitle = applyScope(document.createElement('p'));
+        subtitle.className = 'finance-step__subtitle';
+        stepEl.appendChild(subtitle);
+      }
+      setLocalizedCopy(subtitle, typeof stepData?.subtitle === 'string' ? stepData.subtitle : '');
+
+      let body = stepEl.querySelector('.finance-step__body');
+      if (!body) {
+        body = applyScope(document.createElement('p'));
+        body.className = 'finance-step__body';
+        stepEl.appendChild(body);
+      }
+      setLocalizedCopy(body, typeof stepData?.body === 'string' ? stepData.body : '');
+
+      stepEl.style.order = String(number);
+    };
+
+    const syncColumn = (columnEl, steps, fallbackTemplate) => {
+      const existingSteps = Array.from(columnEl.querySelectorAll(':scope > .finance-step'));
+      steps.forEach((step, index) => {
+        const current = existingSteps[index] ?? ensureFinanceStep(columnEl, fallbackTemplate);
+        setFinanceStepContent(current, step, step.number);
+      });
+
+      existingSteps.slice(steps.length).forEach((extra) => extra.remove());
+    };
+
+    const applyFinancePreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const heroImage = shell.querySelector('.finance-hero img');
+      if (heroImage && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        const heroAlt = fields.hero_image.alt || '';
+        if (heroUrl) heroImage.setAttribute('src', heroUrl);
+        heroImage.setAttribute('alt', heroAlt);
+        heroImage.setAttribute('data-alt-es', heroAlt);
+        heroImage.setAttribute('data-alt-en', heroAlt);
+      }
+
+      const introHeadingEl = shell.querySelector('.finance-intro__heading');
+      if (introHeadingEl && typeof fields.intro_heading === 'string') {
+        setLocalizedCopy(introHeadingEl, fields.intro_heading);
+      }
+
+      const introBodyEl = shell.querySelector('.finance-intro__body');
+      if (introBodyEl && typeof fields.intro_body === 'string') {
+        setLocalizedCopy(introBodyEl, fields.intro_body);
+      }
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const contact = fields.contact ?? {};
+      const phoneLabel = shell.querySelector('[data-contact-field="phone-label"]');
+      if (phoneLabel && typeof contact.heading === 'string') {
+        setLocalizedCopy(phoneLabel, contact.heading);
+      }
+
+      const phoneValue = shell.querySelector('[data-contact-field="phone-value"]');
+      if (phoneValue && typeof contact.phone_display === 'string') {
+        setLocalizedCopy(phoneValue, contact.phone_display);
+      }
+      if (phoneValue) {
+        const normalizedPhoneHref = typeof contact.phone_href === 'string' && contact.phone_href.trim()
+          ? contact.phone_href
+          : (typeof contact.phone_display === 'string' && contact.phone_display.trim()
+              ? `tel:${contact.phone_display.replace(/[^\d+]/g, '')}`
+              : '');
+        if (normalizedPhoneHref) {
+          setLocalizedHref(phoneValue, normalizedPhoneHref);
+        }
+      }
+
+      const emailLabel = shell.querySelector('[data-contact-field="email-label"]');
+      if (emailLabel && typeof contact.email_label === 'string') {
+        setLocalizedCopy(emailLabel, contact.email_label);
+      }
+
+      const emailValue = shell.querySelector('[data-contact-field="email-value"]');
+      if (emailValue && typeof contact.email === 'string') {
+        setLocalizedCopy(emailValue, contact.email);
+        if (contact.email.trim()) {
+          setLocalizedHref(emailValue, `mailto:${contact.email}`);
+        }
+      }
+
+      const columnsRoot = shell.querySelector('.finance-columns');
+      const leftColumn = columnsRoot?.querySelector(':scope > .finance-column:first-child');
+      const rightColumn = columnsRoot?.querySelector(':scope > .finance-column:last-child');
+      if (!columnsRoot || !leftColumn || !rightColumn) {
+        document.documentElement.lang = previewData?.locale === 'es' ? 'es' : 'en';
+        return;
+      }
+
+      const previewSteps = Array.isArray(fields.steps) ? fields.steps : [];
+      const normalizedSteps = previewSteps.map((step, index) => ({
+        number: index + 1,
+        column: toStepColumn(step?.column, index),
+        title: typeof step?.title === 'string' ? step.title : '',
+        subtitle: typeof step?.subtitle === 'string' ? step.subtitle : '',
+        body: typeof step?.body === 'string' ? step.body : ''
+      }));
+
+      const fallbackTemplate =
+        leftColumn.querySelector(':scope > .finance-step') ??
+        rightColumn.querySelector(':scope > .finance-step') ??
+        null;
+
+      syncColumn(leftColumn, normalizedSteps.filter((step) => step.column === 'left'), fallbackTemplate);
+      syncColumn(rightColumn, normalizedSteps.filter((step) => step.column === 'right'), fallbackTemplate);
+
+      document.documentElement.lang = previewData?.locale === 'es' ? 'es' : 'en';
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') {
+        return;
+      }
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') {
+        return;
+      }
+
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.FinancePage')) {
+        return;
+      }
+
+      isWagtailPreview = true;
+      applyFinancePreview(previewData);
+    });
+
+    // Subscriber only. Header.astro owns lang state, the .lang-link handlers, and the
+    // sitelangchange dispatch. This script never dispatches sitelangchange and never
+    // writes localStorage.siteLang — re-dispatching would turn Header's boot into a
+    // feedback loop. Self-boot first, since Header's boot dispatch fires before this
+    // page script runs (see warranty.astro for the same pattern).
+    applyFinanceLanguage(getActiveLang());
+    document.addEventListener('sitelangchange', (event) => applyFinanceLanguage(event.detail));
+  }
+</script>
+
+<style>
+  .finance-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Full-bleed technique reused from collections/product.astro's
+     .product-bleed: breaks out of the ~1100px .page-shell (see
+     PageLayout.astro's :root --max) to span the full viewport. Safe because
+     PageLayout's body has `overflow-x: clip`. */
+  .finance-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .finance-bleed img {
+    width: 100%;
+    height: clamp(260px, 45vw, 560px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .finance-hero {
+    margin-top: -3rem;
+    margin-bottom: 3rem;
+  }
+
+  /* Intro block: same recipe as .warranty-intro in warranty.astro. */
+  .finance-intro {
+    margin-bottom: 3rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .finance-intro__heading {
+    margin: 0 0 .75rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .finance-intro__body {
+    margin: 0;
+    max-width: 70ch;
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    color: #333;
+  }
+
+  /* Two INDEPENDENT stacks, not a row grid — same reasoning as
+     .warranty-columns in warranty.astro: a CSS grid with row-wise
+     auto-placement would size row 1 to the taller of its two cells and push
+     row 2 down by that same amount on both sides. Two separate flex columns
+     avoid that: each stack's height is its own. */
+  .finance-columns {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  .finance-column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  @media (max-width: 900px) {
+    /* `display: contents` dissolves the two column wrappers so every
+       .finance-step becomes a direct child of .finance-columns; with
+       flex-direction switched to column, the `order` each FinanceStep
+       carries (its 1-based number) alone puts them back into 1,2,3,4 — no
+       JS, no duplicated markup. Same technique as .warranty-columns. */
+    .finance-columns {
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .finance-column {
+      display: contents;
+    }
+  }
+
+  /* Same recipe as .section-rule in contact-us.astro. */
+  .finance-rule {
+    margin: 0 0 3rem;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  /* Same recipe as .contact-highlight in contact-us.astro. */
+  .finance-contact {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .finance-contact:last-child {
+    margin-bottom: 0;
+  }
+
+  .finance-contact__label {
+    margin: 0 0 .35rem;
+    color: #b6ae99;
+    font-size: .9rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .finance-contact__value {
+    color: #2f3437;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    text-decoration: none;
+  }
+
+  .finance-contact__value:hover,
+  .finance-contact__value:focus-visible {
+    text-decoration: underline;
+  }
+</style>
