@@ -97,13 +97,23 @@ const appendLang = (href: string, value: string) => {
 // Most footer links are placeholders (href="#") until their pages exist.
 // `linkHrefs` only overrides the ones that are real today, by index into
 // `t.links` / `footerCopy[lang].links` above — "Why Policrafters" is index 1,
-// "Catalogs" is index 2, "Terms & Conditions" is index 3, "Warranty" is index 4.
+// "Catalogs" is index 2, "Terms & Conditions" is index 3, "Warranty" is index 4,
+// "Financing Options" is index 6.
 const linkHrefs: Record<number, string> = {
   1: appendLang('/why-policrafters', lang),
   2: appendLang('/catalogs', lang),
   3: appendLang('/terms-and-conditions', lang),
   4: appendLang('/warranty', lang),
-  7: 'https://policrafters.ancous.tech/'
+  6: appendLang('/finance', lang)
+};
+
+// External links don't go through appendLang: that rewrites a relative path's
+// own query string, which would mangle this URL's `?next=/` and stamp a
+// `lang=es` onto a page this site doesn't control. "Partners Area (Login)" is
+// index 7 — kept out of `linkHrefs` (and its script-side counterpart below) so
+// the language-switch loop never touches its href, only its label.
+const externalLinkHrefs: Record<number, string> = {
+  7: 'https://policrafters.ancous.tech/accounts/login/?next=/'
 };
 
 const socialLinks = [
@@ -134,17 +144,17 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
     <div class="footer-col">
       <ul class="footer-links">
         {t.links.map((label, index) => (
-          <li>
-            <a
-              href={linkHrefs[index] ?? '#'}
+          externalLinkHrefs[index] ? (
+            <li><a
+              href={externalLinkHrefs[index]}
               class="link-underline"
+              target="_blank"
+              rel="noopener noreferrer"
               data-footer-key={`link-${index}`}
-              target={index === 7 ? '_blank' : undefined}
-              rel={index === 7 ? 'noopener noreferrer' : undefined}
-            >
-              {label}
-            </a>
-          </li>
+            >{label}</a></li>
+          ) : (
+            <li><a href={linkHrefs[index] ?? '#'} class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
+          )
         ))}
       </ul>
     </div>
@@ -319,14 +329,18 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
   };
 
   // Mirrors the frontmatter's linkHrefs: index 1 ("Why Policrafters"), index 2
-  // ("Catalogs"), index 3 ("Terms & Conditions") and index 4 ("Warranty") are the
-  // only real links today; the rest stay href="#".
-  const linkHrefs: Record<number, (activeLang: 'es' | 'en') => string> = {
+  // ("Catalogs"), index 3 ("Terms & Conditions"), index 4 ("Warranty") and
+  // index 6 ("Financing Options") are the only internal links today; the rest
+  // stay href="#". Index 7 ("Partners Area (Login)") is external (see the
+  // frontmatter's externalLinkHrefs) and is deliberately left out of this map
+  // so this language-switch loop never overwrites its href — only its label,
+  // via the copy.links.forEach below.
+  const linkHrefs: Record<number, (activeLang: string) => string> = {
     1: (activeLang) => appendLang('/why-policrafters', activeLang),
     2: (activeLang) => appendLang('/catalogs', activeLang),
     3: (activeLang) => appendLang('/terms-and-conditions', activeLang),
     4: (activeLang) => appendLang('/warranty', activeLang),
-    7: () => 'https://policrafters.ancous.tech/'
+    6: (activeLang) => appendLang('/finance', activeLang)
   };
 
   const applyFooterLanguage = (lang: 'es' | 'en') => {

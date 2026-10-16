@@ -610,6 +610,63 @@ Nota importante: igual que TermsPage, ServicesPage y BrandsPage, la API devuelve
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
 - El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
 
+## FinancePage
+
+Página de opciones de financiamiento referenciada por [finance.astro](../src/pages/finance.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer. Imagen de cabecera a todo el ancho (sin texto superpuesto), seguida del mismo bloque de intro (título + párrafo con regla vertical) que [WarrantyPage](#warrantypage), cuatro pasos numerados en dos columnas (sin viñetas, a diferencia de WarrantyPage), un `<hr>` y un bloque de contacto centrado (teléfono + correo). No incluye formulario de contacto — ese bloque vive solo en [ContactPage](#contactpage-contenido-de-página).
+
+Mocks de referencia: [src/mocks/finance-page.en.json](../src/mocks/finance-page.en.json) y [src/mocks/finance-page.es.json](../src/mocks/finance-page.es.json).
+
+Endpoint sugerido para este payload: `PUBLIC_FINANCE_API_URL`.
+
+Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+
+```json
+{
+  "type": "finance.FinancePage",
+  "title": "string",
+  "locale": "en | es",
+  "meta": {
+    "seo_title": "string",
+    "search_description": "string"
+  },
+  "fields": {
+    "hero_image": { "url": "string", "alt": "string" },
+    "intro_heading": "string",
+    "intro_body": "string",
+    "steps": [
+      {
+        "key": "string",
+        "title": "string",
+        "subtitle": "string",
+        "body": "string",
+        "column": "left | right"
+      }
+    ],
+    "contact": {
+      "heading": "string",
+      "phone_display": "string",
+      "phone_href": "string",
+      "email_label": "string",
+      "email": "string"
+    }
+  }
+}
+```
+
+### Reglas de implementación
+
+- `steps` es un array dinámico y ordenado; el frontend numera cada entrada según su posición (1-indexado), así que `title` no incluye el número — el frontend lo agrega al renderizar (p. ej. "1. STEP"). El diseño actual usa 4 entradas, pero el frontend no asume una cantidad fija.
+- `column` determina en qué columna visual cae el paso en escritorio (`"left"` o `"right"`); el frontend conserva el orden del payload dentro de cada columna, igual que en WarrantyPage. En mobile todos los pasos vuelven al orden numérico 1→n. Si `column` falta o trae un valor inválido, el frontend usa el mismo fallback por índice que WarrantyPage: posición par (0-indexada) → `left`, impar → `right`.
+- `column` y `key` son independientes del idioma; el frontend los lee siempre de la respuesta en inglés.
+- `key` es un slug estable en kebab-case, igual en ambos idiomas.
+- A diferencia de WarrantyPage, cada paso es un párrafo simple (`body`) sin lista de viñetas, con un `subtitle` corto adicional debajo del título.
+- `intro_heading` e `intro_body` alimentan el bloque de intro bajo la imagen de cabecera (título + párrafo introductorio con una regla vertical a la izquierda), igual que en WarrantyPage; no se repiten en `steps`.
+- `hero_image` sigue la convención general de imágenes del documento (`{ url, alt }`); se renderiza a todo el ancho del viewport, sin texto superpuesto, justo debajo del header.
+- `contact.phone_href` es opcional: si falta, el frontend lo deriva de `contact.phone_display` quitando todo carácter que no sea dígito o `+` y anteponiendo `tel:`.
+- El backend o mock devuelve `intro_heading`, `intro_body`, `steps` (incluyendo cada campo) y `contact` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. `steps` se empareja entre idiomas por índice, y el inglés determina la cantidad.
+- Esta página no incluye `contact_links`, el carrusel de catálogos, ni el formulario de contacto; esos bloques viven en sus contratos compartidos (DirectContactBlock, CatalogIndex, ContactPage) y esta página no los usa.
+- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, WarrantyPage, CollectionIndexPage y RenovationIndexPage.
+
 ## WhyPolicraftersPage
 
 Página "Why Policrafters" referenciada por [why-policrafters.astro](../src/pages/why-policrafters.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer. Cinco secciones fijas: banner + intro, "por qué elegirnos", certificaciones/licencias, identidad corporativa, y socios fabricantes (con el mismo layout de fila alternada imagen/texto que [ServicesPage](#servicespage)).
