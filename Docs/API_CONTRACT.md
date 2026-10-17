@@ -941,10 +941,13 @@ pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fi
 
 ## ContactPage (contenido de página)
 
-Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro),
-exclusivo para textos y bloques visibles fuera del formulario. El formulario
-mantiene sus labels/placeholders hardcodeados en frontend por ahora; este endpoint
-no reemplaza el contrato de leads.
+Contrato de contenido para [contact-us.astro](../src/pages/contact-us.astro).
+La página ya no tiene formulario propio: el bloque "comienza tu proyecto" es
+un banner a todo el ancho con una imagen de fondo, un logo decorativo, un
+eyebrow, un heading y un botón que enlaza a un formulario externo
+(`contact.url_contact`), abierto en pestaña nueva. Este contrato no reemplaza
+el contrato de leads de la sección siguiente; simplemente ese formulario ya
+no vive en esta página.
 
 Endpoint sugerido para este payload: `PUBLIC_CONTACT_PAGE_API_URL`.
 
@@ -967,6 +970,9 @@ Mocks de referencia:
       "intro": "string",
       "phone_label": "string",
       "email_label": "string",
+      "banner_eyebrow": "string",
+      "banner_heading": "string",
+      "project_button_label": "string",
       "locations_heading": "string",
       "locations_aria": "string",
       "learn_more": "string"
@@ -974,7 +980,12 @@ Mocks de referencia:
     "contact": {
       "phone_display": "string",
       "phone_href": "string | null",
-      "email": "string"
+      "email": "string",
+      "url_contact": "string | null"
+    },
+    "banner_image": {
+      "url": "string",
+      "alt": "string"
     },
     "locations": [
       {
@@ -1001,12 +1012,32 @@ Mocks de referencia:
   asume cantidad fija de tarjetas.
 - `contact.phone_href` puede venir nulo o vacío; en ese caso el frontend calcula
   `tel:` desde `phone_display` como fallback.
+- `contact.url_contact` es la URL del formulario externo de leads (hoy,
+  `policrafters.ancous.tech/leads/quote/...`) a la que enlaza el botón del
+  banner, abierto con `target="_blank"`. Si viene vacío o nulo, el frontend
+  no renderiza el botón.
+- `banner_image` sigue la convención general de imágenes del documento
+  (`{ url, alt }`); es la foto de fondo a todo el ancho del banner, bajo una
+  superposición oscura, con el logo de Policrafters superpuesto en blanco en
+  la esquina superior derecha (decorativo, sin alt propio — el logo no viene
+  de este payload, es un asset estático del sitio).
+- `copy.project_button_label` es la etiqueta del botón del banner (antes era
+  la etiqueta de un botón "Mi Proyecto"/"My Project" dentro del bloque de
+  correo; la clave se reutiliza, no se renombra).
 - `meta.seo_title` y `meta.search_description` alimentan el `title` y `description`
   de la página de contacto.
 
 ---
 
 ## Formulario de contacto (leads)
+
+> **Nota:** `contact-us.astro` ya no renderiza ningún formulario en la página;
+> el frontend actualmente no consume este contrato. El punto de contacto para
+> iniciar un proyecto es el botón del banner, que enlaza a un formulario
+> externo vía `fields.contact.url_contact` (ver `## ContactPage` arriba). Este
+> contrato de leads se deja documentado aquí porque sigue siendo compartido
+> con el repo del CMS, por si el formulario propio vuelve a usarse más
+> adelante.
 
 A diferencia del resto de este documento, este contrato es de **escritura**: el sitio
 envía datos al backend, no los recibe. Lo consume [src/pages/contact-us.astro](../src/pages/contact-us.astro),
