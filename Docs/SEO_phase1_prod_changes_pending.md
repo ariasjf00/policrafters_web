@@ -63,14 +63,17 @@ work through it when the site is actually ready to launch on
   How to verify: test a URL with no CMS `og_image` in Facebook's Sharing
   Debugger / opengraph.xyz; confirm fast load and no cropping artifacts.
 
-- [ ] **Add an apple-touch-icon.**
-  What: add `public/apple-touch-icon.png` (180×180) and a matching
-  `<link rel="apple-touch-icon" href="/apple-touch-icon.png">` in `SeoHead.astro`.
-  Where: `public/`, `src/components/SeoHead.astro`.
-  Why: only `favicon.svg`/`favicon.ico` exist today; iOS home-screen bookmarks
-  and some share surfaces fall back to a screenshot without it.
+- [x] **Add an apple-touch-icon.**
+  Done: `public/apple-touch-icon.png` (180×180) plus the full favicon set
+  (`favicon-16/32/48/192/512.png`), a `site.webmanifest`, and their
+  `<link>`/`<meta name="theme-color">` tags all live in `SeoHead.astro` now.
   How to verify: "Add to Home Screen" on iOS Safari shows the icon, not a
   page screenshot.
+
+- [x] **Replace `public/favicon.svg` with the real Policrafters mark.**
+  Done: it now holds the Policrafters "P"-in-circle mark (matching
+  `public/favicon-512.png`) instead of the Astro starter logo; its `<link>`
+  tag in `SeoHead.astro` needed no change.
 
 - [ ] **Resolve every remaining `href="#"` placeholder.**
   What: point each of these at a real URL once the destination page/section exists.

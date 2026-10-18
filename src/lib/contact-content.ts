@@ -7,6 +7,8 @@ export interface ContactPageCopy {
   intro?: string;
   phone_label?: string;
   email_label?: string;
+  banner_eyebrow?: string;
+  banner_heading?: string;
   project_button_label?: string;
   locations_heading?: string;
   locations_aria?: string;
@@ -32,6 +34,7 @@ export interface ContactLocation {
 export interface ContactPagePayload {
   copy: ContactPageCopy;
   contact: ContactPageDetails;
+  banner_image: { url?: string; alt?: string };
   locations: ContactLocation[];
   meta: { seo_title?: string; search_description?: string };
 }
@@ -58,9 +61,21 @@ const toPayload = (source: any, isRemote: boolean, fallback: any): ContactPagePa
     ? fields.locations
     : (fallbackFields.locations ?? []);
 
+  // Per-key fallback to the mock, same as everywhere else in this function.
+  // normalizeAssetUrl only runs when this field actually came from the API
+  // (isRemote && Boolean(fields.banner_image)) — the mock's /images/pages/...
+  // path must never be prefixed (see CLAUDE.md and services-content.ts).
+  const bannerImageSource = fields.banner_image ?? fallbackFields.banner_image;
+
   return {
     copy: { ...(fallbackFields.copy ?? {}), ...(fields.copy ?? {}) },
     contact: { ...(fallbackFields.contact ?? {}), ...(fields.contact ?? {}) },
+    banner_image: {
+      url: isRemote && Boolean(fields.banner_image)
+        ? normalizeAssetUrl(bannerImageSource?.url)
+        : (bannerImageSource?.url ?? ''),
+      alt: bannerImageSource?.alt ?? ''
+    },
     locations: locations.map((location) => ({
       ...location,
       image: {
