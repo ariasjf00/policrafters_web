@@ -1,5 +1,6 @@
 import brandsEnMock from '../mocks/brands-header.en.json';
 import brandsEsMock from '../mocks/brands-header.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface BrandsImage {
   url?: string;
@@ -29,7 +30,7 @@ const mocks: Record<Lang, BrandsHeaderPayload> = {
 };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_BRANDS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_BRANDS_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const hasPreviewFlag = (value: string | null | undefined): boolean => {

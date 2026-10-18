@@ -1,5 +1,6 @@
 import catalogsEnMock from '../mocks/catalogs.en.json';
 import catalogsEsMock from '../mocks/catalogs.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 // Shared loader for the catalogs endpoint, used by index.astro, contact-us.astro and
 // services.astro (through CatalogsCarousel.astro) and by catalogs.astro (the /catalogs
@@ -50,7 +51,7 @@ type Lang = 'en' | 'es';
 const mocks: Record<Lang, any> = { en: catalogsEnMock, es: catalogsEsMock };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_CATALOGS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_CATALOGS_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 // CMS image paths come back host-relative and need the API origin prepended;

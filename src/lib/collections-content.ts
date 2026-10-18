@@ -1,5 +1,6 @@
 import collectionsEnMock from '../mocks/collections-page.en.json';
 import collectionsEsMock from '../mocks/collections-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface CollectionProductImage {
   url?: string;
@@ -49,7 +50,7 @@ const mocks: Record<Lang, CollectionPagePayload> = {
 };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_COLLECTIONS_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const normalizeAssetUrl = (value: unknown, isRemote: boolean): string => {

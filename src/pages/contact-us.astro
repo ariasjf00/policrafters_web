@@ -3,6 +3,7 @@ import PageLayout from '../layouts/PageLayout.astro';
 import CatalogsCarousel from '../components/CatalogsCarousel.astro';
 import { loadCatalogs } from '../lib/catalogs';
 import { loadContactPageContent } from '../lib/contact-content';
+import { toDevApiUrl } from '../lib/dev-proxy';
 
 // Same shared endpoint the homepage renders; both languages ship so the carousel
 // can switch without a reload.
@@ -11,7 +12,7 @@ const { en: contactEn, es: contactEs } = await loadContactPageContent();
 
 // Where the form POSTs. Unset in local/mock mode, exactly like the CMS URLs:
 // the form then tells the visitor to email us instead of failing silently.
-const contactApiUrl = import.meta.env.PUBLIC_CONTACT_API_URL || '';
+const contactApiUrl = toDevApiUrl(import.meta.env.PUBLIC_CONTACT_API_URL || '', 'browser');
 
 // Mirrors Header.astro's resolver: ?lang= wins, English is the default.
 const langParam = Astro.url.searchParams.get('lang')?.toLowerCase();

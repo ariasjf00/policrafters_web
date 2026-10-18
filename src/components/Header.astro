@@ -5,6 +5,7 @@
 // preflight (margin/padding/border resets) into the homepage's hand-written CSS.
 
 import { loadBrandsPageContent } from '../lib/brands-content';
+import { toDevApiUrl } from '../lib/dev-proxy';
 
 interface Props {
 	lang?: 'es' | 'en';
@@ -449,7 +450,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		window.history.replaceState({}, '', nextUrl);
 	};
 
-	const brandsApiUrl = import.meta.env.PUBLIC_BRANDS_API_URL || '';
+	const brandsApiUrl = toDevApiUrl(import.meta.env.PUBLIC_BRANDS_API_URL || '', 'browser');
 	const brandsGrid = document.querySelector('.brands-menu__grid');
 	const staticBrandMenuMarkup = brandsGrid ? brandsGrid.innerHTML : '';
 	const restoreStaticBrandsMenu = () => {
