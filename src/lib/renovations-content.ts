@@ -1,5 +1,6 @@
 import renovationsEnMock from '../mocks/renovations-page.en.json';
 import renovationsEsMock from '../mocks/renovations-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface RenovationProductImage {
   url?: string;
@@ -50,7 +51,7 @@ const mocks: Record<Lang, RenovationPagePayload> = {
 };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_RENOVATIONS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_RENOVATIONS_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const normalizeAssetUrl = (value: unknown, isRemote: boolean): string => {

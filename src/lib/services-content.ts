@@ -1,5 +1,6 @@
 import servicesEnMock from '../mocks/services-page.en.json';
 import servicesEsMock from '../mocks/services-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface ServicesImage {
   url?: string;
@@ -39,7 +40,7 @@ const mocks: Record<Lang, ServicesPagePayload> = {
 };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_SERVICES_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_SERVICES_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 // CMS image paths come back host-relative and need the API origin prepended;

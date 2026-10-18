@@ -1,5 +1,6 @@
 import warrantyEnMock from '../mocks/warranty-page.en.json';
 import warrantyEsMock from '../mocks/warranty-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface WarrantyItem {
   label?: string;
@@ -43,7 +44,7 @@ const hasEnabledFlag = (value: unknown): boolean => {
 };
 
 const useApi = hasEnabledFlag(import.meta.env.PUBLIC_USE_API);
-const apiUrl = import.meta.env.PUBLIC_WARRANTY_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_WARRANTY_API_URL || '', 'server');
 
 // `column` only ever comes from the EN payload (see toPayload below) and is
 // language-independent, so it's normalized once here rather than per-locale.

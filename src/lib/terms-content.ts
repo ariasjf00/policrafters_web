@@ -1,5 +1,6 @@
 import termsEnMock from '../mocks/terms-page.en.json';
 import termsEsMock from '../mocks/terms-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface TermItem {
   key?: string;
@@ -36,7 +37,7 @@ const hasEnabledFlag = (value: unknown): boolean => {
 };
 
 const useApi = hasEnabledFlag(import.meta.env.PUBLIC_USE_API);
-const apiUrl = import.meta.env.PUBLIC_TERMS_API_URL || import.meta.env.PUBLIC_TERMS_AND_CONDITIONS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_TERMS_API_URL || import.meta.env.PUBLIC_TERMS_AND_CONDITIONS_API_URL || '', 'server');
 
 // No image fields on this page, so unlike services-content.ts / brands-content.ts
 // there is no normalizeAssetUrl to carry over.

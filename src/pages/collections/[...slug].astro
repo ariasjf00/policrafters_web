@@ -1,6 +1,7 @@
 ---
 import collectionsEnMock from '../../mocks/collections-page.en.json';
 import collectionsEsMock from '../../mocks/collections-page.es.json';
+import { toDevApiUrl } from '../../lib/dev-proxy';
 import ProductPage from './product.astro';
 
 export async function getStaticPaths() {
@@ -20,7 +21,7 @@ export async function getStaticPaths() {
   };
 
   const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-  const collectionsApiUrl = import.meta.env.PUBLIC_COLLECTIONS_API_URL || '';
+  const collectionsApiUrl = toDevApiUrl(import.meta.env.PUBLIC_COLLECTIONS_API_URL || '', 'server');
 
   if (useApi && collectionsApiUrl) {
     try {

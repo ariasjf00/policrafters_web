@@ -1,11 +1,14 @@
 import contactEnMock from '../mocks/contact-page.en.json';
 import contactEsMock from '../mocks/contact-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface ContactPageCopy {
   heading?: string;
   intro?: string;
   phone_label?: string;
   email_label?: string;
+  banner_eyebrow?: string;
+  banner_heading?: string;
   project_button_label?: string;
   locations_heading?: string;
   locations_aria?: string;
@@ -31,6 +34,7 @@ export interface ContactLocation {
 export interface ContactPagePayload {
   copy: ContactPageCopy;
   contact: ContactPageDetails;
+  banner_image: { url?: string; alt?: string };
   locations: ContactLocation[];
   meta: { seo_title?: string; search_description?: string };
 }
@@ -40,7 +44,7 @@ type Lang = 'en' | 'es';
 const mocks: Record<Lang, any> = { en: contactEnMock, es: contactEsMock };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_CONTACT_PAGE_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_CONTACT_PAGE_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const normalizeAssetUrl = (value: unknown): string => {
@@ -57,9 +61,21 @@ const toPayload = (source: any, isRemote: boolean, fallback: any): ContactPagePa
     ? fields.locations
     : (fallbackFields.locations ?? []);
 
+  // Per-key fallback to the mock, same as everywhere else in this function.
+  // normalizeAssetUrl only runs when this field actually came from the API
+  // (isRemote && Boolean(fields.banner_image)) — the mock's /images/pages/...
+  // path must never be prefixed (see CLAUDE.md and services-content.ts).
+  const bannerImageSource = fields.banner_image ?? fallbackFields.banner_image;
+
   return {
     copy: { ...(fallbackFields.copy ?? {}), ...(fields.copy ?? {}) },
     contact: { ...(fallbackFields.contact ?? {}), ...(fields.contact ?? {}) },
+    banner_image: {
+      url: isRemote && Boolean(fields.banner_image)
+        ? normalizeAssetUrl(bannerImageSource?.url)
+        : (bannerImageSource?.url ?? ''),
+      alt: bannerImageSource?.alt ?? ''
+    },
     locations: locations.map((location) => ({
       ...location,
       image: {

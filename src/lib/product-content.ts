@@ -1,5 +1,6 @@
 import productEnMock from '../mocks/product-page.en.json';
 import productEsMock from '../mocks/product-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 // Shared loader for the product detail page (/collections/product), following the
 // same shape as contact-content.ts and catalogs.ts.
@@ -63,7 +64,7 @@ type Lang = 'en' | 'es';
 const mocks: Record<Lang, any> = { en: productEnMock, es: productEsMock };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_PRODUCT_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_PRODUCT_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const buildRequestUrl = (lang: Lang, slug?: string): string => {

@@ -9,10 +9,12 @@
   "fields": {
     "copy": {
       "heading": "CONTACT US!",
-      "intro": "If you have any questions or comments, please contact our Call Center, where our team will be happy to assist you. If you have a project, please complete the form by clicking the “My Project” button. One of our advisors will contact you as soon as possible.",
+      "intro": "If you have any questions, concerns, or comments regarding Policrafters, please contact our Call Center, where our team will be happy to assist you. If you have a project, click the “LET'S TALK!” button below to get started.",
       "phone_label": "CALL CENTER PHONE",
       "email_label": "EMAIL",
-      "project_button_label": "My Project",
+      "banner_eyebrow": "GET IN TOUCH",
+      "banner_heading": "Start Your Next Project with Policrafters",
+      "project_button_label": "LET'S TALK!",
       "locations_heading": "OUR LOCATIONS",
       "locations_aria": "Policrafters locations",
       "learn_more": "Learn more"
@@ -22,6 +24,10 @@
       "phone_href": "tel:+18138120650",
       "email": "info@policrafters.com",
       "url_contact": "https://policrafters.ancous.tech/leads/quote/?lang=es&utm_source=astro.novatierra.cloud&utm_medium=my_project&utm_campaign=websiteastro"
+    },
+    "banner_image": {
+      "url": "/images/pages/values_1.webp",
+      "alt": "A custom Policrafters kitchen and living space"
     },
     "locations": [
       {

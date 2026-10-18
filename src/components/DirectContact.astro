@@ -15,6 +15,7 @@
 // inside whatever `.container`/wrapper that page already uses.
 
 import type { DirectContactPayload } from '../lib/direct-contact';
+import { toDevApiUrl } from '../lib/dev-proxy';
 
 interface Props {
   lang?: 'en' | 'es';
@@ -156,7 +157,7 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
       applyDirectContactLanguage(resolveActiveLang());
     };
 
-    const runtimeDirectContactApiUrl = import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '';
+    const runtimeDirectContactApiUrl = toDevApiUrl(import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '', 'browser');
     const hydratePreviewDirectContact = async () => {
       if (!getPreviewState() || !runtimeDirectContactApiUrl) return;
 

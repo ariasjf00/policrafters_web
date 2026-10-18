@@ -59,6 +59,14 @@ const shouldNoindex = noindex || !isIndexingAllowed();
 <meta name="twitter:description" content={resolvedDescription} />
 <meta name="twitter:image" content={resolvedImageUrl} />
 
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
-<!-- No apple-touch-icon file yet — see Docs/SEO_phase1_prod_changes_pending.md -->
+<!-- public/favicon.svg carries the real Policrafters mark now — do not edit, delete
+     or rename that file here; it's maintained directly in public/. -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
+<link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta name="theme-color" content="#2f3437" />
