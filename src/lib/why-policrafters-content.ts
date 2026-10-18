@@ -1,5 +1,6 @@
 import whyPolicraftersEnMock from '../mocks/why-policrafters-page.en.json';
 import whyPolicraftersEsMock from '../mocks/why-policrafters-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface WhyPolicraftersImage {
   url?: string;
@@ -80,7 +81,7 @@ const hasEnabledFlag = (value: unknown): boolean => {
 };
 
 const useApi = hasEnabledFlag(import.meta.env.PUBLIC_USE_API);
-const apiUrl = import.meta.env.PUBLIC_WHY_POLICRAFTERS_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_WHY_POLICRAFTERS_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 // CMS image paths come back host-relative and need the API origin prepended;

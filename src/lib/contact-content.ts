@@ -1,5 +1,6 @@
 import contactEnMock from '../mocks/contact-page.en.json';
 import contactEsMock from '../mocks/contact-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface ContactPageCopy {
   heading?: string;
@@ -43,7 +44,7 @@ type Lang = 'en' | 'es';
 const mocks: Record<Lang, any> = { en: contactEnMock, es: contactEsMock };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-const apiUrl = import.meta.env.PUBLIC_CONTACT_PAGE_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_CONTACT_PAGE_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 const normalizeAssetUrl = (value: unknown): string => {

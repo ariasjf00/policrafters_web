@@ -1,5 +1,6 @@
 import directContactEnMock from '../mocks/direct-contact.en.json';
 import directContactEsMock from '../mocks/direct-contact.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 // Shared shaping for the "direct contact" block, so any page can feed DirectContact.astro.
 // The section is treated as a standalone content source: pages ask for it once and
@@ -108,7 +109,7 @@ const isPreviewRequest = (search?: string | URLSearchParams | null): boolean => 
 
 export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; es: DirectContactPayload }> => {
   const useApi = import.meta.env.PUBLIC_USE_API === 'true';
-  const apiUrl = import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '';
+  const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '', 'server');
 
   if (!useApi || !apiUrl) {
     return { en: mocks.en, es: mocks.es };

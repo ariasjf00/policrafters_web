@@ -1,5 +1,6 @@
 import financeEnMock from '../mocks/finance-page.en.json';
 import financeEsMock from '../mocks/finance-page.es.json';
+import { toDevApiUrl } from './dev-proxy';
 
 export interface FinanceImage {
   url?: string;
@@ -53,7 +54,7 @@ const hasEnabledFlag = (value: unknown): boolean => {
 };
 
 const useApi = hasEnabledFlag(import.meta.env.PUBLIC_USE_API);
-const apiUrl = import.meta.env.PUBLIC_FINANCE_API_URL || '';
+const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_FINANCE_API_URL || '', 'server');
 const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin : '';
 
 // `column` only ever comes from the EN payload (see toPayload below) and is
