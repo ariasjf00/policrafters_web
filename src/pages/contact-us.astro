@@ -9,6 +9,8 @@ import { toDevApiUrl } from '../lib/dev-proxy';
 // can switch without a reload.
 const { en: catalogsEn, es: catalogsEs } = await loadCatalogs();
 const { en: contactEn, es: contactEs } = await loadContactPageContent();
+const useCmsApi = import.meta.env.PUBLIC_USE_API === 'true';
+const contactPageRuntimeApiUrl = toDevApiUrl(import.meta.env.PUBLIC_CONTACT_PAGE_API_URL || '', 'browser');
 
 // Where the form POSTs. Unset in local/mock mode, exactly like the CMS URLs:
 // the form then tells the visitor to email us instead of failing silently.
@@ -99,7 +101,11 @@ const locations = baseLocations.map((enLocation, index) => {
   showHero={false}
   image={{ url: bannerImageUrl, alt: pick(enBannerAlt, esBannerAlt) }}
 >
-  <section class="contact-page">
+  <section
+    class="contact-page"
+    data-contact-api-url={contactPageRuntimeApiUrl}
+    data-use-api={useCmsApi ? 'true' : 'false'}
+  >
     <header class="contact-intro">
       <h1 data-copy-en={contentCopy.heading.en} data-copy-es={contentCopy.heading.es}>
         {pick(contentCopy.heading.en, contentCopy.heading.es)}
@@ -247,6 +253,9 @@ const locations = baseLocations.map((enLocation, index) => {
 
   const root = document.querySelector('.contact-page');
   if (root) {
+    const runtimeContactPageApiUrl = root.getAttribute('data-contact-api-url') || '';
+    const shouldUseCms = root.getAttribute('data-use-api') === 'true' && Boolean(runtimeContactPageApiUrl);
+
     const getLangFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const lang = params.get('lang');
@@ -308,6 +317,33 @@ const locations = baseLocations.map((enLocation, index) => {
       element.textContent = value;
       element.setAttribute('data-copy-en', value);
       element.setAttribute('data-copy-es', value);
+    };
+
+    const setCopyForLang = (element, value, lang) => {
+      if (!element || typeof value !== 'string') return;
+      const key = lang === 'es' ? 'es' : 'en';
+      element.setAttribute(`data-copy-${key}`, value);
+      if (activeLang === key) {
+        element.textContent = value;
+      }
+    };
+
+    const setAltForLang = (element, value, lang) => {
+      if (!element || typeof value !== 'string') return;
+      const key = lang === 'es' ? 'es' : 'en';
+      element.setAttribute(`data-alt-${key}`, value);
+      if (activeLang === key) {
+        element.setAttribute('alt', value);
+      }
+    };
+
+    const setAriaForLang = (element, value, lang) => {
+      if (!element || typeof value !== 'string') return;
+      const key = lang === 'es' ? 'es' : 'en';
+      element.setAttribute(`data-aria-${key}`, value);
+      if (activeLang === key) {
+        element.setAttribute('aria-label', value);
+      }
     };
 
     const setAltPair = (element, value) => {
@@ -418,8 +454,138 @@ const locations = baseLocations.map((enLocation, index) => {
       document.documentElement.lang = previewLang;
     };
 
+    const updateLocationsRuntime = (locations = [], learnMoreLabel = '', lang = 'en') => {
+      const grid = document.querySelector('.locations__grid');
+      const template = grid?.querySelector('.location-card');
+      if (!grid || !template) return;
+
+      grid.replaceChildren();
+      locations.forEach((location, index) => {
+        const card = template.cloneNode(true);
+        const image = card.querySelector('.location-card__image');
+        if (image) {
+          image.setAttribute('src', normalizePreviewAssetUrl(location?.image?.url || ''));
+          setAltForLang(image, location?.image?.alt || `LOCATION ${index + 1}`, lang);
+        }
+
+        setCopyForLang(card.querySelector('.location-card__name'), location?.name || '', lang);
+
+        const address = card.querySelector('.location-card__address');
+        if (address) {
+          const parts = address.querySelectorAll('[data-copy-en]');
+          if (parts[0]) setCopyForLang(parts[0], location?.address_label || '', lang);
+          if (parts[1]) setCopyForLang(parts[1], location?.street || '', lang);
+          if (parts[2]) setCopyForLang(parts[2], location?.city || '', lang);
+        }
+
+        const link = card.querySelector('.location-card__cta');
+        if (link) {
+          link.setAttribute('href', location?.url || '#');
+          setCopyForLang(link, learnMoreLabel || link.textContent || '', lang);
+        }
+
+        grid.appendChild(card);
+      });
+    };
+
+    const applyRuntimePublishedContent = (payload, lang) => {
+      const fields = payload?.fields ?? {};
+      if (!fields || typeof fields !== 'object') return;
+
+      if (typeof payload?.meta?.seo_title === 'string' && payload.meta.seo_title.trim() && activeLang === lang) {
+        document.title = payload.meta.seo_title;
+      }
+
+      if (typeof payload?.meta?.search_description === 'string' && activeLang === lang) {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', payload.meta.search_description);
+        }
+      }
+
+      setCopyForLang(document.querySelector('.contact-intro h1'), fields.copy?.heading || '', lang);
+      setCopyForLang(document.querySelector('.contact-intro p'), fields.copy?.intro || '', lang);
+
+      const bannerImage = document.querySelector('[data-contact-field="banner-image"]');
+      if (bannerImage && fields.banner_image && typeof fields.banner_image === 'object') {
+        const bannerUrl = normalizePreviewAssetUrl(fields.banner_image.url || '');
+        if (bannerUrl) bannerImage.setAttribute('src', bannerUrl);
+        setAltForLang(bannerImage, fields.banner_image.alt || '', lang);
+      }
+
+      setCopyForLang(document.querySelector('[data-contact-field="banner-eyebrow"]'), fields.copy?.banner_eyebrow || '', lang);
+      setCopyForLang(document.querySelector('[data-contact-field="banner-heading"]'), fields.copy?.banner_heading || '', lang);
+
+      const bannerCta = document.querySelector('[data-contact-field="banner-cta"]');
+      if (bannerCta) {
+        setCopyForLang(bannerCta, fields.copy?.project_button_label || '', lang);
+        if (typeof fields.contact?.url_contact === 'string') {
+          bannerCta.setAttribute('href', fields.contact.url_contact);
+        }
+      }
+
+      setCopyForLang(document.querySelector('[data-contact-field="phone-label"]'), fields.copy?.phone_label || '', lang);
+      const phoneValue = fields.contact?.phone_display || '';
+      const phoneHref = fields.contact?.phone_href || `tel:${phoneValue.replace(/[^\d+]/g, '')}`;
+      const phoneLink = document.querySelector('[data-contact-field="phone-value"]');
+      if (phoneLink && phoneValue) {
+        if (activeLang === lang) {
+          phoneLink.textContent = phoneValue;
+        }
+        phoneLink.setAttribute('href', phoneHref);
+      }
+
+      setCopyForLang(document.querySelector('[data-contact-field="email-label"]'), fields.copy?.email_label || '', lang);
+      const emailLink = document.querySelector('[data-contact-field="email-value"]');
+      if (emailLink && typeof fields.contact?.email === 'string') {
+        if (activeLang === lang) {
+          emailLink.textContent = fields.contact.email;
+        }
+        emailLink.setAttribute('href', `mailto:${fields.contact.email}`);
+      }
+
+      setCopyForLang(document.querySelector('.locations__heading'), fields.copy?.locations_heading || '', lang);
+      setAriaForLang(document.querySelector('.locations'), fields.copy?.locations_aria || '', lang);
+      updateLocationsRuntime(Array.isArray(fields.locations) ? fields.locations : [], fields.copy?.learn_more || '', lang);
+
+      applyContactLanguage(activeLang);
+    };
+
+    const buildContactApiUrlForLang = (lang) => {
+      if (!runtimeContactPageApiUrl) return '';
+      try {
+        const requestUrl = new URL(runtimeContactPageApiUrl, window.location.origin);
+        requestUrl.searchParams.set('lang', lang === 'es' ? 'es' : 'en');
+        return requestUrl.toString();
+      } catch {
+        return runtimeContactPageApiUrl;
+      }
+    };
+
+    const hydratePublishedContactRuntime = async (lang) => {
+      if (!shouldUseCms) return;
+
+      try {
+        const requestUrl = buildContactApiUrlForLang(lang);
+        if (!requestUrl) return;
+
+        const response = await fetch(requestUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`Contact page ${lang} status ${response.status}`);
+        }
+        const payload = await response.json();
+        applyRuntimePublishedContent(payload, lang);
+      } catch (error) {
+        console.warn('[contact-us] Runtime refresh failed; keeping SSR content.', error);
+      }
+    };
+
     applyContactLanguage(activeLang);
-    document.addEventListener('sitelangchange', (event) => applyContactLanguage(event.detail));
+    document.addEventListener('sitelangchange', (event) => {
+      const nextLang = event?.detail === 'es' ? 'es' : 'en';
+      applyContactLanguage(nextLang);
+      void hydratePublishedContactRuntime(nextLang);
+    });
 
     window.addEventListener('message', (event) => {
       if (event.data?.type !== 'policrafters-preview') {
@@ -437,6 +603,8 @@ const locations = baseLocations.map((enLocation, index) => {
 
       updateContactPreview(previewData);
     });
+
+    void hydratePublishedContactRuntime(activeLang);
   }
 </script>
 
