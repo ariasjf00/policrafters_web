@@ -10,10 +10,25 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
 
 ## Convenciones generales
 
-- `locale`: `"en"` o `"es"`, según el idioma de la página consultada.
+- **Parámetro de idioma unificado: `?locale=en|es`.** Todos los endpoints lo aceptan. `lang` se
+  acepta como alias temporal (algunos endpoints históricamente solo leían `lang`); cuando ambos
+  llegan, `locale` gana. Si no viene ninguno, o el valor no es válido, la respuesta es en inglés.
+- `locale` (en la respuesta): `"en"` o `"es"`, el idioma resuelto de la página consultada.
 - Todo campo de imagen sigue la forma `{ "url": "string", "alt": "string" }`.
 - Campos opcionales/nulos se marcan explícitamente como `"string | null"`.
 - `meta.seo_title` y `meta.search_description` vienen de los campos SEO nativos de Wagtail — siempre presentes, pueden estar vacíos.
+- `meta.translations` (opcional): `{ "en": "<slug>", "es": "<slug>" }`, tomado del `translation_key`
+  de Wagtail. Indica qué traducciones de esta página existen y con qué slug. Si falta un idioma,
+  esa traducción no existe y el frontend no genera su URL ni su etiqueta `hreflang`. Si el campo
+  completo no viene, el frontend asume que ambos idiomas existen con el mismo slug.
+- **Listados por idioma.** Un endpoint de listado (por ejemplo `GET /api/products?locale=es`) solo
+  debe devolver los registros publicados en ese idioma, cada uno con su `slug`. El frontend genera
+  las páginas de `/es/...` exclusivamente a partir del listado en español — un registro sin
+  publicar en español simplemente no aparece ahí, para no generar una página vacía ni anunciarle
+  a Google una URL que no existe.
+- **URLs de "ver en vivo" / vista previa de Wagtail.** Deben apuntar a
+  `https://policrafters.com/<ruta>` para inglés y a `https://policrafters.com/es/<ruta>` para
+  español, siempre sin barra final.
 - Las migas de pan (`breadcrumbs`) se exponen ya armadas desde la API — no se recalculan en el frontend, porque en Wagtail salen naturalmente del árbol de páginas.
 
 ---
@@ -178,7 +193,7 @@ Fuente única de la lista de catálogos descargables. La renderizan tanto [index
 
 Mocks: [src/mocks/catalogs.en.json](../src/mocks/catalogs.en.json) y [src/mocks/catalogs.es.json](../src/mocks/catalogs.es.json).
 
-Nota para el backend: el frontend pide **los dos idiomas** en build time (`?lang=en` y `?lang=es`) y deja ambos en el markup, porque el selector de idioma cambia el contenido sin recargar. Cada respuesta sigue siendo de un solo idioma, como el resto del contrato.
+Nota para el backend: el frontend pide `?locale=<en|es>` (con `lang` como alias temporal) una sola vez por idioma en build time, y genera `/catalogs` y `/es/catalogs` como páginas independientes. Cada respuesta sigue siendo de un solo idioma, como el resto del contrato.
 
 ```json
 {
@@ -237,7 +252,7 @@ Fuente única del bloque de contacto reutilizable que se renderiza al final de v
 
 Mocks: [src/mocks/direct-contact.en.json](../src/mocks/direct-contact.en.json) y [src/mocks/direct-contact.es.json](../src/mocks/direct-contact.es.json).
 
-Nota para el backend: la respuesta debe venir ya localizada por idioma. Si el frontend pide inglés y español por separado, ambas respuestas deben mantener la misma forma para que el componente pueda cambiar de idioma sin recargar.
+Nota para el backend: la respuesta debe venir ya localizada por idioma. El frontend pide `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, y cada página que incluye este bloque lo renderiza en su propio idioma.
 
 ```json
 {
@@ -263,7 +278,7 @@ Nota para el backend: la respuesta debe venir ya localizada por idioma. Si el fr
 ### Reglas de implementación
 
 - Este bloque no vive dentro del payload de una página concreta; se trata como contenido global reutilizable.
-- El frontend lo renderiza con ambas lenguas ya resueltas para permitir el cambio de idioma sin recargar.
+- El frontend lo pide en el idioma de la página que lo incluye (un único `locale` por build), no en ambos a la vez.
 - Si el endpoint dedicado no responde, el frontend cae a los mocks locales del bloque.
 
 ## CollectionIndexPage
@@ -272,7 +287,7 @@ Página de índice de colecciones referenciada por [collections.astro](../src/pa
 
 Mocks de referencia: [src/mocks/collections-page.en.json](../src/mocks/collections-page.en.json) y [src/mocks/collections-page.es.json](../src/mocks/collections-page.es.json).
 
-Nota importante: igual que HomePage y ContactPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -332,7 +347,7 @@ Nota importante: igual que HomePage y ContactPage, la API devuelve un solo idiom
 - El backend o mock devuelve `hero_title`, `intro_text`, `empty_state_text` y `categories` ya localizados para un solo idioma por respuesta.
 - Los productos de la categoría `shower-doors` se agrupan en la galería; las demás categorías pueden actuar como secciones informativas sin productos.
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage y ContactPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## RenovationIndexPage
 
@@ -340,7 +355,7 @@ Página de índice de renovaciones referenciada por [renovations.astro](../src/p
 
 Mocks de referencia: [src/mocks/renovations-page.en.json](../src/mocks/renovations-page.en.json) y [src/mocks/renovations-page.es.json](../src/mocks/renovations-page.es.json).
 
-Nota importante: igual que CollectionIndexPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -425,7 +440,7 @@ Nota importante: igual que CollectionIndexPage, la API devuelve un solo idioma p
   - Ausente o `true` (default): se renderiza la lista de tipos como checkboxes filtrables (comportamiento igual a `commercial`).
   - `false`: la categoría no expone filtros por tipo — el panel se renderiza vacío — pero sus productos sí aparecen en la galería al expandirla. Así se modela `partners`, que tiene un solo grupo de productos sin sub-tipos.
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage y CollectionIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## ServicesPage
 
@@ -435,7 +450,7 @@ Mocks de referencia: [src/mocks/services-page.en.json](../src/mocks/services-pag
 
 Endpoint sugerido para este payload: `PUBLIC_SERVICES_API_URL`.
 
-Nota importante: igual que CollectionIndexPage y RenovationIndexPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -477,7 +492,7 @@ Nota importante: igual que CollectionIndexPage y RenovationIndexPage, la API dev
 - Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
 - El backend o mock devuelve `hero_image`, `intro_eyebrow`, `intro_heading`, `intro_text` y `services` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`.
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos ([DirectContactBlock](#directcontactblock--contacto-directo-compartido) y [CatalogIndex](#catalogindex--catálogos)).
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## BrandsHeader
 
@@ -487,7 +502,7 @@ Mocks de referencia: [src/mocks/brands-header.en.json](../src/mocks/brands-heade
 
 Endpoint sugerido para este payload: `PUBLIC_BRANDS_API_URL`.
 
-Nota importante: igual que en los demás bloques bilingües, la API devuelve un solo idioma por request. El frontend pide `?locale=en` y `?locale=es` por separado para poblar ambos idiomas en el markup y permitir cambio de idioma sin recarga.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -525,7 +540,7 @@ Mocks de referencia: [src/mocks/terms-page.en.json](../src/mocks/terms-page.en.j
 
 Endpoint sugerido para este payload: `PUBLIC_TERMS_API_URL`.
 
-Nota importante: igual que ServicesPage y BrandsPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -558,7 +573,7 @@ Nota importante: igual que ServicesPage y BrandsPage, la API devuelve un solo id
 - Todo campo de imagen seguiría la convención general del documento, pero esta página no tiene imágenes.
 - El backend o mock devuelve `intro_heading`, `intro_body` y `terms` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`.
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## WarrantyPage
 
@@ -568,7 +583,7 @@ Mocks de referencia: [src/mocks/warranty-page.en.json](../src/mocks/warranty-pag
 
 Endpoint sugerido para este payload: `PUBLIC_WARRANTY_API_URL`.
 
-Nota importante: igual que TermsPage, ServicesPage y BrandsPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -608,7 +623,7 @@ Nota importante: igual que TermsPage, ServicesPage y BrandsPage, la API devuelve
 - Todo campo de imagen seguiría la convención general del documento, pero esta página no tiene imágenes.
 - El backend o mock devuelve `intro_heading`, `intro_body` y `sections` (incluyendo `items`) ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. `sections` e `items` se emparejan entre idiomas por índice, y el inglés determina la cantidad.
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## FinancePage
 
@@ -618,7 +633,7 @@ Mocks de referencia: [src/mocks/finance-page.en.json](../src/mocks/finance-page.
 
 Endpoint sugerido para este payload: `PUBLIC_FINANCE_API_URL`.
 
-Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -665,7 +680,7 @@ Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuel
 - `contact.phone_href` es opcional: si falta, el frontend lo deriva de `contact.phone_display` quitando todo carácter que no sea dígito o `+` y anteponiendo `tel:`.
 - El backend o mock devuelve `intro_heading`, `intro_body`, `steps` (incluyendo cada campo) y `contact` ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. `steps` se empareja entre idiomas por índice, y el inglés determina la cantidad.
 - Esta página no incluye `contact_links`, el carrusel de catálogos, ni el formulario de contacto; esos bloques viven en sus contratos compartidos (DirectContactBlock, CatalogIndex, ContactPage) y esta página no los usa.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, ContactPage, WarrantyPage, CollectionIndexPage y RenovationIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## WhyPolicraftersPage
 
@@ -675,7 +690,7 @@ Mocks de referencia: [src/mocks/why-policrafters-page.en.json](../src/mocks/why-
 
 Endpoint sugerido para este payload: `PUBLIC_WHY_POLICRAFTERS_API_URL`.
 
-Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuelve un solo idioma por request. El frontend pide `?lang=en` y `?lang=es` por separado para poder renderizar ambos idiomas en el markup sin mezclar campos bilingües en una sola respuesta.
+Nota importante: la API devuelve un solo idioma por request, como en el resto del contrato. El frontend pide `?locale=<en|es>` (con `lang` aceptado como alias temporal) una sola vez por página/idioma en build time, y genera `/<ruta>` en inglés y `/es/<ruta>` en español como páginas estáticas independientes, cada una con su propio `<html lang>`, título, descripción y etiquetas `hreflang` — sin mezclar campos bilingües en una sola respuesta ni mantener los dos idiomas en el mismo markup.
 
 ```json
 {
@@ -744,7 +759,7 @@ Nota importante: igual que TermsPage, ServicesPage y WarrantyPage, la API devuel
 - Todo campo de imagen sigue la convención general del documento (`{ "url", "alt" }`); las URLs relativas que vienen del CMS se normalizan con el origen de la API en el frontend, igual que en ServicesPage — las rutas `/images/...` de los mocks locales no se tocan.
 - El backend o mock devuelve todos los campos de texto ya localizados para un solo idioma por respuesta; el frontend no espera objetos bilingües ni pares `_en`. Los arrays se emparejan entre idiomas por índice, y el inglés determina la cantidad.
 - Esta página no incluye `contact_links` ni los datos del carrusel de catálogos; ambos bloques viven en sus contratos compartidos y esta página no los usa.
-- El frontend solicita `?lang=en` y `?lang=es` por separado para renderizar ambos idiomas con el mismo patrón que TermsPage, HomePage, ServicesPage, WarrantyPage, ContactPage, CollectionIndexPage y RenovationIndexPage.
+- El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 
 ## ModelPage
 
@@ -806,11 +821,11 @@ de vuelta al menú + hasta 4 tarjetas), seguido del componente compartido `Direc
 payload de home).
 
 A diferencia de `collections.astro`, este endpoint **sigue la regla general** del documento:
-un solo idioma ya resuelto por respuesta, sin pares `_en`. El frontend pide `?lang=en` y
-`?lang=es` por separado en build time y conserva ambos en el markup (el mismo patrón que
-`ContactPage` y `CatalogIndex` — ver [product-content.ts](../src/lib/product-content.ts)),
-en vez del convenio base-español + hermano `_en` que el bloque introductorio usó en un borrador
-anterior de este documento. Mocks de referencia:
+un solo idioma ya resuelto por respuesta, sin pares `_en`. El frontend pide `?locale=<en|es>`
+(con `lang` como alias) una sola vez por idioma en build time y genera una página estática por
+idioma (ver [product-content.ts](../src/lib/product-content.ts)), en vez del convenio
+base-español + hermano `_en` que el bloque introductorio usó en un borrador anterior de este
+documento. Mocks de referencia:
 [src/mocks/product-page.en.json](../src/mocks/product-page.en.json) y
 [src/mocks/product-page.es.json](../src/mocks/product-page.es.json).
 
@@ -821,20 +836,23 @@ los productos. El frontend ahora soporta URLs dinámicas de la forma:
 
 ```text
 /collections/<category>/<type>/<model>
+/es/collections/<category>/<type>/<model>
 ```
 
 Ejemplo:
 
 ```text
 /collections/shower-doors/fixed/model-1
+/es/collections/shower-doors/fixed/model-1
 /collections/shower-doors/pivot/model-1
 ```
 
-La API debe resolver el producto por el slug completo, no por una sola página genérica. Es decir,
-el backend debe aceptar un filtro de `slug` y devolver solo el `ModelPage` correspondiente.
+El slug es el mismo en los dos idiomas. La API debe resolver el producto por el slug completo,
+no por una sola página genérica. Es decir, el backend debe aceptar un filtro de `slug` y devolver
+solo el `ModelPage` correspondiente, en el idioma pedido.
 
 ```http
-GET /api/products?lang=en&slug=shower-doors/fixed/model-1
+GET /api/products?locale=en&lang=en&slug=shower-doors/fixed/model-1
 ```
 
 Respuesta esperada:
@@ -847,7 +865,8 @@ Respuesta esperada:
   "locale": "en",
   "meta": {
     "seo_title": "Product | Policrafters",
-    "search_description": "Discover Policrafters' fixed shower door model"
+    "search_description": "Discover Policrafters' fixed shower door model",
+    "translations": { "en": "shower-doors/fixed/model-1", "es": "shower-doors/fixed/model-1" }
   },
   "fields": {
     "collection": {
@@ -886,6 +905,14 @@ Respuesta esperada:
 Esto es importante porque la colección lista productos con `slug` completo, y la página de detalle
 **debe resolver exactamente ese producto**. No se puede devolver siempre el mismo payload de
 `/collections/product` para cada imagen clickeada.
+
+`meta.translations` es un objeto opcional, tomado del `translation_key` de Wagtail, que indica qué
+traducciones existen de esta página y con qué slug: `{ "en": "<slug>", "es": "<slug>" }`. Si falta
+un idioma en el objeto, esa traducción no existe — el frontend no genera `/es/collections/<slug>`
+para ese producto, ni muestra una etiqueta `hreflang="es"`. Si el backend todavía no envía este
+campo, el frontend asume que ambos idiomas existen con el mismo slug (el comportamiento actual).
+Aplica igual en HomePage, CollectionIndexPage, RenovationIndexPage y el resto de páginas listadas
+abajo, no solo en ModelPage.
 
 El resto del contrato de `ModelPage` (`specs`, `gallery`, `brand`, `breadcrumbs`) sigue
 pendiente de construirse en el frontend y no cambia. Estos campos se suman a `fields` arriba:
@@ -1006,8 +1033,9 @@ Mocks de referencia:
 
 ### Reglas de implementación
 
-- La API devuelve un solo idioma por request (`?lang=en` o `?lang=es`) y el
-  frontend solicita ambos en build time para permitir cambio de idioma sin recarga.
+- La API devuelve un solo idioma por request (`?locale=en|es`, con `lang` como alias) y el
+  frontend pide un idioma por página en build time (`/contact-us` en inglés, `/es/contact-us`
+  en español), como el resto del contrato.
 - `locations` es dinámico y ordenado: el frontend respeta el orden recibido y no
   asume cantidad fija de tarjetas.
 - `contact.phone_href` puede venir nulo o vacío; en ese caso el frontend calcula

@@ -5,7 +5,8 @@
   "locale": "es",
   "meta": {
     "seo_title": "Producto | Policrafters",
-    "search_description": "Conoce el modelo de puerta de ducha fija de Policrafters: materiales, acabados y detalles de instalación."
+    "search_description": "Conoce el modelo de puerta de ducha fija de Policrafters: materiales, acabados y detalles de instalación.",
+    "translations": { "en": "product", "es": "product" }
   },
   "fields": {
     "hero_image": {

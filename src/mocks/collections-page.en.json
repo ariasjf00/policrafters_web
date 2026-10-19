@@ -4,7 +4,8 @@
   "locale": "en",
   "meta": {
     "seo_title": "Collections | Policrafters",
-    "search_description": "Featured Policrafters collections for doors, windows, pergolas, kitchens, terraces, and bathrooms."
+    "search_description": "Featured Policrafters collections for doors, windows, pergolas, kitchens, terraces, and bathrooms.",
+    "translations": { "en": "collections", "es": "collections" }
   },
   "fields": {
     "hero_title": "Collections",

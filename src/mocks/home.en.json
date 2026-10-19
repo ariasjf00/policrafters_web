@@ -4,7 +4,8 @@
   "locale": "en",
   "meta": {
     "seo_title": "Policrafters | Design and Furnishings",
-    "search_description": "Premium interior design and furnishings."
+    "search_description": "Premium interior design and furnishings.",
+    "translations": { "en": "", "es": "" }
   },
   "fields": {
     "copy": {
