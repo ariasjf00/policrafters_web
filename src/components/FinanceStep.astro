@@ -6,41 +6,25 @@
 // stack (see .finance-columns in finance.astro's <style>), and a shared
 // component beats duplicating the JSX inline.
 //
-// Purely presentational: it ships both languages as data-copy-es/-en but does
-// NOT subscribe to sitelangchange itself. finance.astro's own script already
-// walks `.finance-shell [data-copy-es]` on every language change, and this
-// component's markup lands inside that shell, so one subscriber covers it —
-// same pattern as WarrantySection.astro.
+// Purely presentational and single-language: the host page is already
+// rendered in one language (route-based i18n — see src/lib/i18n.ts), so
+// there is nothing left to swap client-side.
 interface Props {
-  lang?: 'en' | 'es';
   number: number;
-  titleEs: string;
-  titleEn: string;
-  subtitleEs: string;
-  subtitleEn: string;
-  bodyEs: string;
-  bodyEn: string;
+  title: string;
+  subtitle: string;
+  body: string;
 }
 
-const { lang = 'en', number, titleEs, titleEn, subtitleEs, subtitleEn, bodyEs, bodyEn } = Astro.props;
-const isEs = lang === 'es';
-const pick = (es: string, en: string) => (isEs ? es : en);
+const { number, title, subtitle, body } = Astro.props;
 ---
 
 <div class="finance-step" style={`order: ${number}`}>
   <h2 class="finance-step__title">
-    {`${number}. `}<span data-copy-es={titleEs} data-copy-en={titleEn}>{pick(titleEs, titleEn)}</span>
+    {`${number}. `}<span>{title}</span>
   </h2>
-  <p
-    class="finance-step__subtitle"
-    data-copy-es={subtitleEs}
-    data-copy-en={subtitleEn}
-  >{pick(subtitleEs, subtitleEn)}</p>
-  <p
-    class="finance-step__body"
-    data-copy-es={bodyEs}
-    data-copy-en={bodyEn}
-  >{pick(bodyEs, bodyEn)}</p>
+  <p class="finance-step__subtitle">{subtitle}</p>
+  <p class="finance-step__body">{body}</p>
 </div>
 
 <style>

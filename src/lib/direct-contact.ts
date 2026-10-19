@@ -1,10 +1,11 @@
 import directContactEnMock from '../mocks/direct-contact.en.json';
 import directContactEsMock from '../mocks/direct-contact.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
 // Shared shaping for the "direct contact" block, so any page can feed DirectContact.astro.
-// The section is treated as a standalone content source: pages ask for it once and
-// render the returned English and Spanish payloads without depending on page data.
+// The section is treated as a standalone content source: pages ask for it once, in
+// their own language, without depending on page data.
 
 export interface DirectContactCopy {
   contact_heading?: string;
@@ -21,8 +22,6 @@ export interface DirectContactPayload {
   copy: DirectContactCopy;
   items: DirectContactItem[];
 }
-
-type Lang = 'en' | 'es';
 
 const mocks: Record<Lang, DirectContactPayload> = {
   en: {
@@ -77,18 +76,6 @@ export const toDirectContactPayload = (source: any, fallback: any = null): Direc
   };
 };
 
-/* Both languages for a page that has already resolved one of them — the usual case,
-   since pages fetch their endpoint for the active language at build time. The other
-   language falls back to its mock, which is the same source the client-side
-   re-render has always used to switch without a reload. */
-export const buildDirectContact = (
-  resolved: any,
-  resolvedLang: Lang
-): { en: DirectContactPayload; es: DirectContactPayload } => ({
-  en: resolvedLang === 'en' && resolved ? toDirectContactPayload(resolved, mocks.en) : mocks.en,
-  es: resolvedLang === 'es' && resolved ? toDirectContactPayload(resolved, mocks.es) : mocks.es
-});
-
 const hasPreviewFlag = (value: string | null | undefined): boolean => {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
   return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
@@ -107,60 +94,47 @@ const isPreviewRequest = (search?: string | URLSearchParams | null): boolean => 
   return hasPreviewFlag(search.get('preview'));
 };
 
-export const loadDirectContact = async (): Promise<{ en: DirectContactPayload; es: DirectContactPayload }> => {
+export const loadDirectContact = async (lang: Lang): Promise<DirectContactPayload> => {
   const useApi = import.meta.env.PUBLIC_USE_API === 'true';
   const apiUrl = toDevApiUrl(import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '', 'server');
 
   if (!useApi || !apiUrl) {
-    return { en: mocks.en, es: mocks.es };
+    return mocks[lang];
   }
 
-  const fetchLocalized = async (lang: Lang): Promise<DirectContactPayload> => {
-    const previewRuntime = isPreviewRequest(typeof window !== 'undefined' ? window.location.search : '');
-    const runtimeMode = previewRuntime ? 'no-store' : 'default';
-    const requestUrl = (() => {
-      try {
-        const url = new URL(apiUrl);
-        url.searchParams.set('lang', lang);
-        return url.toString();
-      } catch {
-        const separator = apiUrl.includes('?') ? '&' : '?';
-        return `${apiUrl}${separator}lang=${lang}`;
-      }
-    })();
+  const previewRuntime = isPreviewRequest(typeof window !== 'undefined' ? window.location.search : '');
+  const runtimeMode = previewRuntime ? 'no-store' : 'default';
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) — see Docs/API_CONTRACT.md.
+  const requestUrl = withLocaleParam(apiUrl, lang);
 
-    if (import.meta.env.DEV) {
-      console.debug('[direct-contact]', {
-        preview: previewRuntime,
-        source: previewRuntime ? 'runtime' : 'static',
-        endpoint: requestUrl,
-        lang,
-        cache: runtimeMode
-      });
+  if (import.meta.env.DEV) {
+    console.debug('[direct-contact]', {
+      preview: previewRuntime,
+      source: previewRuntime ? 'runtime' : 'static',
+      endpoint: requestUrl,
+      lang,
+      cache: runtimeMode
+    });
+  }
+
+  try {
+    const response = await fetch(requestUrl, {
+      cache: runtimeMode,
+      headers: { 'Cache-Control': runtimeMode === 'no-store' ? 'no-cache, no-store, must-revalidate' : 'max-age=300' }
+    });
+
+    if (!response.ok) {
+      return mocks[lang];
     }
 
-    try {
-      const response = await fetch(requestUrl, {
-        cache: runtimeMode,
-        headers: { 'Cache-Control': runtimeMode === 'no-store' ? 'no-cache, no-store, must-revalidate' : 'max-age=300' }
-      });
-
-      if (!response.ok) {
-        return mocks[lang];
-      }
-
-      const payload = await response.json();
-      if (payload && typeof payload === 'object') {
-        return toDirectContactPayload(payload, mocks[lang]);
-      }
-    } catch {
-      // Keep the section functional when the dedicated endpoint is missing.
+    const payload = await response.json();
+    if (payload && typeof payload === 'object') {
+      return toDirectContactPayload(payload, mocks[lang]);
     }
+  } catch {
+    // Keep the section functional when the dedicated endpoint is missing.
+  }
 
-    return mocks[lang];
-  };
-
-  const [en, es] = await Promise.all([fetchLocalized('en'), fetchLocalized('es')]);
-
-  return { en, es };
+  return mocks[lang];
 };

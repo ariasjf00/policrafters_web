@@ -1,0 +1,563 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import CatalogsCarousel from '../components/CatalogsCarousel.astro';
+import { loadCatalogs } from '../lib/catalogs';
+import { loadContactPageContent } from '../lib/contact-content';
+import type { Lang } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const isEs = lang === 'es';
+
+const catalogs = await loadCatalogs(lang);
+const data = await loadContactPageContent(lang);
+
+const pageTitle = data.meta?.seo_title || (isEs ? 'Contáctanos | Policrafters' : 'Contact Us | Policrafters');
+const pageDescription = data.meta?.search_description || (isEs ? 'Ponte en contacto con Policrafters' : 'Get in touch with Policrafters');
+
+// Contact details are editable from CMS with mock fallback; phone href still falls
+// back to sanitized E.164 when only a display string exists.
+const contactPhoneDisplay = data.contact?.phone_display || '+1 (813) 812-0650';
+const contactPhoneHref = data.contact?.phone_href || `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const contactEmail = data.contact?.email || 'info@policrafters.com';
+const contactUrl = data.contact?.url_contact || '';
+
+const bannerImageUrl = data.banner_image?.url || '/images/pages/values_1.webp';
+const bannerAlt = data.banner_image?.alt || '';
+
+const copy = data.copy ?? {};
+const contentCopy = {
+  heading: copy.heading || (isEs ? '¡CONTÁCTANOS!' : 'CONTACT US!'),
+  intro: copy.intro || (isEs
+    ? 'Si tienes preguntas, inquietudes o comentarios sobre Policrafters, comunícate con nuestro Call Center, donde nuestro equipo estará encantado de ayudarte.'
+    : 'If you have any questions, concerns, or comments regarding Policrafters, please contact our Call Center, where our team will be happy to assist you.'),
+  phoneLabel: copy.phone_label || (isEs ? 'TELÉFONO DEL CENTRO DE ATENCIÓN' : 'CALL CENTER PHONE'),
+  emailLabel: copy.email_label || (isEs ? 'CORREO ELECTRÓNICO' : 'EMAIL'),
+  bannerEyebrow: copy.banner_eyebrow || (isEs ? 'CONTÁCTANOS' : 'GET IN TOUCH'),
+  bannerHeading: copy.banner_heading || (isEs ? 'Comienza tu próximo proyecto con Policrafters' : 'Start Your Next Project with Policrafters'),
+  projectButtonLabel: copy.project_button_label || (isEs ? '¡HABLEMOS!' : "LET'S TALK!"),
+  locationsHeading: copy.locations_heading || (isEs ? 'NUESTRAS UBICACIONES' : 'OUR LOCATIONS'),
+  locationsAria: copy.locations_aria || (isEs ? 'Ubicaciones de Policrafters' : 'Policrafters locations'),
+  learnMore: copy.learn_more || (isEs ? 'Conoce más' : 'Learn more')
+};
+
+const locations = (Array.isArray(data.locations) ? data.locations : []).map((location, index) => {
+  const street = location?.street || '';
+  const city = location?.city || '';
+  const query = encodeURIComponent(`${street} ${city}`.trim());
+  return {
+    name: location?.name || (isEs ? `UBICACIÓN ${index + 1}` : `LOCATION ${index + 1}`),
+    label: location?.address_label || (isEs ? `DIRECCIÓN ${index + 1}` : `ADDRESS ${index + 1}`),
+    street,
+    city,
+    url: location?.url || (query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '#'),
+    imageUrl: location?.image?.url || '/images/pages/location.png',
+    alt: location?.image?.alt || (isEs
+      ? `Edificio de Policrafters ${location?.name || `UBICACIÓN ${index + 1}`}`
+      : `Policrafters ${location?.name || `LOCATION ${index + 1}`} building`)
+  };
+});
+---
+
+<PageLayout lang={lang} title={pageTitle} description={pageDescription} showHero={false} image={{ url: bannerImageUrl, alt: bannerAlt }}>
+  <section class="contact-page">
+    <header class="contact-intro">
+      <h1>{contentCopy.heading}</h1>
+      <p>{contentCopy.intro}</p>
+    </header>
+
+    <!-- Banner: full-bleed photo under a dark overlay, the Policrafters mark
+         (decorative — a static site asset, not CMS content) in the top-right
+         turned white via CSS, and a centered eyebrow/heading/CTA. The CTA
+         opens the external lead form (contact.url_contact) in a new tab;
+         this replaces the "My Project" button that used to sit in the email
+         block below. Full-bleed technique copied from finance.astro's
+         .finance-bleed: breaks out of PageLayout's ~1100px .page-shell,
+         safe because its body has overflow-x: clip. -->
+    <div class="contact-banner-bleed">
+      <div class="contact-banner">
+        <img
+          class="contact-banner__image"
+          data-contact-field="banner-image"
+          src={bannerImageUrl}
+          alt=""
+          width="1600"
+          height="896"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <div class="contact-banner__overlay"></div>
+        <img
+          class="contact-banner__logo"
+          src="/favicon-512.png"
+          alt=""
+          aria-hidden="true"
+          width="512"
+          height="512"
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="contact-banner__content">
+          <p class="contact-banner__eyebrow" data-contact-field="banner-eyebrow">{contentCopy.bannerEyebrow}</p>
+          <h2 class="contact-banner__heading" data-contact-field="banner-heading">{contentCopy.bannerHeading}</h2>
+          {contactUrl && (
+            <a
+              class="contact-banner__cta"
+              data-contact-field="banner-cta"
+              href={contactUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >{contentCopy.projectButtonLabel}</a>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-highlight">
+      <h2 class="contact-highlight__label" data-contact-field="phone-label">{contentCopy.phoneLabel}</h2>
+      <a class="contact-highlight__value" data-contact-field="phone-value" href={contactPhoneHref}>{contactPhoneDisplay}</a>
+    </div>
+
+    <div class="contact-highlight">
+      <p class="contact-highlight__label" data-contact-field="email-label">{contentCopy.emailLabel}</p>
+      <a class="contact-highlight__value" data-contact-field="email-value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+    </div>
+
+    <section class="locations" aria-label={contentCopy.locationsAria}>
+      <h2 class="locations__heading">{contentCopy.locationsHeading}</h2>
+
+      <ul class="locations__grid">
+        {locations.map((location) => (
+          <li class="location-card">
+            <img
+              class="location-card__image"
+              src={location.imageUrl}
+              width="252"
+              height="200"
+              loading="lazy"
+              decoding="async"
+              alt={location.alt}
+            />
+            <h3 class="location-card__name">{location.name}</h3>
+            <p class="location-card__address">
+              <span>{location.label}</span>
+              <span>{location.street}</span>
+              <span>{location.city}</span>
+            </p>
+            <a class="location-card__cta" href={location.url} target="_blank" rel="noopener noreferrer">
+              {contentCopy.learnMore}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </section>
+
+  <hr class="section-rule" />
+
+  <CatalogsCarousel lang={lang} data={catalogs} />
+</PageLayout>
+
+<script>
+  // Wagtail preview only (postMessage from the CMS admin iframe). There is no
+  // more language switching to subscribe to — the page is single-language
+  // (route-based i18n — see src/lib/i18n.ts).
+  const normalizePreviewAssetUrl = (value) => {
+    if (typeof value !== 'string' || !value) return '';
+    if (
+      window.location.hostname === 'localhost' &&
+      value.startsWith('http://localhost/media/')
+    ) {
+      return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+    }
+    return value;
+  };
+
+  const setText = (element, value) => {
+    if (element && typeof value === 'string' && value.trim()) element.textContent = value;
+  };
+
+  const updateLocationsPreview = (locations = [], learnMoreLabel = '') => {
+    const grid = document.querySelector('.locations__grid');
+    const template = grid?.querySelector('.location-card');
+    if (!grid || !template) return;
+
+    grid.replaceChildren();
+    locations.forEach((location, index) => {
+      const card = template.cloneNode(true);
+      const image = card.querySelector('.location-card__image');
+      if (image) {
+        image.setAttribute('src', normalizePreviewAssetUrl(location?.image?.url || ''));
+        image.setAttribute('alt', location?.image?.alt || `LOCATION ${index + 1}`);
+      }
+
+      setText(card.querySelector('.location-card__name'), location?.name || '');
+
+      const address = card.querySelector('.location-card__address');
+      if (address) {
+        const parts = address.querySelectorAll('span');
+        if (parts[0]) setText(parts[0], location?.address_label || '');
+        if (parts[1]) setText(parts[1], location?.street || '');
+        if (parts[2]) setText(parts[2], location?.city || '');
+      }
+
+      const link = card.querySelector('.location-card__cta');
+      if (link) {
+        link.setAttribute('href', location?.url || '#');
+        setText(link, learnMoreLabel || link.textContent || '');
+      }
+
+      grid.appendChild(card);
+    });
+  };
+
+  // Field lookups below use [data-contact-field] rather than relying on DOM
+  // order — the page has two ".contact-highlight" blocks (phone, email)
+  // whose labels/values would otherwise collide under the same class names.
+  const updateContactPreview = (previewData) => {
+    const fields = previewData?.fields ?? {};
+
+    if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+      document.title = previewData.meta.seo_title;
+    }
+
+    if (typeof previewData?.meta?.search_description === 'string') {
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute('content', previewData.meta.search_description);
+      }
+    }
+
+    setText(document.querySelector('.contact-intro h1'), fields.copy?.heading || '');
+    setText(document.querySelector('.contact-intro p'), fields.copy?.intro || '');
+
+    const bannerImage = document.querySelector('[data-contact-field="banner-image"]');
+    if (bannerImage && fields.banner_image && typeof fields.banner_image === 'object') {
+      const bannerUrl = normalizePreviewAssetUrl(fields.banner_image.url || '');
+      if (bannerUrl) bannerImage.setAttribute('src', bannerUrl);
+      if (fields.banner_image.alt) bannerImage.setAttribute('alt', fields.banner_image.alt);
+    }
+
+    setText(document.querySelector('[data-contact-field="banner-eyebrow"]'), fields.copy?.banner_eyebrow || '');
+    setText(document.querySelector('[data-contact-field="banner-heading"]'), fields.copy?.banner_heading || '');
+
+    const bannerCta = document.querySelector('[data-contact-field="banner-cta"]');
+    if (bannerCta) {
+      setText(bannerCta, fields.copy?.project_button_label || '');
+      if (typeof fields.contact?.url_contact === 'string') {
+        bannerCta.setAttribute('href', fields.contact.url_contact);
+      }
+    }
+
+    setText(document.querySelector('[data-contact-field="phone-label"]'), fields.copy?.phone_label || '');
+    const phoneValue = fields.contact?.phone_display || '';
+    const phoneHref = fields.contact?.phone_href || `tel:${phoneValue.replace(/[^\d+]/g, '')}`;
+    const phoneLink = document.querySelector('[data-contact-field="phone-value"]');
+    if (phoneLink && phoneValue) {
+      phoneLink.textContent = phoneValue;
+      phoneLink.setAttribute('href', phoneHref);
+    }
+
+    setText(document.querySelector('[data-contact-field="email-label"]'), fields.copy?.email_label || '');
+    const emailLink = document.querySelector('[data-contact-field="email-value"]');
+    if (emailLink && typeof fields.contact?.email === 'string') {
+      emailLink.textContent = fields.contact.email;
+      emailLink.setAttribute('href', `mailto:${fields.contact.email}`);
+    }
+
+    setText(document.querySelector('.locations__heading'), fields.copy?.locations_heading || '');
+    const locationsSection = document.querySelector('.locations');
+    if (locationsSection && typeof fields.copy?.locations_aria === 'string') {
+      locationsSection.setAttribute('aria-label', fields.copy.locations_aria);
+    }
+
+    updateLocationsPreview(Array.isArray(fields.locations) ? fields.locations : [], fields.copy?.learn_more || '');
+  };
+
+  window.addEventListener('message', (event) => {
+    if (event.data?.type !== 'policrafters-preview') return;
+
+    const previewData = event.data?.payload;
+    if (!previewData || typeof previewData !== 'object') return;
+    if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.ContactPage')) return;
+
+    updateContactPreview(previewData);
+  });
+</script>
+
+<style>
+  .contact-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  /* The rule down the left edge of the heading block, as in the design. */
+  .contact-intro {
+    border-left: 3px solid #2f3437;
+    padding-left: 1.15rem;
+  }
+
+  .contact-intro h1 {
+    margin: 0 0 0.55rem;
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #111;
+  }
+
+  .contact-intro p {
+    margin: 0;
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #3f4447;
+    max-width: 68ch;
+  }
+
+  .contact-highlight {
+    text-align: center;
+  }
+
+  .contact-highlight__label {
+    margin: 0 0 0.35rem;
+    color: #b6ae99;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .contact-highlight__value {
+    color: #2f3437;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    text-decoration: none;
+  }
+
+  .contact-highlight__value:hover,
+  .contact-highlight__value:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* Banner: full-bleed photo under a dark overlay, with the logo, eyebrow,
+     heading and CTA stacked on top. Full-bleed technique copied from
+     finance.astro's .finance-bleed: width:100vw plus negative side margins
+     to break out of PageLayout's ~1100px .page-shell, safe because its body
+     has overflow-x: clip. */
+  .contact-banner-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .contact-banner {
+    position: relative;
+    height: clamp(340px, 35vw, 600px);
+    overflow: hidden;
+  }
+
+  .contact-banner__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .contact-banner__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  /* Decorative mark, not CMS content — see the <img alt=""> above. Dark on
+     transparent in the source file, turned white here to sit on the photo. */
+  .contact-banner__logo {
+    position: absolute;
+    top: clamp(1rem, 2.5vw, 2.5rem);
+    right: clamp(1rem, 2.5vw, 2.5rem);
+    width: clamp(56px, 6vw, 104px);
+    height: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  .contact-banner__content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    padding: 1.5rem;
+    text-align: center;
+    color: #fff;
+  }
+
+  .contact-banner__eyebrow {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .contact-banner__heading {
+    margin: 0;
+    max-width: 18ch;
+    font-size: clamp(1.8rem, 4.5vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .contact-banner__cta {
+    margin-top: 0.6rem;
+    padding: 0.85rem 3.5rem;
+    border: 1px solid #fff;
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .contact-banner__cta:hover,
+  .contact-banner__cta:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .contact-banner__cta:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 600px) {
+    .contact-banner {
+      height: clamp(340px, 55vw, 440px);
+    }
+
+    .contact-banner__cta {
+      padding: 0.75rem 2.4rem;
+    }
+  }
+
+  .locations {
+    margin-top: 0.75rem;
+  }
+
+  /* Matches index.astro's divider; .contact-page's flex gap does not reach here,
+     so the spacing around the rule is set explicitly. */
+  .section-rule {
+    margin: 3.5rem 0 3rem;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  .locations__heading {
+    margin: 0 0 1.75rem;
+    text-align: center;
+    color: #b6ae99;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .locations__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .location-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    text-align: center;
+  }
+
+  .location-card__image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* The short rule under the name, as in the design: narrower than the card. */
+  .location-card__name {
+    width: 78%;
+    margin: 0;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #d8d8d8;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #2f3437;
+  }
+
+  .location-card__address {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #3f4447;
+  }
+
+  .location-card__cta {
+    margin-top: 0.3rem;
+    padding: 0.4rem 1.1rem;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .location-card__cta:hover,
+  .location-card__cta:focus-visible {
+    background: #b6ae99;
+  }
+
+  @media (max-width: 860px) {
+    .locations__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 1.5rem;
+    }
+  }
+
+  @media (max-width: 460px) {
+    .locations__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .location-card__image {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-banner__cta,
+    .location-card__cta {
+      transition: none;
+    }
+  }
+</style>

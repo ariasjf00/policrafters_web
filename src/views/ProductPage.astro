@@ -1,0 +1,512 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import DirectContact from '../components/DirectContact.astro';
+import { loadDirectContact } from '../lib/direct-contact';
+import { loadProductPageContent } from '../lib/product-content';
+import { type Lang, localizePath } from '../lib/i18n';
+
+type AnyRecord = Record<string, any>;
+
+interface Props {
+  lang: Lang;
+  slug?: string;
+}
+
+const { lang, slug } = Astro.props;
+const isEs = lang === 'es';
+
+const data = await loadProductPageContent(lang, slug || undefined);
+const directContact = await loadDirectContact(lang);
+const fields = data.fields;
+
+const seoTitle = data.meta?.seo_title || (isEs ? 'Producto | Policrafters' : 'Product | Policrafters');
+const searchDescription = data.meta?.search_description || 'Policrafters product detail';
+
+const heroAlt = fields.hero_image?.alt || '';
+const heroImageUrl = fields.hero_image?.url || '';
+
+const intro1 = fields.intro_text_1 || '';
+
+const secondaryAlt = fields.secondary_image?.alt || '';
+const secondaryImageUrl = fields.secondary_image?.url || '';
+
+const intro2 = fields.intro_text_2 || '';
+const introProduct = fields.intro_text_product || fields.product_body || '';
+
+const galleryPair = (Array.isArray(fields.gallery_pair) ? fields.gallery_pair : []).map((image: AnyRecord) => ({
+  url: image?.url || '',
+  alt: image?.alt || ''
+}));
+
+const eyebrow = fields.product_eyebrow || '';
+const heading = fields.product_heading || '';
+
+const technicalEyebrow = fields.technical_eyebrow || '';
+
+const technicalProductAlt = fields.technical_image_product?.alt || '';
+const technicalProductImageUrl = fields.technical_image_product?.url || '';
+
+const technicalDimensionsAlt = fields.technical_image_dimensions?.alt || '';
+const technicalDimensionsImageUrl = fields.technical_image_dimensions?.url || '';
+
+const downloadHeading = fields.download_heading || '';
+const downloadLinks = (Array.isArray(fields.download_links) ? fields.download_links : []).map((link: AnyRecord) => ({
+  label: link?.label || '',
+  url: link?.url || '#'
+}));
+
+const collectionName = fields.collection?.name || '';
+const collectionSlug = fields.collection?.slug || '';
+const backToMenuHref = localizePath(collectionSlug ? `/collections?category=${collectionSlug}` : '/collections', lang);
+
+const backToMenuLabel = fields.back_to_menu_label || '';
+
+// The CMS may return more than 4; this strip only ever shows 4.
+const relatedModels = (Array.isArray(fields.related_models) ? fields.related_models : []).slice(0, 4).map((model: AnyRecord) => ({
+  title: model?.title || '',
+  thumbnail: { url: model?.thumbnail?.url || '', alt: model?.thumbnail?.alt || '' }
+}));
+---
+
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} image={{ url: heroImageUrl, alt: heroAlt }} ogType="product">
+  <section class="product-shell">
+    <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
+         top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`
+         so this image sits directly against the Header with no gap. -->
+    <div class="product-bleed product-hero">
+      <img
+        src={heroImageUrl}
+        alt={heroAlt}
+        width="2160"
+        height="1440"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <!-- b. Intro paragraph 1 — centered, inside the normal page-shell flow. -->
+    <p class="product-copy product-copy--centered">{intro1}</p>
+
+    <!-- c. Secondary image — full-bleed, same treatment minus the top margin. -->
+    <div class="product-bleed">
+      <img
+        src={secondaryImageUrl}
+        alt={secondaryAlt}
+        width="2123"
+        height="1440"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    <!-- d. Intro paragraph 2 — centered, same treatment as (b). -->
+    <p class="product-copy product-copy--centered">{intro2}</p>
+
+    <!-- e. Image pair, edge to edge with visible white space between. -->
+    <div class="product-pair">
+      {galleryPair.map((image: AnyRecord) => (
+        <img src={image.url} alt={image.alt} width="1440" height="960" loading="lazy" decoding="async" />
+      ))}
+    </div>
+
+    <!-- f. Product title block — left-aligned, border-left rule mirrors
+         .team-card__meta on the homepage (src/pages/index.astro). -->
+    <div class="product-title">
+      <p class="product-eyebrow">{eyebrow}</p>
+      <h1 class="product-heading">{heading}</h1>
+    </div>
+    <p class="product-copy product-body">{introProduct}</p>
+
+    <!-- g. Technical Information — full-bleed dark section. -->
+    <div class="technical-section">
+      <div class="technical-inner">
+        <div class="technical-title">
+          <p class="technical-eyebrow">{technicalEyebrow}</p>
+          <h2 class="technical-heading">{heading}</h2>
+        </div>
+
+        <div class="technical-figures">
+          <img
+            src={technicalProductImageUrl}
+            alt={technicalProductAlt}
+            width="1448"
+            height="1086"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            src={technicalDimensionsImageUrl}
+            alt={technicalDimensionsAlt}
+            width="1200"
+            height="1450"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div class="technical-download">
+          <h3 class="technical-download__heading">{downloadHeading}</h3>
+          <ul>
+            {downloadLinks.map((link: AnyRecord) => (
+              <li><a href={link.url}>{link.label}</a></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- h. Related products — white section between the dark technical block
+         and the footer. -->
+    <div class="related-products">
+      <div class="related-products__head">
+        <h2 class="related-products__title">{collectionName}</h2>
+        <a class="related-products__back" href={backToMenuHref}>{backToMenuLabel}</a>
+      </div>
+      <div class="related-products__grid">
+        {relatedModels.map((model: AnyRecord) => (
+          <a href="#" class="related-card">
+            <img src={model.thumbnail.url} alt={model.thumbnail.alt} width="2700" height="1800" loading="lazy" decoding="async" />
+            <span class="related-card__title">{model.title}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <DirectContact lang={lang} data={directContact} />
+  </section>
+</PageLayout>
+
+<style>
+  .product-shell {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  /* Full-bleed technique reused from collections.astro: breaks out of the
+     ~1100px .page-shell (see PageLayout.astro's :root --max) to span the
+     full viewport. Safe because PageLayout's body has `overflow-x: clip`. */
+  .product-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  /* Capped rather than `height: auto`: the source photos are ~1.5:1
+     (2160x1440 / 2123x1440), which at full-bleed width runs 960-1280px tall
+     and exceeds most browser windows. clamp() holds the ~2:1 band the design
+     was drawn at (720px at the 1440px stage) and scales down on narrower
+     viewports instead of jumping straight to the floor. object-fit crops
+     each photo to fit rather than stretching or letterboxing it. */
+  .product-bleed img {
+    width: 100%;
+    height: clamp(320px, 45vw, 720px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .product-hero {
+    margin-top: -3rem;
+  }
+
+  .product-copy {
+    margin: 0;
+    color: #2f2f2f;
+    line-height: 1.7;
+    font-size: 1.05rem;
+  }
+
+  .product-copy--centered {
+    max-width: 60ch;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .product-pair {
+    /* Truly edge-to-edge, same as .product-bleed above it — no side padding,
+       no 1440px cap. The 1.75rem gap between the two columns is the only
+       "visible white space between the images" the design calls for. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .product-pair img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+
+  .product-title {
+    margin-top: 1rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .product-eyebrow {
+    margin: 0 0 0.25rem;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: #777;
+  }
+
+  .product-heading {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .product-body {
+    max-width: 78ch;
+  }
+
+  @media (max-width: 680px) {
+    .product-pair {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Full-bleed technique duplicated from .product-bleed rather than reused:
+     .product-bleed img sets height: clamp(...) + object-fit: cover, which
+     would crop these SVGs. Do not merge this into .product-bleed. */
+  .technical-section {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    background: #2f3437;
+    color: #fff;
+  }
+
+  .technical-inner {
+    /* Capped at 1100px — PageLayout.astro's --max — so .technical-title's
+       border lines up with .product-title's above it. */
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
+    padding-block: 4.5rem;
+    box-sizing: border-box;
+  }
+
+  .technical-title {
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .technical-eyebrow {
+    margin: 0 0 0.25rem;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .technical-heading {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-figures {
+    display: grid;
+    grid-template-columns: 0.63fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+    margin-top: 2.5rem;
+  }
+
+  .technical-figures img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .technical-download {
+    margin-top: 3.5rem;
+  }
+
+  .technical-download__heading {
+    margin: 0 0 1.25rem;
+    border-left-style: solid;
+    border-left-color: rgba(255, 255, 255, 0.45);
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .technical-download ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, auto);
+    justify-content: start;
+    gap: 0.55rem 4rem;
+  }
+
+  .technical-download a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .technical-download a:hover {
+    text-decoration: underline;
+  }
+
+  .technical-download a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 680px) {
+    .technical-inner {
+      padding-inline: 1.25rem;
+    }
+
+    .technical-figures {
+      grid-template-columns: 1fr;
+    }
+
+    .technical-download ul {
+      grid-auto-flow: row;
+      grid-template-rows: none;
+    }
+  }
+
+  /* Full-bleed, capped at 1100px — PageLayout.astro's --max — so
+     .related-products__title lines up with .product-title above it, and
+     the whole page reads as one consistent left edge instead of two
+     different stage widths. (collections.astro caps its own equivalent
+     full-bleed content at 1440px instead; that page has no bordered title
+     sitting in the narrower .page-shell to align against, so the wider
+     stage doesn't create the same mismatch there.)
+     :global() is required: `.direct-contact` is the component's own class,
+     not one Astro's scoping would otherwise match here. */
+  .related-products,
+  .product-shell > :global(.direct-contact) {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-inline: max(1.5rem, calc((100vw - 1100px) / 2));
+    box-sizing: border-box;
+  }
+
+  .related-products__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .related-products__title {
+    margin: 0;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .related-products__back {
+    display: inline-block;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid #2f3437;
+    border-radius: 999px;
+    background: #2f3437;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .related-products__back:hover,
+  .related-products__back:focus-visible {
+    background: #fff;
+    color: #2f3437;
+  }
+
+  .related-products__back:focus-visible {
+    outline: 2px solid #2f3437;
+    outline-offset: 3px;
+  }
+
+  .related-products__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+
+  .related-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .related-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+  }
+
+  .related-card__title {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  @media (max-width: 980px) {
+    .related-products__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .related-products,
+    .product-shell > :global(.direct-contact) {
+      padding-inline: 1.25rem;
+    }
+
+    .related-products__head {
+      flex-wrap: wrap;
+    }
+
+    .related-products__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

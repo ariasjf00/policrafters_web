@@ -5,7 +5,8 @@
   "locale": "en",
   "meta": {
     "seo_title": "Product | Policrafters",
-    "search_description": "Discover Policrafters' fixed shower door model: materials, finishes, and installation details."
+    "search_description": "Discover Policrafters' fixed shower door model: materials, finishes, and installation details.",
+    "translations": { "en": "product", "es": "product" }
   },
   "fields": {
     "hero_image": {

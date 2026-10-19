@@ -4,7 +4,8 @@
   "locale": "es",
   "meta": {
     "seo_title": "Policrafters | Diseño y mobiliario",
-    "search_description": "Mobiliario y diseño de interiores premium."
+    "search_description": "Mobiliario y diseño de interiores premium.",
+    "translations": { "en": "", "es": "" }
   },
   "fields": {
     "copy": {

@@ -1,6 +1,7 @@
 import contactEnMock from '../mocks/contact-page.en.json';
 import contactEsMock from '../mocks/contact-page.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
 export interface ContactPageCopy {
   heading?: string;
@@ -38,8 +39,6 @@ export interface ContactPagePayload {
   locations: ContactLocation[];
   meta: { seo_title?: string; search_description?: string };
 }
-
-type Lang = 'en' | 'es';
 
 const mocks: Record<Lang, any> = { en: contactEnMock, es: contactEsMock };
 
@@ -91,14 +90,9 @@ const fetchLang = async (lang: Lang): Promise<ContactPagePayload> => {
   const fallback = mocks[lang];
   if (!useApi || !apiUrl) return toPayload(fallback, false, fallback);
 
-  let requestUrl = apiUrl;
-  try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('lang', lang);
-    requestUrl = url.toString();
-  } catch {
-    // Relative endpoint: send it as configured.
-  }
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) — see Docs/API_CONTRACT.md.
+  const requestUrl = withLocaleParam(apiUrl, lang);
 
   try {
     const response = await fetch(requestUrl);
@@ -113,7 +107,4 @@ const fetchLang = async (lang: Lang): Promise<ContactPagePayload> => {
   return toPayload(fallback, false, fallback);
 };
 
-export const loadContactPageContent = async (): Promise<{ en: ContactPagePayload; es: ContactPagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en'), fetchLang('es')]);
-  return { en, es };
-};
+export const loadContactPageContent = async (lang: Lang): Promise<ContactPagePayload> => fetchLang(lang);

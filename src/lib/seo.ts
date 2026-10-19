@@ -2,6 +2,7 @@
 // metadata (title, description, canonical/OG URLs, robots). Centralizing
 // these rules here is what keeps every page's <head> consistent — see
 // src/components/SeoHead.astro.
+import { normalizePathname } from './i18n';
 
 export const SITE_NAME = 'Policrafters';
 
@@ -50,18 +51,16 @@ export function buildDescription(raw?: string | null, fallback: string = DEFAULT
  *
  * With `build.format: 'file'` (astro.config.mjs), Astro.url.pathname at
  * build time is the literal output filename — "/services.html",
- * "/index.html" — not the clean URL nginx actually serves (nginx.conf's
+ * "/es/services.html" — not the clean URL nginx actually serves (nginx.conf's
  * `try_files $uri $uri.html` maps "/services" to that file). So a
  * ".html"/"index.html" suffix here is a build artifact, not part of the
- * real URL, and must be stripped before it reaches canonical/OG tags.
+ * real URL, and must be stripped before it reaches canonical/OG tags. See
+ * src/lib/i18n.ts normalizePathname, which this reuses (it never strips a
+ * "/es" language prefix — that's a real part of the URL).
  */
 export function absoluteUrl(path: string, site: URL | undefined): string {
   const base = site ?? new URL('https://policrafters.com');
-  const withoutQuery = path.split('?')[0].split('#')[0];
-  const withoutIndex = withoutQuery.replace(/\/index\.html$/, '/');
-  const withoutHtmlExt = withoutIndex.replace(/\.html$/, '');
-  const normalizedPath = withoutHtmlExt === '' || withoutHtmlExt === '/' ? '/' : withoutHtmlExt.replace(/\/+$/, '');
-  return new URL(normalizedPath, base).toString();
+  return new URL(normalizePathname(path), base).toString();
 }
 
 /**

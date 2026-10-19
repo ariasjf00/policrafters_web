@@ -1,15 +1,22 @@
 ---
 // Single source of truth for every page's <head> metadata: title, description,
-// canonical, Open Graph/Twitter, favicons and the robots meta tag. Used by both
-// PageLayout.astro (interior pages) and index.astro (which writes its own <head>
-// and deliberately does not load Tailwind — see CLAUDE.md). No <style> block here
-// on purpose, for the same reason: this component also renders on the homepage.
+// canonical, hreflang alternates, Open Graph/Twitter, favicons and the robots
+// meta tag. Used by both PageLayout.astro (interior pages) and index.astro
+// (which writes its own <head> and deliberately does not load Tailwind — see
+// CLAUDE.md). No <style> block here on purpose, for the same reason: this
+// component also renders on the homepage.
 import { buildTitle, buildDescription, absoluteUrl, isIndexingAllowed, SITE_NAME } from '../lib/seo';
+import { type Lang, LANGS, DEFAULT_LANG, otherLang, ogLocale, stripLangPrefix, localizePath } from '../lib/i18n';
 
 interface Props {
 	title?: string;
 	description?: string;
-	lang?: 'en' | 'es';
+	lang?: Lang;
+	/* Which languages this page actually exists in (from meta.translations).
+	   Defaults to both — most content pages are generated in both languages.
+	   Pages that only exist in one language (legacy redirect stubs, previews)
+	   should pass noindex, which suppresses hreflang entirely (see below). */
+	availableLangs?: Lang[];
 	image?: { url: string; alt: string };
 	noindex?: boolean;
 	type?: 'website' | 'article' | 'product';
@@ -18,7 +25,8 @@ interface Props {
 const {
 	title,
 	description,
-	lang = 'en',
+	lang = DEFAULT_LANG,
+	availableLangs,
 	image,
 	noindex = false,
 	type = 'website',
@@ -35,8 +43,23 @@ const DEFAULT_OG_IMAGE = { url: '/images/pages/horizontal_video_static_image.png
 const resolvedImage = image?.url ? image : DEFAULT_OG_IMAGE;
 const resolvedImageUrl = absoluteUrl(resolvedImage.url, Astro.site);
 
-const ogLocale = lang === 'es' ? 'es_US' : 'en_US';
 const shouldNoindex = noindex || !isIndexingAllowed();
+
+// hreflang/og:locale:alternate only make sense on indexable, real content
+// pages — not on 404/preview/projects stubs, which exist in one language.
+const resolvedAvailableLangs = availableLangs && availableLangs.length ? availableLangs : LANGS;
+const pathWithoutLangPrefix = stripLangPrefix(Astro.url.pathname);
+const hreflangLinks = shouldNoindex
+	? []
+	: resolvedAvailableLangs.map((l) => ({
+			hreflang: l,
+			href: absoluteUrl(localizePath(pathWithoutLangPrefix, l), Astro.site),
+		}));
+const xDefaultHref = shouldNoindex ? null : absoluteUrl(localizePath(pathWithoutLangPrefix, DEFAULT_LANG), Astro.site);
+
+const resolvedOgLocale = ogLocale(lang);
+const alternateLang = otherLang(lang);
+const showAlternateLocale = !shouldNoindex && resolvedAvailableLangs.includes(alternateLang);
 ---
 
 <title>{resolvedTitle}</title>
@@ -45,6 +68,11 @@ const shouldNoindex = noindex || !isIndexingAllowed();
 
 {shouldNoindex && <meta name="robots" content="noindex, nofollow" />}
 
+{hreflangLinks.map((l) => (
+	<link rel="alternate" hreflang={l.hreflang} href={l.href} />
+))}
+{xDefaultHref && <link rel="alternate" hreflang="x-default" href={xDefaultHref} />}
+
 <meta property="og:site_name" content={SITE_NAME} />
 <meta property="og:type" content={type} />
 <meta property="og:title" content={resolvedTitle} />
@@ -52,7 +80,8 @@ const shouldNoindex = noindex || !isIndexingAllowed();
 <meta property="og:url" content={canonicalUrl} />
 <meta property="og:image" content={resolvedImageUrl} />
 <meta property="og:image:alt" content={resolvedImage.alt || SITE_NAME} />
-<meta property="og:locale" content={ogLocale} />
+<meta property="og:locale" content={resolvedOgLocale} />
+{showAlternateLocale && <meta property="og:locale:alternate" content={ogLocale(alternateLang)} />}
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={resolvedTitle} />
