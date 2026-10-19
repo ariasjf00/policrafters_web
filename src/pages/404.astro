@@ -1,29 +1,17 @@
 ---
-// Custom 404. Always noindex — a missing-page response should never be
-// indexed regardless of PUBLIC_ALLOW_INDEXING (see src/components/SeoHead.astro).
-// Both languages render in the markup (no script needed): whoever lands here
-// came from a dead/mistyped link, not a page that ships a lang toggle.
+// Custom 404, English only. Always noindex — a missing-page response should
+// never be indexed regardless of PUBLIC_ALLOW_INDEXING (see
+// src/components/SeoHead.astro). The Spanish twin is src/pages/es/404.astro;
+// nginx's error_page picks whichever matches the request path (see nginx.conf).
 import PageLayout from '../layouts/PageLayout.astro';
 ---
 
-<PageLayout
-  title="Page Not Found"
-  description="The page you're looking for doesn't exist."
-  showHero={false}
-  noindex
->
+<PageLayout lang="en" title="Page Not Found" description="The page you're looking for doesn't exist." showHero={false} noindex>
   <section class="not-found">
     <div class="not-found__block">
       <h1 class="not-found__heading">Page not found</h1>
       <p class="not-found__body">
         The page you're looking for doesn't exist or may have moved. Head back to the <a href="/">homepage</a> or browse our <a href="/collections">collections</a>.
-      </p>
-    </div>
-
-    <div class="not-found__block">
-      <h2 class="not-found__heading">Página no encontrada</h2>
-      <p class="not-found__body">
-        La página que buscas no existe o fue movida. Vuelve a la <a href="/">página de inicio</a> o explora nuestras <a href="/collections">colecciones</a>.
       </p>
     </div>
   </section>
