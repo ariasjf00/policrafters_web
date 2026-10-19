@@ -12,10 +12,18 @@ import sitemap from '@astrojs/sitemap';
 const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
 const siteUrl = env.SITE_URL || process.env.SITE_URL || 'https://policrafters.com';
 
-// Routes that should never appear in the sitemap: the CMS preview stub and the
-// still-placeholder /projects page (see src/pages/preview.astro, src/pages/projects.astro).
-// The custom 404 page is excluded too — it has no canonical URL of its own.
-const SITEMAP_EXCLUDED_PATHS = ['/preview', '/projects', '/404'];
+// Routes that should never appear in the sitemap: the CMS preview stub, the
+// still-placeholder /projects page (see src/pages/preview.astro,
+// src/pages/projects.astro) and their Spanish twins. The custom 404 pages are
+// excluded too — they have no canonical URL of their own. The legacy
+// /collections/product?slug= redirect stub (see src/pages/collections/product.astro)
+// is excluded in both languages as well.
+const SITEMAP_EXCLUDED_PATHS = [
+  '/preview',
+  '/projects', '/es/projects',
+  '/404', '/es/404',
+  '/collections/product', '/es/collections/product'
+];
 
 // https://astro.build/config
 export default defineConfig({
@@ -27,6 +35,13 @@ export default defineConfig({
   integrations: [
     icon(),
     sitemap({
+      // Emits xhtml:link alternates (hreflang) per URL — see
+      // src/components/SeoHead.astro for the same pair in each page's <head>.
+      // English has no path segment (it's the default locale), Spanish is /es.
+      i18n: {
+        defaultLocale: 'en',
+        locales: { en: 'en', es: 'es' }
+      },
       filter: (page) => {
         const { pathname } = new URL(page);
         const normalized = pathname.replace(/\/+$/, '') || '/';
