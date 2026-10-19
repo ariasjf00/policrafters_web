@@ -1,0 +1,753 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeadedTextBlock from '../components/HeadedTextBlock.astro';
+import { loadWhyPolicraftersPageContent } from '../lib/why-policrafters-content';
+import type { Lang } from '../lib/i18n';
+
+type AnyRecord = Record<string, any>;
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const isEs = lang === 'es';
+
+const data = await loadWhyPolicraftersPageContent(lang);
+const fields = data.fields;
+
+const seoTitle = data.meta?.seo_title || (isEs ? 'Por Qué Policrafters | Policrafters' : 'Why Policrafters | Policrafters');
+const searchDescription = data.meta?.search_description || '';
+
+// Section 1: banner + intro.
+const heroAlt = fields.hero_image?.alt || '';
+const heroImageUrl = fields.hero_image?.url || '';
+
+const introEyebrow = fields.intro_eyebrow || '';
+const introHeading = fields.intro_heading || '';
+const introBody = Array.isArray(fields.intro_body) ? fields.intro_body : [];
+
+// Section 2: "Why choose us" — three HeadedTextBlock items.
+const whyEyebrow = fields.why_eyebrow || '';
+const whyHeading = fields.why_heading || '';
+const whyItems = (Array.isArray(fields.why_items) ? fields.why_items : []).map((item: AnyRecord) => ({
+  heading: item.heading ?? '',
+  body: Array.isArray(item.body) ? item.body : []
+}));
+
+// Section 3: Certifications.
+const certImageAlt = fields.certifications_image?.alt || '';
+const certImageUrl = fields.certifications_image?.url || '';
+
+const certEyebrow = fields.certifications_eyebrow || '';
+const certHeading = fields.certifications_heading || '';
+const certBody = Array.isArray(fields.certifications_body) ? fields.certifications_body : [];
+
+// issuers: each issuer's logo spans its own license count (DBPR's logo spans
+// 2 columns because it owns 2 licenses — see Docs/API_CONTRACT.md §
+// WhyPolicraftersPage).
+const issuers = (Array.isArray(fields.issuers) ? fields.issuers : []).map((issuer: AnyRecord) => {
+  const licenses = (Array.isArray(issuer.licenses) ? issuer.licenses : []).map((license: AnyRecord) => ({
+    label: license.label ?? '',
+    number: license.number ?? '',
+    caption: license.caption ?? ''
+  }));
+  return {
+    logoUrl: issuer.logo?.url || '',
+    logoAlt: issuer.logo?.alt || '',
+    span: licenses.length || 1,
+    licenses
+  };
+});
+
+// Section 4: Corporate identity — same HeadedTextBlock shape as section 2.
+const identityEyebrow = fields.identity_eyebrow || '';
+const identityHeading = fields.identity_heading || '';
+const identityItems = (Array.isArray(fields.identity_items) ? fields.identity_items : []).map((item: AnyRecord) => ({
+  heading: item.heading ?? '',
+  body: Array.isArray(item.body) ? item.body : []
+}));
+
+// Section 5: Partners — same alternating-row shape as services.astro's
+// `services` array, with a logo substituting for the heading/subtitle.
+const partnersEyebrow = fields.partners_eyebrow || '';
+const partnersHeading = fields.partners_heading || '';
+const partnersIntro = fields.partners_intro || '';
+
+const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((partner: AnyRecord) => ({
+  logo: { url: partner.logo?.url || '', alt: partner.logo?.alt || '' },
+  image: { url: partner.image?.url || '', alt: partner.image?.alt || '' },
+  body: Array.isArray(partner.body) ? partner.body : []
+}));
+---
+
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false}>
+  <section class="why-shell">
+    <!-- Section 1: banner + intro. Full-bleed hero exactly like
+         services.astro's .services-bleed/.services-hero. -->
+    <div class="why-bleed why-hero">
+      <img
+        src={heroImageUrl}
+        alt={heroAlt}
+        width="1440"
+        height="960"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <div class="why-intro">
+      <p class="section-eyebrow">{introEyebrow}</p>
+      <h1 class="section-heading">{introHeading}</h1>
+      {introBody.map((para: string) => (
+        <p class="why-intro__body">{para}</p>
+      ))}
+    </div>
+
+    <hr class="section-rule" />
+
+    <!-- Section 2: "Why choose us" — three HeadedTextBlock items. -->
+    <div class="why-section">
+      <div class="why-section__intro">
+        <p class="section-eyebrow">{whyEyebrow}</p>
+        <h2 class="section-heading">{whyHeading}</h2>
+      </div>
+      {whyItems.map((item: AnyRecord) => (
+        <HeadedTextBlock heading={item.heading} body={item.body} />
+      ))}
+    </div>
+
+    <hr class="section-rule" />
+
+    <!-- Section 3: Certifications. Container-width image (not full-bleed),
+         then eyebrow/heading/body, then the credentials grid. -->
+    <div class="why-section">
+      <div class="why-cert-image-wrap">
+        <img
+          class="why-cert-image"
+          src={certImageUrl}
+          alt={certImageAlt}
+          width="1440"
+          height="500"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+
+      <div class="why-section__intro">
+        <p class="section-eyebrow why-cert-eyebrow">{certEyebrow}</p>
+        <h2 class="section-heading">{certHeading}</h2>
+      </div>
+
+      {certBody.map((para: string) => (
+        <p class="why-cert-body">{para}</p>
+      ))}
+
+      <!-- Credentials grid: total columns = sum of each issuer's license
+           count. Each issuer renders as a `display: contents` group on
+           desktop so its logo (spanning its own license count) and license
+           blocks fall into the right grid cells; on narrow screens
+           `contents` is dropped so the group stacks as a normal block. -->
+      <div
+        class="why-credentials"
+        style={`--credential-columns: ${issuers.reduce((sum: number, issuer: AnyRecord) => sum + issuer.span, 0) || 1}`}
+      >
+        {issuers.map((issuer: AnyRecord) => (
+          <div class="why-credentials__issuer" style={`--issuer-span: ${issuer.span}`}>
+            <div class="why-credentials__logo-cell">
+              <img
+                class="why-credentials__logo"
+                src={issuer.logoUrl}
+                alt={issuer.logoAlt}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            {issuer.licenses.map((license: AnyRecord) => (
+              <div class="why-credentials__license">
+                <p class="why-credentials__label">{license.label}</p>
+                <p class="why-credentials__number">{license.number}</p>
+                <p class="why-credentials__caption">{license.caption}</p>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <hr class="section-rule" />
+
+    <!-- Section 4: Corporate identity — same HeadedTextBlock items as
+         section 2 (Our Mission / Our Vision / Our Values). -->
+    <div class="why-section">
+      <div class="why-section__intro">
+        <p class="section-eyebrow">{identityEyebrow}</p>
+        <h2 class="section-heading">{identityHeading}</h2>
+      </div>
+      {identityItems.map((item: AnyRecord) => (
+        <HeadedTextBlock heading={item.heading} body={item.body} />
+      ))}
+    </div>
+
+    <hr class="section-rule" />
+
+    <!-- Section 5: Partners. No <hr> after this one — the page goes
+         straight to the footer. Rows reuse services.astro's .service-row
+         alternating image/copy layout, with a logo substituting for the
+         heading/subtitle. -->
+    <div class="why-section">
+      <div class="why-section__intro">
+        <p class="section-eyebrow">{partnersEyebrow}</p>
+        <h2 class="section-heading">{partnersHeading}</h2>
+        <p class="why-partners-intro">{partnersIntro}</p>
+      </div>
+
+      {partners.map((partner: AnyRecord, index: number) => (
+        <div class={`service-row${index % 2 === 1 ? ' service-row--reversed' : ''}`}>
+          <div class="service-row__image-wrap">
+            <img
+              class="service-row__image"
+              src={partner.image.url}
+              alt={partner.image.alt}
+              width="1440"
+              height="768"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="service-row__copy">
+            <div class="service-row__title why-partner-logo-title">
+              <img class="why-partner-logo" src={partner.logo.url} alt={partner.logo.alt} loading="lazy" decoding="async" />
+            </div>
+            {partner.body.map((para: string) => (
+              <p class="service-row__body">{para}</p>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  // Wagtail preview only (postMessage from the CMS admin iframe). There is no
+  // more language switching to subscribe to — the page is single-language
+  // (route-based i18n — see src/lib/i18n.ts).
+  const shell = document.querySelector('.why-shell');
+
+  if (shell) {
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    const setText = (el, value) => {
+      if (el && typeof value === 'string' && value.trim()) el.textContent = value;
+    };
+
+    const applyWhyPolicraftersPreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const hero = shell.querySelector('.why-bleed img');
+      if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        if (heroUrl) hero.setAttribute('src', heroUrl);
+        if (fields.hero_image.alt) hero.setAttribute('alt', fields.hero_image.alt);
+      }
+
+      setText(shell.querySelector('.why-intro .section-eyebrow'), fields.intro_eyebrow);
+      setText(shell.querySelector('.why-intro .section-heading'), fields.intro_heading);
+
+      const introParagraphs = Array.from(shell.querySelectorAll('.why-intro__body'));
+      const previewIntroBody = Array.isArray(fields.intro_body) ? fields.intro_body : [];
+      introParagraphs.forEach((paragraph, index) => {
+        setText(paragraph, previewIntroBody[index] ?? previewIntroBody[0]);
+      });
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const whySections = Array.from(shell.querySelectorAll('.why-section'));
+      const whySection = whySections[0];
+      const whyBlocks = whySection ? Array.from(whySection.querySelectorAll('.headed-text-block')) : [];
+      const whyItems = Array.isArray(fields.why_items) ? fields.why_items : [];
+      whyBlocks.forEach((block, index) => {
+        const item = whyItems[index] ?? whyItems[0] ?? {};
+        setText(block.querySelector('.headed-text-block__heading'), item.heading);
+
+        const bodies = Array.from(block.querySelectorAll('.headed-text-block__body'));
+        const itemBodies = Array.isArray(item.body) ? item.body : [];
+        bodies.forEach((paragraph, paragraphIndex) => {
+          setText(paragraph, itemBodies[paragraphIndex] ?? itemBodies[0]);
+        });
+      });
+
+      const certSection = whySections[1];
+      const certImage = certSection ? certSection.querySelector('.why-cert-image') : null;
+      if (certImage && fields.certifications_image && typeof fields.certifications_image === 'object') {
+        const certUrl = normalizePreviewAssetUrl(fields.certifications_image.url || '');
+        if (certUrl) certImage.setAttribute('src', certUrl);
+        if (fields.certifications_image.alt) certImage.setAttribute('alt', fields.certifications_image.alt);
+      }
+
+      setText(certSection?.querySelector('.why-cert-eyebrow'), fields.certifications_eyebrow);
+      setText(certSection?.querySelector('.section-heading'), fields.certifications_heading);
+
+      const certBodies = certSection ? Array.from(certSection.querySelectorAll('.why-cert-body')) : [];
+      const previewCertBodies = Array.isArray(fields.certifications_body) ? fields.certifications_body : [];
+      certBodies.forEach((paragraph, index) => {
+        setText(paragraph, previewCertBodies[index] ?? previewCertBodies[0]);
+      });
+
+      const issuerEls = certSection ? Array.from(certSection.querySelectorAll('.why-credentials__issuer')) : [];
+      const previewIssuers = Array.isArray(fields.issuers) ? fields.issuers : [];
+      issuerEls.forEach((issuerEl, index) => {
+        const issuer = previewIssuers[index] ?? previewIssuers[0] ?? {};
+        const logo = issuerEl.querySelector('.why-credentials__logo');
+        if (logo && issuer.logo && typeof issuer.logo === 'object') {
+          const logoUrl = normalizePreviewAssetUrl(issuer.logo.url || '');
+          if (logoUrl) logo.setAttribute('src', logoUrl);
+          if (issuer.logo.alt) logo.setAttribute('alt', issuer.logo.alt);
+        }
+
+        const licenseEls = Array.from(issuerEl.querySelectorAll('.why-credentials__license'));
+        const previewLicenses = Array.isArray(issuer.licenses) ? issuer.licenses : [];
+        licenseEls.forEach((licenseEl, licenseIndex) => {
+          const license = previewLicenses[licenseIndex] ?? previewLicenses[0] ?? {};
+          setText(licenseEl.querySelector('.why-credentials__label'), license.label);
+          const number = licenseEl.querySelector('.why-credentials__number');
+          if (number && typeof license.number === 'string') number.textContent = license.number;
+          setText(licenseEl.querySelector('.why-credentials__caption'), license.caption);
+        });
+      });
+
+      const identitySection = whySections[2];
+      const identityBlocks = identitySection ? Array.from(identitySection.querySelectorAll('.headed-text-block')) : [];
+      const identityItems = Array.isArray(fields.identity_items) ? fields.identity_items : [];
+      identityBlocks.forEach((block, index) => {
+        const item = identityItems[index] ?? identityItems[0] ?? {};
+        setText(block.querySelector('.headed-text-block__heading'), item.heading);
+
+        const bodies = Array.from(block.querySelectorAll('.headed-text-block__body'));
+        const itemBodies = Array.isArray(item.body) ? item.body : [];
+        bodies.forEach((paragraph, paragraphIndex) => {
+          setText(paragraph, itemBodies[paragraphIndex] ?? itemBodies[0]);
+        });
+      });
+
+      const identityIntro = identitySection ? identitySection.querySelector('.why-section__intro') : null;
+      setText(identityIntro?.querySelector('.section-eyebrow'), fields.identity_eyebrow);
+      setText(identityIntro?.querySelector('.section-heading'), fields.identity_heading);
+
+      const partnersSection = whySections[3];
+      const partnersIntro = partnersSection ? partnersSection.querySelector('.why-section__intro') : null;
+      setText(partnersIntro?.querySelector('.section-eyebrow'), fields.partners_eyebrow);
+      setText(partnersIntro?.querySelector('.section-heading'), fields.partners_heading);
+      setText(partnersSection?.querySelector('.why-partners-intro'), fields.partners_intro);
+
+      const partnerRows = partnersSection ? Array.from(partnersSection.querySelectorAll('.service-row')) : [];
+      const previewPartners = Array.isArray(fields.partners) ? fields.partners : [];
+      partnerRows.forEach((row, index) => {
+        const partner = previewPartners[index] ?? previewPartners[0] ?? {};
+        const image = row.querySelector('.service-row__image');
+        if (image && partner.image && typeof partner.image === 'object') {
+          const imageUrl = normalizePreviewAssetUrl(partner.image.url || '');
+          if (imageUrl) image.setAttribute('src', imageUrl);
+          if (partner.image.alt) image.setAttribute('alt', partner.image.alt);
+        }
+
+        const logo = row.querySelector('.why-partner-logo');
+        if (logo && partner.logo && typeof partner.logo === 'object') {
+          const logoUrl = normalizePreviewAssetUrl(partner.logo.url || '');
+          if (logoUrl) logo.setAttribute('src', logoUrl);
+          if (partner.logo.alt) logo.setAttribute('alt', partner.logo.alt);
+        }
+
+        const bodyEls = Array.from(row.querySelectorAll('.service-row__body'));
+        const partnerBody = Array.isArray(partner.body) ? partner.body : [];
+        bodyEls.forEach((paragraph, paragraphIndex) => {
+          setText(paragraph, partnerBody[paragraphIndex] ?? partnerBody[0]);
+        });
+      });
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') return;
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') return;
+      if (previewData.type !== 'why_policrafters.WhyPolicraftersPage') return;
+
+      applyWhyPolicraftersPreview(previewData);
+    });
+  }
+</script>
+
+<style>
+  .why-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Full-bleed technique reused from services.astro/collections.astro: breaks
+     out of the ~1100px .page-shell (see PageLayout.astro's :root --max) to
+     span the full viewport. Safe because PageLayout's body has
+     `overflow-x: clip`. */
+  .why-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .why-bleed img {
+    width: 100%;
+    height: clamp(320px, 45vw, 720px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .why-hero {
+    margin-top: -3rem;
+  }
+
+  .why-intro {
+    padding: 3rem 0 1rem;
+    text-align: center;
+  }
+
+  /* Intro body is left-aligned and full container width, unlike
+     services.astro's narrow centered intro text — matches the reference
+     design for this section. */
+  .why-intro__body {
+    margin: 0 0 1.25rem;
+    text-align: left;
+    line-height: 1.6;
+    color: #333;
+    font-size: .95rem;
+  }
+
+  .why-intro__body:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Reused verbatim from services.astro's eyebrow + heading recipe, which
+     itself copies index.astro. Neither rule sets font-family: both inherit
+     Arimo from PageLayout.astro. */
+  .section-eyebrow {
+    margin: 0 0 .4rem;
+    font-style: italic;
+    font-size: .95rem;
+    color: #555;
+  }
+
+  .section-heading {
+    margin: 0 0 2.5rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #B6AE99;
+  }
+
+  .why-section {
+    padding: 3.5rem 0;
+  }
+
+  .why-section__intro {
+    text-align: center;
+  }
+
+  /* Matches index.astro's divider; .why-shell's spacing does not reach
+     outside it, so the spacing around the rule is set explicitly here —
+     same values as services.astro's .section-rule. */
+  .section-rule {
+    width: min(var(--max), 92%);
+    margin: 0 auto;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  /* --- Section 3: Certifications --- */
+
+  .why-cert-image-wrap {
+    margin-bottom: 2.5rem;
+  }
+
+  .why-cert-image {
+    width: 100%;
+    height: clamp(220px, 28vw, 380px);
+    object-fit: cover;
+    display: block;
+  }
+
+  .why-cert-eyebrow {
+    font-variant: small-caps;
+  }
+
+  .why-cert-body {
+    max-width: none;
+    margin: 0 0 1.25rem;
+    text-align: left;
+    line-height: 1.6;
+    color: #333;
+    font-size: .95rem;
+  }
+
+  .why-cert-body:last-of-type {
+    margin-bottom: 2.5rem;
+  }
+
+  /* Credentials grid: one column per license across all issuers. Each
+     issuer's logo cell spans its own license count (--issuer-span), so
+     DBPR's logo (2 licenses) sits centered over its two columns while AIA
+     and NGA (1 license each) sit over a single column — see
+     Docs/API_CONTRACT.md § WhyPolicraftersPage. */
+  .why-credentials {
+    display: grid;
+    grid-template-columns: repeat(var(--credential-columns), minmax(0, 1fr));
+    gap: 1.5rem 1rem;
+  }
+
+  .why-credentials__issuer {
+    display: contents;
+  }
+
+  .why-credentials__logo-cell {
+    grid-column: span var(--issuer-span);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .why-credentials__logo {
+    max-width: 100%;
+    max-height: 90px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .why-credentials__license {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    text-align: center;
+  }
+
+  .why-credentials__label {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #2f3437;
+    font-size: 1.1rem;
+  }
+
+  .why-credentials__number {
+    margin: 0;
+    width: 100%;
+    max-width: 180px;
+    padding: .25rem .75rem;
+    background: #B6AE99;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .why-credentials__caption {
+    margin: 0;
+    font-weight: 700;
+    color: #333;
+    font-size: .9rem;
+  }
+
+  @media (max-width: 900px) {
+    .why-credentials {
+      grid-template-columns: repeat(min(var(--credential-columns), 2), minmax(0, 1fr));
+    }
+
+    .why-credentials__logo-cell {
+      grid-column: span min(var(--issuer-span), 2);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .why-credentials {
+      grid-template-columns: 1fr;
+    }
+
+    .why-credentials__issuer {
+      display: block;
+      margin-bottom: 2rem;
+    }
+
+    .why-credentials__issuer:last-child {
+      margin-bottom: 0;
+    }
+
+    .why-credentials__logo-cell {
+      grid-column: auto;
+      margin-bottom: 1.25rem;
+    }
+
+    .why-credentials__license {
+      grid-row: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    .why-credentials__license:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  /* --- Section 5: Partners --- */
+
+  .why-partners-intro {
+    max-width: 62ch;
+    margin: 0 auto;
+    text-align: center;
+    line-height: 1.6;
+    font-size: 1.15rem;
+    color: #333;
+  }
+
+  /* --- Service-row layout, reused verbatim from services.astro for the
+     partner rows. --- */
+  .service-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: stretch;
+    padding: 3.5rem 0;
+    /* Distance from the container edge to the page edge, so the image can
+       bleed out to the viewport — same trick as index.astro's .about-grid
+       and services.astro's .service-row. */
+    --page-gutter: calc((100vw - min(var(--max), 92vw)) / 2);
+  }
+
+  /* Default (left-bleed) placement: image first/left, copy second/right.
+     order is stated explicitly on both sides — see .service-row--reversed
+     below.
+
+     The bleed math lives on this wrapper DIV, not on the <img> itself:
+     PageLayout loads Tailwind's global.css, whose preflight sets
+     `img { max-width: 100% }`. That silently clamps an oversized width back
+     down to 100% while the negative margin still applies, so the image
+     shifts toward the viewport edge without actually widening — a gap opens
+     up between it and the text. Wrapping it in a plain DIV (untouched by
+     that img rule) and keeping the <img> itself at a safe 100%/100% avoids
+     the clash — same reasoning as services.astro's .service-row__image-wrap. */
+  .service-row__image-wrap {
+    order: 1;
+    width: calc(100% + var(--page-gutter));
+    margin-left: calc(-1 * var(--page-gutter));
+    margin-right: 0;
+    height: 100%;
+    min-height: 320px;
+  }
+
+  .service-row__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .service-row__copy {
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+
+  /* Even rows: text left, image right — mirrors the left-bleed wrapper with
+     every property restated, same as services.astro. */
+  .service-row--reversed .service-row__image-wrap {
+    order: 2;
+    margin-left: 0;
+    margin-right: calc(-1 * var(--page-gutter));
+  }
+
+  .service-row--reversed .service-row__copy {
+    order: 1;
+  }
+
+  /* Border-left rule mirrors .service-row__title (services.astro) and
+     .headed-text-block__title (HeadedTextBlock.astro). A logo image
+     substitutes for the heading/subtitle this title block normally holds. */
+  .service-row__title {
+    margin-bottom: 1.5rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1pt;
+    padding-left: 7px;
+  }
+
+  .why-partner-logo-title {
+    display: flex;
+    align-items: center;
+  }
+
+  .why-partner-logo {
+    max-height: 48px;
+    width: auto;
+    display: block;
+  }
+
+  .service-row__body {
+    margin: 0 0 1.25rem;
+    line-height: 1.6;
+    color: #333;
+    font-size: .95rem;
+  }
+
+  .service-row__body:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 900px) {
+    .service-row {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+      padding: 2.5rem 0;
+    }
+
+    .service-row__image-wrap,
+    .service-row--reversed .service-row__image-wrap {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      height: auto;
+      min-height: 0;
+      order: 0;
+    }
+
+    .service-row__copy,
+    .service-row--reversed .service-row__copy {
+      order: 0;
+    }
+  }
+</style>

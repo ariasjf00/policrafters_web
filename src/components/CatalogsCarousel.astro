@@ -1,16 +1,15 @@
 ---
 import { Icon } from 'astro-icon/components';
+import type { Lang } from '../lib/i18n';
 
-// Shared "Our Catalogs" slider, used by index.astro and contact-us.astro.
+// Shared "Our Catalogs" slider, used by index.astro, contact-us.astro and
+// services.astro. Each page passes its own already-localized payload — this
+// component renders one language per build, like the rest of the site.
 //
-// Two rules shape this component:
-//  - It must NOT import global.css. index.astro deliberately ships no Tailwind,
-//    and preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
-//    <style> below carries everything it needs; `--text` is declared by both
-//    index.astro and PageLayout.astro, so `var(--text)` resolves on either page.
-//  - It owns its own language switching. Both languages ship in the markup as
-//    data-copy-es/-en and data-aria-es/-en, and the script subscribes to
-//    `sitelangchange` — Header.astro remains the sole dispatcher.
+// It must NOT import global.css. index.astro deliberately ships no Tailwind,
+// and preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
+// <style> below carries everything it needs; `--text` is declared by both
+// index.astro and PageLayout.astro, so `var(--text)` resolves on either page.
 
 export interface CatalogsCopy {
   catalogs_eyebrow?: string;
@@ -32,58 +31,32 @@ interface CatalogsPayload {
 }
 
 interface Props {
-  lang?: 'en' | 'es';
-  en: CatalogsPayload;
-  es: CatalogsPayload;
+  lang: Lang;
+  data: CatalogsPayload;
   /* Cards visible per page in the widest layout. Only decides how many dots are
      server-rendered; the script re-measures and rebuilds them after hydration. */
   perPage?: number;
 }
 
-const { lang = 'en', en, es, perPage = 4 } = Astro.props;
-const isEs = lang === 'es';
-const pick = (enValue = '', esValue = '') => (isEs ? esValue : enValue);
+const { data, perPage = 4 } = Astro.props;
 
-const enCopy = en.copy ?? {};
-const esCopy = es.copy ?? {};
-const enItems = en.items ?? [];
-const esItems = es.items ?? [];
-
-// English is the spine: images and file URLs are language-neutral, so only the
-// title and alt are looked up per language (matching index.astro's re-render,
-// which also pairs the arrays by index).
-const items = enItems.map((item, index) => {
-  const esItem = esItems[index] ?? item;
-  return {
-    url: item.image?.url ?? '',
-    href: item.file_url || '#',
-    title: { en: item.title ?? '', es: esItem.title ?? item.title ?? '' },
-    alt: { en: item.image?.alt ?? '', es: esItem.image?.alt ?? item.image?.alt ?? '' }
-  };
-});
+const copy = data.copy ?? {};
+const items = (data.items ?? []).map((item) => ({
+  url: item.image?.url ?? '',
+  href: item.file_url || '#',
+  title: item.title ?? '',
+  alt: item.image?.alt ?? ''
+}));
 
 const dotCount = Math.max(1, Math.ceil(items.length / perPage));
-const dotAria = (index: number) => ({
-  en: `${enCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim(),
-  es: `${esCopy.catalogs_dot_aria ?? ''} ${index + 1}`.trim()
-});
+const dotAria = (index: number) => `${copy.catalogs_dot_aria ?? ''} ${index + 1}`.trim();
 const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
 ---
 
 <section class="catalogs-carousel">
-  <p
-    id="catalogs-eyebrow"
-    class="catalogs-eyebrow"
-    data-copy-en={enCopy.catalogs_eyebrow ?? ''}
-    data-copy-es={esCopy.catalogs_eyebrow ?? ''}
-  >{pick(enCopy.catalogs_eyebrow, esCopy.catalogs_eyebrow)}</p>
+  <p id="catalogs-eyebrow" class="catalogs-eyebrow">{copy.catalogs_eyebrow ?? ''}</p>
 
-  <h2
-    id="catalogs-heading"
-    class="catalogs-heading"
-    data-copy-en={enCopy.catalogs_heading ?? ''}
-    data-copy-es={esCopy.catalogs_heading ?? ''}
-  >{pick(enCopy.catalogs_heading, esCopy.catalogs_heading)}</h2>
+  <h2 id="catalogs-heading" class="catalogs-heading">{copy.catalogs_heading ?? ''}</h2>
 
   <div class="catalogs-track" id="catalogs-track">
     {items.map((item, index) => (
@@ -97,18 +70,12 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
         <img
           class="catalog-card__image"
           src={item.url}
-          alt={pick(item.alt.en, item.alt.es)}
-          data-alt-en={item.alt.en}
-          data-alt-es={item.alt.es}
+          alt={item.alt}
           loading="lazy"
           decoding="async"
         />
         <span class="catalog-card__label">
-          <span
-            class="catalog-card__title"
-            data-copy-en={item.title.en}
-            data-copy-es={item.title.es}
-          >{pick(item.title.en, item.title.es)}</span>
+          <span class="catalog-card__title">{item.title}</span>
           <Icon name="mdi:download" class="catalog-card__icon" />
         </span>
       </a>
@@ -119,9 +86,7 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
     class="catalogs-indicator"
     id="catalogs-indicator"
     role="tablist"
-    data-aria-en={enCopy.catalogs_heading ?? ''}
-    data-aria-es={esCopy.catalogs_heading ?? ''}
-    aria-label={pick(enCopy.catalogs_heading, esCopy.catalogs_heading)}
+    aria-label={copy.catalogs_heading ?? ''}
   >
     <button
       type="button"
@@ -129,29 +94,20 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
       class="catalogs-indicator-arrow"
       data-action="prev"
       disabled
-      data-aria-en={enCopy.catalogs_prev_aria ?? ''}
-      data-aria-es={esCopy.catalogs_prev_aria ?? ''}
-      aria-label={pick(enCopy.catalogs_prev_aria, esCopy.catalogs_prev_aria)}
+      aria-label={copy.catalogs_prev_aria ?? ''}
     >
       <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="16,2 16,22 4,12" fill="#2f3437" /></svg>
     </button>
 
     {/* Server-rendered for the widest layout and for no-JS; the script rebuilds
         this list to match the pages actually measured at the current width. */}
-    <div
-      class="catalogs-dots"
-      id="catalogs-dots"
-      data-dot-aria-en={enCopy.catalogs_dot_aria ?? ''}
-      data-dot-aria-es={esCopy.catalogs_dot_aria ?? ''}
-    >
+    <div class="catalogs-dots" id="catalogs-dots" data-dot-aria={copy.catalogs_dot_aria ?? ''}>
       {Array.from({ length: dotCount }, (_, index) => (
         <button
           type="button"
           class:list={['catalogs-dot', index === 0 && 'is-active']}
           data-dot-index={index}
-          data-aria-en={dotAria(index).en}
-          data-aria-es={dotAria(index).es}
-          aria-label={pick(dotAria(index).en, dotAria(index).es)}
+          aria-label={dotAria(index)}
         ></button>
       ))}
     </div>
@@ -161,9 +117,7 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
       id="catalogs-next"
       class="catalogs-indicator-arrow"
       data-action="next"
-      data-aria-en={enCopy.catalogs_next_aria ?? ''}
-      data-aria-es={esCopy.catalogs_next_aria ?? ''}
-      aria-label={pick(enCopy.catalogs_next_aria, esCopy.catalogs_next_aria)}
+      aria-label={copy.catalogs_next_aria ?? ''}
     >
       <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><polygon points="8,2 8,22 20,12" fill="#2f3437" /></svg>
     </button>
@@ -181,45 +135,6 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
     let currentPage = 0;
     let pageCount = dotsHolder.querySelectorAll('.catalogs-dot').length || 1;
     let scrollRaf = null;
-
-    const getLangFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      const lang = params.get('lang');
-      return lang === 'en' || lang === 'es' ? lang : null;
-    };
-
-    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
-    const resolveActiveLang = () => {
-      const inUrl = getLangFromUrl();
-      if (inUrl) return inUrl;
-      const stored = localStorage.getItem('siteLang');
-      if (stored === 'en' || stored === 'es') return stored;
-      return 'en';
-    };
-
-    let activeLang = resolveActiveLang();
-
-    const applyCatalogsLanguage = (lang) => {
-      activeLang = lang === 'es' ? 'es' : 'en';
-      const key = activeLang;
-
-      // Scoped to this section so the host page's own subscriber stays in charge
-      // of everything around it.
-      section.querySelectorAll('[data-copy-en]').forEach((el) => {
-        const value = el.getAttribute('data-copy-' + key);
-        if (value !== null) el.textContent = value;
-      });
-
-      section.querySelectorAll('[data-aria-en]').forEach((el) => {
-        const value = el.getAttribute('data-aria-' + key);
-        if (value !== null) el.setAttribute('aria-label', value);
-      });
-
-      section.querySelectorAll('[data-alt-en]').forEach((el) => {
-        const value = el.getAttribute('data-alt-' + key);
-        if (value !== null) el.setAttribute('alt', value);
-      });
-    };
 
     const updateIndicator = () => {
       dotsHolder.querySelectorAll('.catalogs-dot').forEach((dot) => {
@@ -249,17 +164,13 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
       if (measured === pageCount) return;
 
       pageCount = measured;
-      const prefix = dotsHolder.dataset['dotAria' + (activeLang === 'es' ? 'Es' : 'En')] || '';
-      const enPrefix = dotsHolder.dataset.dotAriaEn || '';
-      const esPrefix = dotsHolder.dataset.dotAriaEs || '';
+      const prefix = dotsHolder.dataset.dotAria || '';
 
       dotsHolder.replaceChildren(...Array.from({ length: pageCount }, (_, index) => {
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'catalogs-dot';
         dot.dataset.dotIndex = String(index);
-        dot.setAttribute('data-aria-en', `${enPrefix} ${index + 1}`.trim());
-        dot.setAttribute('data-aria-es', `${esPrefix} ${index + 1}`.trim());
         dot.setAttribute('aria-label', `${prefix} ${index + 1}`.trim());
         dot.addEventListener('click', () => scrollToPage(index));
         return dot;
@@ -299,11 +210,6 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
       measurePages();
       updateIndicator();
     });
-
-    // Subscriber only: self-boot first, since Header's boot dispatch fires before
-    // this script runs (same pattern as Footer.astro and collections.astro).
-    applyCatalogsLanguage(activeLang);
-    document.addEventListener('sitelangchange', (event) => applyCatalogsLanguage(event.detail));
   }
 </script>
 

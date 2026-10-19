@@ -1,12 +1,13 @@
 ---
 import { Icon } from 'astro-icon/components';
 import '../styles/links.css';
+import { type Lang, localizePath } from '../lib/i18n';
 
 interface Props {
-  lang?: 'es' | 'en';
+  lang: Lang;
 }
 
-const { lang = 'en' } = Astro.props;
+const { lang } = Astro.props;
 const currentYear = new Date().getFullYear();
 
 const footerCopy = {
@@ -82,36 +83,23 @@ const footerCopy = {
 
 const t = footerCopy[lang] ?? footerCopy.en;
 
-// English is the default, so it is never stamped into a URL; Spanish always is.
-// Mirrors Header.astro's appendLang so an internal footer link carries the
-// current language the same way the top nav does.
-const appendLang = (href: string, value: string) => {
-  const [path, query = ''] = href.split('?');
-  const params = new URLSearchParams(query);
-  if (value === 'es') params.set('lang', 'es');
-  else params.delete('lang');
-  const queryString = params.toString();
-  return queryString ? `${path}?${queryString}` : path;
-};
-
 // Most footer links are placeholders (href="#") until their pages exist.
 // `linkHrefs` only overrides the ones that are real today, by index into
 // `t.links` / `footerCopy[lang].links` above — "Why Policrafters" is index 1,
 // "Catalogs" is index 2, "Terms & Conditions" is index 3, "Warranty" is index 4,
 // "Financing Options" is index 6.
 const linkHrefs: Record<number, string> = {
-  1: appendLang('/why-policrafters', lang),
-  2: appendLang('/catalogs', lang),
-  3: appendLang('/terms-and-conditions', lang),
-  4: appendLang('/warranty', lang),
-  6: appendLang('/finance', lang)
+  1: localizePath('/why-policrafters', lang),
+  2: localizePath('/catalogs', lang),
+  3: localizePath('/terms-and-conditions', lang),
+  4: localizePath('/warranty', lang),
+  6: localizePath('/finance', lang)
 };
 
-// External links don't go through appendLang: that rewrites a relative path's
-// own query string, which would mangle this URL's `?next=/` and stamp a
-// `lang=es` onto a page this site doesn't control. "Partners Area (Login)" is
-// index 7 — kept out of `linkHrefs` (and its script-side counterpart below) so
-// the language-switch loop never touches its href, only its label.
+// External links don't go through localizePath — it already leaves anything
+// that isn't an internal page path untouched, but this URL carries its own
+// `?next=/` query string that must survive as-is. "Partners Area (Login)" is
+// index 7 — kept out of `linkHrefs` so only its label is ever touched.
 const externalLinkHrefs: Record<number, string> = {
   7: 'https://policrafters.ancous.tech/accounts/login/?next=/'
 };
@@ -229,153 +217,9 @@ const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encode
 </footer>
 
 <script>
-  const footerCopy = {
-    es: {
-      blurb1: 'Ya sea que busques renovar tu hogar o renovar tu espacio comercial, nos comprometemos a ofrecer soluciones a la medida que combinan diseño innovador con una calidad inigualable.',
-      blurb2: 'Entendemos que cada cliente tiene necesidades únicas.',
-      links: [
-        'Noticias',
-        'Por qué Policrafters',
-        'Catálogos',
-        'Términos y condiciones',
-        'Garantía',
-        'Conviértete en socio franquiciado',
-        'Opciones de financiamiento',
-        'Área de socios (Iniciar sesión)',
-        'Red social'
-      ],
-      phoneLabel: 'TELÉFONO',
-      residentialLabel: 'SOLUCIONES RESIDENCIALES',
-      residentialLinks: [
-        'Espejos decorativos',
-        'Ventanas y puertas resistentes a impactos',
-        'Cocinas y espacios exteriores',
-        'Ver más servicios'
-      ],
-      emailLabel: 'CORREO ELECTRÓNICO',
-      commercialLabel: 'SOLUCIONES COMERCIALES',
-      commercialLinks: [
-        'Particiones de oficina',
-        'Barandales y guardias comerciales',
-        'Techos y toldos ligeros',
-        'Ver más servicios'
-      ],
-      addressLabel: 'DIRECCIÓN',
-      socialLabel: 'VISITA NUESTRAS REDES SOCIALES',
-      copyrightText: 'Policrafters - Todos los derechos reservados. Copyright®'
-    },
-    en: {
-      blurb1: "Whether you're looking to renovate your home or revamp your commercial space, we're committed to delivering bespoke solutions that merge innovative design with unparalleled quality.",
-      blurb2: 'We understand that every client has unique needs.',
-      links: [
-        'News',
-        'Why Policrafters',
-        'Catalogs',
-        'Terms & Conditions',
-        'Warranty',
-        'Become a Franchise Partner',
-        'Financing Options',
-        'Partners Area (Login)',
-        'Social Network'
-      ],
-      phoneLabel: 'PHONE',
-      residentialLabel: 'RESIDENTIAL SOLUTIONS',
-      residentialLinks: [
-        'Decorative Mirrors',
-        'Impact Windows and Doors',
-        'Outdoor Kitchens & living',
-        'See more services'
-      ],
-      emailLabel: 'EMAIL',
-      commercialLabel: 'COMMERCIAL SOLUTIONS',
-      commercialLinks: [
-        'Office Partitions',
-        'Commercial Guards and Railings',
-        'Lightweight Roofs and Awnings',
-        'See more services'
-      ],
-      addressLabel: 'ADDRESS',
-      socialLabel: 'VISIT OUR SOCIAL MEDIA',
-      copyrightText: 'Policrafters - All rights reserved. Copyright®'
-    }
-  };
-
-  const getLangFromUrl = () => {
-    const params = new URLSearchParams(window.location.search);
-    const lang = params.get('lang');
-    return lang === 'en' || lang === 'es' ? lang : null;
-  };
-
-  // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
-  // Header owns writing `siteLang`; this is a subscriber, so it only reads.
-  const resolveActiveLang = () => {
-    const langInUrl = getLangFromUrl();
-    if (langInUrl) return langInUrl;
-    const stored = localStorage.getItem('siteLang');
-    if (stored === 'en' || stored === 'es') return stored;
-    return 'en';
-  };
-
-  // Same appendLang as the frontmatter above (duplicated, not imported — this
-  // script block has no access to the component's module scope) and the same
-  // Header.astro convention: English is never stamped into the URL.
-  const appendLang = (href: string, value: string) => {
-    const [path, query = ''] = href.split('?');
-    const params = new URLSearchParams(query);
-    if (value === 'es') params.set('lang', 'es');
-    else params.delete('lang');
-    const queryString = params.toString();
-    return queryString ? `${path}?${queryString}` : path;
-  };
-
-  // Mirrors the frontmatter's linkHrefs: index 1 ("Why Policrafters"), index 2
-  // ("Catalogs"), index 3 ("Terms & Conditions"), index 4 ("Warranty") and
-  // index 6 ("Financing Options") are the only internal links today; the rest
-  // stay href="#". Index 7 ("Partners Area (Login)") is external (see the
-  // frontmatter's externalLinkHrefs) and is deliberately left out of this map
-  // so this language-switch loop never overwrites its href — only its label,
-  // via the copy.links.forEach below.
-  const linkHrefs: Record<number, (activeLang: string) => string> = {
-    1: (activeLang) => appendLang('/why-policrafters', activeLang),
-    2: (activeLang) => appendLang('/catalogs', activeLang),
-    3: (activeLang) => appendLang('/terms-and-conditions', activeLang),
-    4: (activeLang) => appendLang('/warranty', activeLang),
-    6: (activeLang) => appendLang('/finance', activeLang)
-  };
-
-  const applyFooterLanguage = (lang: 'es' | 'en') => {
-    const activeLang = lang === 'en' ? 'en' : 'es';
-    const copy = footerCopy[activeLang];
-
-    document.querySelector('#footer-blurb-1')?.replaceChildren(copy.blurb1);
-    document.querySelector('#footer-blurb-2')?.replaceChildren(copy.blurb2);
-    document.querySelector('#footer-phone-label')?.replaceChildren(copy.phoneLabel);
-    document.querySelector('#footer-residential-label')?.replaceChildren(copy.residentialLabel);
-    document.querySelector('#footer-email-label')?.replaceChildren(copy.emailLabel);
-    document.querySelector('#footer-commercial-label')?.replaceChildren(copy.commercialLabel);
-    document.querySelector('#footer-address-label')?.replaceChildren(copy.addressLabel);
-    document.querySelector('#footer-social-label')?.replaceChildren(copy.socialLabel);
-    document.querySelector('#footer-copyright-text')?.replaceChildren(copy.copyrightText);
-
-    copy.links.forEach((label, index) => {
-      const link = document.querySelector(`[data-footer-key="link-${index}"]`);
-      link?.replaceChildren(label);
-      const hrefForIndex = linkHrefs[index];
-      if (hrefForIndex) link?.setAttribute('href', hrefForIndex(activeLang));
-    });
-    copy.residentialLinks.forEach((label, index) => {
-      document.querySelector(`[data-footer-key="residential-link-${index}"]`)?.replaceChildren(label);
-    });
-    copy.commercialLinks.forEach((label, index) => {
-      document.querySelector(`[data-footer-key="commercial-link-${index}"]`)?.replaceChildren(label);
-    });
-  };
-
-  applyFooterLanguage(resolveActiveLang());
-  document.addEventListener('sitelangchange', (event: Event) => {
-    applyFooterLanguage((event as CustomEvent<'es' | 'en'>).detail);
-  });
-
+  // Language is fixed per build now (route-based i18n — see src/lib/i18n.ts),
+  // so this no longer swaps anything; it only keeps the copyright year fresh
+  // for a visitor who has the page open across a year boundary.
   const yearEl = document.querySelector('[data-footer-year]');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 </script>

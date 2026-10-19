@@ -1,0 +1,426 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import FinanceStep from '../components/FinanceStep.astro';
+import { loadFinancePageContent } from '../lib/finance-content';
+import type { Lang } from '../lib/i18n';
+
+type AnyRecord = Record<string, any>;
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const isEs = lang === 'es';
+
+const data = await loadFinancePageContent(lang);
+const fields = data.fields;
+
+const seoTitle = data.meta?.seo_title || (isEs ? 'Opciones de financiamiento | Policrafters' : 'Financing Options | Policrafters');
+const searchDescription = data.meta?.search_description || '';
+
+// Hero image falls back to a generic asset; alt text comes from the CMS.
+const heroImageUrl = fields.hero_image?.url || '/images/pages/values_1.webp';
+const heroAlt = fields.hero_image?.alt || '';
+
+const introHeading = fields.intro_heading || '';
+const introBody = fields.intro_body || '';
+
+// The number shown before each title comes from this array position, not
+// from the payload. `column` falls back to even/odd by index when missing
+// or invalid, per Docs/API_CONTRACT.md § FinancePage.
+const steps = (Array.isArray(fields.steps) ? fields.steps : []).map((item: AnyRecord, index: number) => {
+  const column = item.column === 'left' || item.column === 'right'
+    ? item.column
+    : (index % 2 === 0 ? 'left' : 'right');
+
+  return {
+    number: index + 1,
+    column,
+    title: item.title ?? '',
+    subtitle: item.subtitle ?? '',
+    body: item.body ?? ''
+  };
+});
+
+// Two independent stacks, not a row grid: left holds steps 1, 3; right holds
+// 2, 4, so step 3 sits directly under step 1 with no gap even if step 2
+// (right) is a different height. See .finance-columns below.
+const leftSteps = steps.filter((step: AnyRecord) => step.column === 'left');
+const rightSteps = steps.filter((step: AnyRecord) => step.column === 'right');
+
+// Contact block. Phone href falls back to tel: + the display string
+// stripped to digits and "+", same as contact-us.astro and Footer.astro.
+const contact = fields.contact ?? {};
+const contactHeading = contact.heading || '';
+const contactPhoneDisplay = contact.phone_display || '+1 (813) 812-0650';
+const contactPhoneHref = contact.phone_href || `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
+const emailLabel = contact.email_label || '';
+const contactEmail = contact.email || 'info@policrafters.com';
+---
+
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} image={{ url: heroImageUrl, alt: heroAlt }}>
+  <section class="finance-shell">
+    <!-- 0. Hero image — full-bleed, flush under the sticky nav. Same
+         technique as collections/product.astro's .product-bleed/.product-hero:
+         the negative top margin cancels PageLayout.astro's
+         `.page-shell { padding: 3rem 0 4rem }` so the image sits directly
+         against the Header with no gap. No text overlay. -->
+    <div class="finance-bleed finance-hero">
+      <img
+        src={heroImageUrl}
+        alt={heroAlt}
+        width="2160"
+        height="1440"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+
+    <!-- 1. Intro — identical markup/CSS to warranty.astro's .warranty-intro
+         (h1 + italic lead, left vertical rule spanning both). Duplicated
+         rather than shared, same reasoning as warranty.astro: the block is
+         small and scoped, and this keeps the Warranty page untouched. -->
+    <div class="finance-intro">
+      <h1 class="finance-intro__heading">{introHeading}</h1>
+      <p class="finance-intro__body">{introBody}</p>
+    </div>
+
+    <!-- 2. Financing steps — each FinanceStep carries its own 1-based
+         `order` (see the component), so at <=900px .finance-columns switches
+         to a single flex-direction:column flow and .finance-column becomes
+         `display: contents`, letting `order` alone restore numeric order
+         1->4 across both former columns with no JS and no duplicated markup.
+         Same technique as .warranty-columns in warranty.astro. -->
+    <div class="finance-columns">
+      <div class="finance-column">
+        {leftSteps.map((step: AnyRecord) => (
+          <FinanceStep number={step.number} title={step.title} subtitle={step.subtitle} body={step.body} />
+        ))}
+      </div>
+      <div class="finance-column">
+        {rightSteps.map((step: AnyRecord) => (
+          <FinanceStep number={step.number} title={step.title} subtitle={step.subtitle} body={step.body} />
+        ))}
+      </div>
+    </div>
+
+    <hr class="finance-rule" />
+
+    <!-- 3. Contact block — same markup/CSS recipe as contact-us.astro's
+         .contact-highlight (label + large link, centered), reused directly
+         rather than shared via a component since this page has no form
+         around it. No contact form here by design — see Docs/API_CONTRACT.md
+         § FinancePage. -->
+    <div class="finance-contact">
+      <h2 class="finance-contact__label" data-contact-field="phone-label">{contactHeading}</h2>
+      <a class="finance-contact__value" data-contact-field="phone-value" href={contactPhoneHref}>{contactPhoneDisplay}</a>
+    </div>
+
+    <div class="finance-contact">
+      <p class="finance-contact__label" data-contact-field="email-label">{emailLabel}</p>
+      <a class="finance-contact__value" data-contact-field="email-value" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // @ts-nocheck
+  // Wagtail preview only (postMessage from the CMS admin iframe). There is no
+  // more language switching to subscribe to — the page is single-language
+  // (route-based i18n — see src/lib/i18n.ts).
+  const shell = document.querySelector('.finance-shell');
+
+  if (shell) {
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
+
+    const setText = (el, value) => {
+      if (el && typeof value === 'string' && value.trim()) el.textContent = value;
+    };
+
+    const normalizePreviewAssetUrl = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      if (
+        window.location.hostname === 'localhost' &&
+        value.startsWith('http://localhost/media/')
+      ) {
+        return value.replace('http://localhost/media/', 'http://localhost:8000/media/');
+      }
+      return value;
+    };
+
+    const toStepColumn = (value, index) => {
+      if (value === 'left' || value === 'right') return value;
+      return index % 2 === 0 ? 'left' : 'right';
+    };
+
+    const ensureFinanceStep = (columnEl, fallbackTemplate) => {
+      const step = fallbackTemplate
+        ? fallbackTemplate.cloneNode(true)
+        : applyScope(document.createElement('div'));
+      if (!fallbackTemplate) {
+        step.className = 'finance-step';
+      }
+      columnEl.appendChild(step);
+      return step;
+    };
+
+    const setFinanceStepContent = (stepEl, stepData, number) => {
+      let title = stepEl.querySelector('.finance-step__title');
+      if (!title) {
+        title = applyScope(document.createElement('h2'));
+        title.className = 'finance-step__title';
+        stepEl.appendChild(title);
+      }
+
+      let titleCopy = title.querySelector('span');
+      if (!titleCopy) {
+        titleCopy = applyScope(document.createElement('span'));
+      }
+      titleCopy.textContent = typeof stepData?.title === 'string' ? stepData.title : '';
+      title.replaceChildren(document.createTextNode(`${number}. `), titleCopy);
+
+      let subtitle = stepEl.querySelector('.finance-step__subtitle');
+      if (!subtitle) {
+        subtitle = applyScope(document.createElement('p'));
+        subtitle.className = 'finance-step__subtitle';
+        stepEl.appendChild(subtitle);
+      }
+      subtitle.textContent = typeof stepData?.subtitle === 'string' ? stepData.subtitle : '';
+
+      let body = stepEl.querySelector('.finance-step__body');
+      if (!body) {
+        body = applyScope(document.createElement('p'));
+        body.className = 'finance-step__body';
+        stepEl.appendChild(body);
+      }
+      body.textContent = typeof stepData?.body === 'string' ? stepData.body : '';
+
+      stepEl.style.order = String(number);
+    };
+
+    const syncColumn = (columnEl, steps, fallbackTemplate) => {
+      const existingSteps = Array.from(columnEl.querySelectorAll(':scope > .finance-step'));
+      steps.forEach((step, index) => {
+        const current = existingSteps[index] ?? ensureFinanceStep(columnEl, fallbackTemplate);
+        setFinanceStepContent(current, step, step.number);
+      });
+
+      existingSteps.slice(steps.length).forEach((extra) => extra.remove());
+    };
+
+    const applyFinancePreview = (previewData) => {
+      const fields = previewData?.fields ?? {};
+
+      const heroImage = shell.querySelector('.finance-hero img');
+      if (heroImage && fields.hero_image && typeof fields.hero_image === 'object') {
+        const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
+        if (heroUrl) heroImage.setAttribute('src', heroUrl);
+        if (fields.hero_image.alt) heroImage.setAttribute('alt', fields.hero_image.alt);
+      }
+
+      setText(shell.querySelector('.finance-intro__heading'), fields.intro_heading);
+      setText(shell.querySelector('.finance-intro__body'), fields.intro_body);
+
+      if (typeof previewData?.meta?.seo_title === 'string' && previewData.meta.seo_title.trim()) {
+        document.title = previewData.meta.seo_title;
+      }
+
+      if (typeof previewData?.meta?.search_description === 'string') {
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', previewData.meta.search_description);
+        }
+      }
+
+      const contact = fields.contact ?? {};
+      setText(shell.querySelector('[data-contact-field="phone-label"]'), contact.heading);
+
+      const phoneValue = shell.querySelector('[data-contact-field="phone-value"]');
+      if (phoneValue && typeof contact.phone_display === 'string' && contact.phone_display.trim()) {
+        phoneValue.textContent = contact.phone_display;
+        const normalizedPhoneHref = typeof contact.phone_href === 'string' && contact.phone_href.trim()
+          ? contact.phone_href
+          : `tel:${contact.phone_display.replace(/[^\d+]/g, '')}`;
+        phoneValue.setAttribute('href', normalizedPhoneHref);
+      }
+
+      setText(shell.querySelector('[data-contact-field="email-label"]'), contact.email_label);
+
+      const emailValue = shell.querySelector('[data-contact-field="email-value"]');
+      if (emailValue && typeof contact.email === 'string' && contact.email.trim()) {
+        emailValue.textContent = contact.email;
+        emailValue.setAttribute('href', `mailto:${contact.email}`);
+      }
+
+      const columnsRoot = shell.querySelector('.finance-columns');
+      const leftColumn = columnsRoot?.querySelector(':scope > .finance-column:first-child');
+      const rightColumn = columnsRoot?.querySelector(':scope > .finance-column:last-child');
+      if (!columnsRoot || !leftColumn || !rightColumn) return;
+
+      const previewSteps = Array.isArray(fields.steps) ? fields.steps : [];
+      const normalizedSteps = previewSteps.map((step, index) => ({
+        number: index + 1,
+        column: toStepColumn(step?.column, index),
+        title: typeof step?.title === 'string' ? step.title : '',
+        subtitle: typeof step?.subtitle === 'string' ? step.subtitle : '',
+        body: typeof step?.body === 'string' ? step.body : ''
+      }));
+
+      const fallbackTemplate =
+        leftColumn.querySelector(':scope > .finance-step') ??
+        rightColumn.querySelector(':scope > .finance-step') ??
+        null;
+
+      syncColumn(leftColumn, normalizedSteps.filter((step) => step.column === 'left'), fallbackTemplate);
+      syncColumn(rightColumn, normalizedSteps.filter((step) => step.column === 'right'), fallbackTemplate);
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'policrafters-preview') return;
+
+      const previewData = event.data?.payload;
+      if (!previewData || typeof previewData !== 'object') return;
+      if (typeof previewData.type !== 'string' || !previewData.type.endsWith('.FinancePage')) return;
+
+      applyFinancePreview(previewData);
+    });
+  }
+</script>
+
+<style>
+  .finance-shell {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Full-bleed technique reused from collections/product.astro's
+     .product-bleed: breaks out of the ~1100px .page-shell (see
+     PageLayout.astro's :root --max) to span the full viewport. Safe because
+     PageLayout's body has `overflow-x: clip`. */
+  .finance-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .finance-bleed img {
+    width: 100%;
+    height: clamp(260px, 45vw, 560px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }` top
+     padding so the hero image sits flush under Header instead of leaving a
+     3rem gap above it. */
+  .finance-hero {
+    margin-top: -3rem;
+    margin-bottom: 3rem;
+  }
+
+  /* Intro block: same recipe as .warranty-intro in warranty.astro. */
+  .finance-intro {
+    margin-bottom: 3rem;
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .finance-intro__heading {
+    margin: 0 0 .75rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .finance-intro__body {
+    margin: 0;
+    max-width: 70ch;
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    color: #333;
+  }
+
+  /* Two INDEPENDENT stacks, not a row grid — same reasoning as
+     .warranty-columns in warranty.astro: a CSS grid with row-wise
+     auto-placement would size row 1 to the taller of its two cells and push
+     row 2 down by that same amount on both sides. Two separate flex columns
+     avoid that: each stack's height is its own. */
+  .finance-columns {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  .finance-column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  @media (max-width: 900px) {
+    /* `display: contents` dissolves the two column wrappers so every
+       .finance-step becomes a direct child of .finance-columns; with
+       flex-direction switched to column, the `order` each FinanceStep
+       carries (its 1-based number) alone puts them back into 1,2,3,4 — no
+       JS, no duplicated markup. Same technique as .warranty-columns. */
+    .finance-columns {
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .finance-column {
+      display: contents;
+    }
+  }
+
+  /* Same recipe as .section-rule in contact-us.astro. */
+  .finance-rule {
+    margin: 0 0 3rem;
+    border: none;
+    border-top: 1px solid #2f3437;
+  }
+
+  /* Same recipe as .contact-highlight in contact-us.astro. */
+  .finance-contact {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .finance-contact:last-child {
+    margin-bottom: 0;
+  }
+
+  .finance-contact__label {
+    margin: 0 0 .35rem;
+    color: #b6ae99;
+    font-size: .9rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .finance-contact__value {
+    color: #2f3437;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    text-decoration: none;
+  }
+
+  .finance-contact__value:hover,
+  .finance-contact__value:focus-visible {
+    text-decoration: underline;
+  }
+</style>

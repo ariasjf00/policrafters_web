@@ -1,0 +1,19 @@
+---
+// Spanish twin of src/pages/collections/product.astro — see that file.
+import PageLayout from '../../../layouts/PageLayout.astro';
+---
+
+<PageLayout lang="es" title="Policrafters" showHero={false} noindex>
+  <p>Redirigiendo…</p>
+</PageLayout>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug') || '';
+  if (slug) {
+    const canonicalSlug = slug.split('/').filter(Boolean).map((segment) => encodeURIComponent(segment)).join('/');
+    window.location.replace(`/es/collections/${canonicalSlug}`);
+  } else {
+    window.location.replace('/es/collections');
+  }
+</script>

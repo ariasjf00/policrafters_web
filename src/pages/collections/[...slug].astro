@@ -1,8 +1,11 @@
 ---
+// English product routes: /collections/<category>/<type>/<model>. The Spanish
+// twin is src/pages/es/collections/[...slug].astro, built from the es listing —
+// see src/views/ProductPage.astro for the shared rendering.
 import collectionsEnMock from '../../mocks/collections-page.en.json';
-import collectionsEsMock from '../../mocks/collections-page.es.json';
 import { toDevApiUrl } from '../../lib/dev-proxy';
-import ProductPage from './product.astro';
+import { withLocaleParam } from '../../lib/i18n';
+import ProductPage from '../../views/ProductPage.astro';
 
 export async function getStaticPaths() {
   const getSlugsFromPayload = (payload: any): string[] => {
@@ -25,11 +28,7 @@ export async function getStaticPaths() {
 
   if (useApi && collectionsApiUrl) {
     try {
-      const requestUrl = collectionsApiUrl.includes('?')
-        ? `${collectionsApiUrl}&locale=en`
-        : `${collectionsApiUrl}?locale=en`;
-
-      const response = await fetch(requestUrl);
+      const response = await fetch(withLocaleParam(collectionsApiUrl, 'en'));
       if (response.ok) {
         const payload = await response.json();
         const slugs = getSlugsFromPayload(payload);
@@ -42,14 +41,11 @@ export async function getStaticPaths() {
     }
   }
 
-  const payloads = [collectionsEnMock, collectionsEsMock];
-  const slugs = payloads.flatMap((payload) => getSlugsFromPayload(payload));
-
+  const slugs = getSlugsFromPayload(collectionsEnMock);
   return slugs.map((slug) => ({ params: { slug } }));
 }
 
 const requestedSlug = Astro.params.slug || '';
 ---
 
-<ProductPage slug={requestedSlug} />
----
+<ProductPage lang="en" slug={requestedSlug} />

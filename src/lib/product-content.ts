@@ -1,15 +1,14 @@
 import productEnMock from '../mocks/product-page.en.json';
 import productEsMock from '../mocks/product-page.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
-// Shared loader for the product detail page (/collections/product), following the
-// same shape as contact-content.ts and catalogs.ts.
+// Shared loader for the product detail page (/collections/<category>/<type>/<model>,
+// in English, and /es/collections/<category>/<type>/<model> in Spanish), following
+// the same shape as contact-content.ts and catalogs.ts.
 //
-// Unlike the old single product-page.json (Spanish-base + `_en` sibling keys), each
-// mock here is a genuinely single-language payload, matching the API contract's
-// general rule. The frontend fetches BOTH languages at build time — this page ships
-// every string twice (data-copy-es/-en) so Header's toggle can switch it without a
-// reload, which means one localized response is not enough.
+// Each mock is a genuinely single-language payload, matching the API contract's
+// general rule. The frontend fetches one language per page at build time.
 
 export interface ProductImage {
   url?: string;
@@ -59,8 +58,6 @@ export interface ProductPagePayload {
   fields: ProductPageFields;
 }
 
-type Lang = 'en' | 'es';
-
 const mocks: Record<Lang, any> = { en: productEnMock, es: productEsMock };
 
 const useApi = import.meta.env.PUBLIC_USE_API === 'true';
@@ -70,19 +67,18 @@ const apiOrigin = apiUrl && apiUrl.startsWith('http') ? new URL(apiUrl).origin :
 const buildRequestUrl = (lang: Lang, slug?: string): string => {
   if (!apiUrl) return apiUrl;
 
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) — see Docs/API_CONTRACT.md.
+  const withLocale = withLocaleParam(apiUrl, lang);
+  if (!slug) return withLocale;
+
   try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('lang', lang);
-    if (slug) {
-      url.searchParams.set('slug', slug);
-    }
+    const url = new URL(withLocale);
+    url.searchParams.set('slug', slug);
     return url.toString();
   } catch {
-    if (slug) {
-      const separator = apiUrl.includes('?') ? '&' : '?';
-      return `${apiUrl}${separator}lang=${lang}&slug=${encodeURIComponent(slug)}`;
-    }
-    return `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}lang=${lang}`;
+    const separator = withLocale.includes('?') ? '&' : '?';
+    return `${withLocale}${separator}slug=${encodeURIComponent(slug)}`;
   }
 };
 
@@ -170,7 +166,5 @@ const fetchLang = async (lang: Lang, slug?: string): Promise<ProductPagePayload>
   return toPayload(fallback, false, fallback);
 };
 
-export const loadProductPageContent = async (slug?: string): Promise<{ en: ProductPagePayload; es: ProductPagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en', slug), fetchLang('es', slug)]);
-  return { en, es };
-};
+export const loadProductPageContent = async (lang: Lang, slug?: string): Promise<ProductPagePayload> =>
+  fetchLang(lang, slug);

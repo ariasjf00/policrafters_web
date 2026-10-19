@@ -1,11 +1,13 @@
 ---
 import { Icon } from 'astro-icon/components';
 
+import type { Lang } from '../lib/i18n';
+
 interface Props {
-  lang?: 'es' | 'en';
+  lang: Lang;
 }
 
-const { lang = 'en' } = Astro.props;
+const { lang } = Astro.props;
 
 // Used for both the accessible name and the hover tooltip; keeping them identical
 // avoids screen readers announcing something different from what sighted users see.
@@ -50,36 +52,8 @@ const t = labels[lang] ?? labels.en;
       });
     });
 
-    // Label follows the site language. Header.astro owns the language state and is
-    // the sole dispatcher of `sitelangchange`; this only listens (see Footer.astro).
-    const LABELS = { es: 'Volver arriba', en: 'Scroll to top' };
-
-    const getLangFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      const lang = params.get('lang');
-      return lang === 'en' || lang === 'es' ? lang : null;
-    };
-
-    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
-    // Header owns writing `siteLang`; this is a subscriber, so it only reads.
-    const resolveActiveLang = () => {
-      const langInUrl = getLangFromUrl();
-      if (langInUrl) return langInUrl;
-      const stored = localStorage.getItem('siteLang');
-      if (stored === 'en' || stored === 'es') return stored;
-      return 'en';
-    };
-
-    const applyScrollTopLanguage = (lang) => {
-      const activeLang = lang === 'en' ? 'en' : 'es';
-      button.setAttribute('aria-label', LABELS[activeLang]);
-      button.setAttribute('title', LABELS[activeLang]);
-    };
-
-    applyScrollTopLanguage(resolveActiveLang());
-    document.addEventListener('sitelangchange', (event) => {
-      applyScrollTopLanguage(event.detail);
-    });
+    // The label is server-rendered in the page's own language now (route-based
+    // i18n — see src/lib/i18n.ts); nothing here needs to swap it client-side.
   }
 </script>
 

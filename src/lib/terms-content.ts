@@ -1,6 +1,7 @@
 import termsEnMock from '../mocks/terms-page.en.json';
 import termsEsMock from '../mocks/terms-page.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
 export interface TermItem {
   key?: string;
@@ -22,8 +23,6 @@ export interface TermsPagePayload {
     terms: TermItem[];
   };
 }
-
-type Lang = 'en' | 'es';
 
 const mocks: Record<Lang, TermsPagePayload> = {
   en: termsEnMock as TermsPagePayload,
@@ -74,22 +73,10 @@ const fetchLang = async (lang: Lang): Promise<TermsPagePayload> => {
   const fallback = mocks[lang];
   if (!useApi || !apiUrl) return toPayload(fallback, fallback);
 
-  let requestUrl = apiUrl;
-  let legacyLangUrl = apiUrl;
-  try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('locale', lang);
-    requestUrl = url.toString();
-
-    const legacyUrl = new URL(apiUrl);
-    legacyUrl.searchParams.set('lang', lang);
-    legacyLangUrl = legacyUrl.toString();
-  } catch {
-    // Relative endpoint: send it as configured.
-    const separator = apiUrl.includes('?') ? '&' : '?';
-    requestUrl = `${apiUrl}${separator}locale=${lang}`;
-    legacyLangUrl = `${apiUrl}${separator}lang=${lang}`;
-  }
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) on a single request — see
+  // Docs/API_CONTRACT.md "Convenciones generales".
+  const requestUrl = withLocaleParam(apiUrl, lang);
 
   try {
     const unwrapPayload = (payload: any): any => {
@@ -100,19 +87,12 @@ const fetchLang = async (lang: Lang): Promise<TermsPagePayload> => {
       return payload;
     };
 
-    const tryParse = async (url: string): Promise<TermsPagePayload | null> => {
-      const response = await fetch(url);
-      if (!response.ok) return null;
+    const response = await fetch(requestUrl);
+    if (response.ok) {
       const raw = await response.json();
       const payload = unwrapPayload(raw);
-      return payload && typeof payload === 'object' ? toPayload(payload, fallback) : null;
-    };
-
-    const fromLocale = await tryParse(requestUrl);
-    if (fromLocale) return fromLocale;
-
-    const fromLang = await tryParse(legacyLangUrl);
-    if (fromLang) return fromLang;
+      if (payload && typeof payload === 'object') return toPayload(payload, fallback);
+    }
   } catch (error) {
     console.warn(`No se pudo cargar Terms desde ${requestUrl}. Usando mock local.`, error);
   }
@@ -120,7 +100,4 @@ const fetchLang = async (lang: Lang): Promise<TermsPagePayload> => {
   return toPayload(fallback, fallback);
 };
 
-export const loadTermsPageContent = async (): Promise<{ en: TermsPagePayload; es: TermsPagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en'), fetchLang('es')]);
-  return { en, es };
-};
+export const loadTermsPageContent = async (lang: Lang): Promise<TermsPagePayload> => fetchLang(lang);
