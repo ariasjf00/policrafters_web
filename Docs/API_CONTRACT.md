@@ -346,6 +346,7 @@ Nota importante: la API devuelve un solo idioma por request, como en el resto de
 - `categories` es dinámico y el frontend respeta el orden recibido.
 - El backend o mock devuelve `hero_title`, `intro_text`, `empty_state_text` y `categories` ya localizados para un solo idioma por respuesta.
 - Los productos de la categoría `shower-doors` se agrupan en la galería; las demás categorías pueden actuar como secciones informativas sin productos.
+- En preview de CMS, el frontend también tolera variantes comunes del payload de Wagtail (bloques envueltos en `value`, aliases de `has_products`/`hasProducts`, y listas `types`/`components`/`items`) para evitar que categorías secundarias se rendericen sin contenido durante la edición.
 - Esta página no incluye `contact_links`; el bloque de contacto directo vive en el contrato separado de DirectContact.
 - El frontend solicita `?locale=<en|es>` (con `lang` como alias) una sola vez por idioma en build time, con el mismo patrón que el resto de páginas de contenido, y genera una página estática por idioma.
 

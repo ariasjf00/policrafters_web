@@ -74,7 +74,13 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
                       return (
                         <li>
                           <label class="filter-type" for={inputId}>
-                            <input type="checkbox" id={inputId} class="filter-type__checkbox" data-type={type.key} />
+                            <input
+                              type="checkbox"
+                              id={inputId}
+                              class="filter-type__checkbox"
+                              data-type={type.key}
+                              data-category={category.key}
+                            />
                             <span>{type.label}</span>
                           </label>
                         </li>
@@ -127,6 +133,15 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
     let cards = [];
     let checkboxes = [];
     let previewCategoryMap = new Map();
+    let lastPreviewSignature = '';
+
+    // Astro scoped styles only apply automatically to server-rendered markup.
+    // Elements created in this script need the same data-astro-cid-* attribute.
+    const scopeAttr = Array.from(shell.attributes).find((attr) => attr.name.startsWith('data-astro-cid-'))?.name;
+    const applyScope = (el) => {
+      if (scopeAttr) el.setAttribute(scopeAttr, '');
+      return el;
+    };
 
     let isWagtailPreview = false;
     let activeCategory = 'shower-doors';
@@ -169,18 +184,18 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
       galleryGrid.replaceChildren();
 
       products.forEach((product) => {
-        const card = document.createElement('a');
+        const card = applyScope(document.createElement('a'));
         card.href = productHref(product?.slug);
         card.className = 'gallery-card';
         card.dataset.productType = product.typeKey || '';
 
-        const image = document.createElement('img');
+        const image = applyScope(document.createElement('img'));
         image.src = normalizePreviewAssetUrl(product?.image?.url || '');
         image.alt = product?.image?.alt || '';
         image.loading = 'lazy';
         image.decoding = 'async';
 
-        const title = document.createElement('span');
+        const title = applyScope(document.createElement('span'));
         title.className = 'gallery-card__title';
         title.textContent = product?.title || '';
 
@@ -274,8 +289,100 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
       if (el && typeof value === 'string' && value.trim()) el.textContent = value;
     };
 
+    const getPreviewObject = (entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      if (entry.value && typeof entry.value === 'object') return entry.value;
+      return entry;
+    };
+
+    const toPreviewCategories = (rawCategories) => {
+      if (!Array.isArray(rawCategories)) return [];
+
+      return rawCategories
+        .map((rawCategory, categoryIndex) => {
+          const category = getPreviewObject(rawCategory);
+          if (!category) return null;
+
+          const rawTypes = Array.isArray(category.types)
+            ? category.types
+            : Array.isArray(category.components)
+              ? category.components
+              : Array.isArray(category.items)
+                ? category.items
+                : [];
+
+          const normalizedTypes = rawTypes.map((rawType, typeIndex) => {
+            const type = getPreviewObject(rawType);
+            if (!type) return null;
+
+            const rawProducts = Array.isArray(type.products)
+              ? type.products
+              : Array.isArray(type.models)
+                ? type.models
+                : Array.isArray(type.items)
+                  ? type.items
+                  : [];
+
+            const normalizedProducts = rawProducts.map((rawProduct) => {
+              const product = getPreviewObject(rawProduct) ?? {};
+              const imageCandidate = getPreviewObject(product.image) ?? getPreviewObject(product.thumbnail) ?? {};
+
+              return {
+                title: product.title ?? product.label ?? '',
+                slug: product.slug ?? '#',
+                image: {
+                  url: imageCandidate.url ?? '',
+                  alt: imageCandidate.alt ?? ''
+                }
+              };
+            });
+
+            const typeKeyCandidate = type.key ?? type.slug ?? type.id;
+            return {
+              key: typeof typeKeyCandidate === 'string' && typeKeyCandidate.trim() ? typeKeyCandidate : `type-${typeIndex}`,
+              label: type.label ?? type.title ?? type.name ?? '',
+              products: normalizedProducts
+            };
+          }).filter(Boolean);
+
+          const categoryKeyCandidate = category.key ?? category.slug ?? category.id;
+          const hasProductsCandidate = category.has_products ?? category.hasProducts;
+          const inferredHasProducts = normalizedTypes.some((type) => Array.isArray(type.products) && type.products.length > 0);
+
+          return {
+            key: typeof categoryKeyCandidate === 'string' && categoryKeyCandidate.trim() ? categoryKeyCandidate : `category-${categoryIndex}`,
+            label: category.label ?? category.title ?? category.name ?? '',
+            has_products: typeof hasProductsCandidate === 'boolean' ? hasProductsCandidate : inferredHasProducts,
+            types: normalizedTypes
+          };
+        })
+        .filter(Boolean);
+    };
+
     const applyCollectionsPreview = (previewData) => {
       const fields = previewData?.fields ?? {};
+      const previewCategories = toPreviewCategories(fields.categories);
+
+      const previewSignature = JSON.stringify({
+        seoTitle: previewData?.meta?.seo_title ?? '',
+        searchDescription: previewData?.meta?.search_description ?? '',
+        heroTitle: fields.hero_title ?? '',
+        introText: fields.intro_text ?? '',
+        emptyStateText: fields.empty_state_text ?? '',
+        categories: previewCategories
+      });
+      if (previewSignature === lastPreviewSignature) return;
+      lastPreviewSignature = previewSignature;
+
+      const previousActiveCategory = activeCategory;
+      const previouslyCheckedTypes = new Set(
+        checkboxes
+          .filter((checkbox) => checkbox.checked)
+          .map((checkbox) => {
+            const categoryKey = checkbox.dataset.category || checkbox.closest('.filter-section')?.dataset.category || '';
+            return `${categoryKey}::${checkbox.dataset.type || ''}`;
+          })
+      );
 
       setText(shell.querySelector('#collections-title'), fields.hero_title);
       setText(shell.querySelector('#collections-intro'), fields.intro_text);
@@ -292,7 +399,6 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
         }
       }
 
-      const previewCategories = Array.isArray(fields.categories) ? fields.categories : [];
       previewCategoryMap = new Map(previewCategories.map((category) => [category?.key, category]));
 
       if (filtersContainer && previewCategories.length > 0) {
@@ -304,19 +410,19 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
           const hasProducts = Boolean(category?.has_products);
           const panelId = `filter-panel-${categoryKey}`;
 
-          const section = document.createElement('div');
+          const section = applyScope(document.createElement('div'));
           section.className = 'filter-section';
           section.dataset.category = categoryKey;
           section.dataset.hasProducts = hasProducts ? 'true' : 'false';
 
-          const toggle = document.createElement('button');
+          const toggle = applyScope(document.createElement('button'));
           toggle.type = 'button';
           toggle.className = 'filter-section__toggle';
           toggle.setAttribute('aria-expanded', 'false');
           toggle.setAttribute('aria-controls', panelId);
           toggle.textContent = categoryLabel;
 
-          const panel = document.createElement('div');
+          const panel = applyScope(document.createElement('div'));
           panel.id = panelId;
           panel.className = 'filter-section__panel';
           panel.hidden = true;
@@ -324,7 +430,7 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
           const categoryTypes = Array.isArray(category?.types) ? category.types : [];
 
           if (hasProducts) {
-            const typesList = document.createElement('ul');
+            const typesList = applyScope(document.createElement('ul'));
             typesList.className = 'filter-types';
 
             categoryTypes.forEach((typeItem, typeIndex) => {
@@ -332,18 +438,19 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
               const typeLabel = typeItem?.label || '';
               const inputId = `filter-type-${categoryKey}-${typeKey}`;
 
-              const li = document.createElement('li');
-              const label = document.createElement('label');
+              const li = applyScope(document.createElement('li'));
+              const label = applyScope(document.createElement('label'));
               label.className = 'filter-type';
               label.setAttribute('for', inputId);
 
-              const input = document.createElement('input');
+              const input = applyScope(document.createElement('input'));
               input.type = 'checkbox';
               input.id = inputId;
               input.className = 'filter-type__checkbox';
               input.dataset.type = typeKey;
+              input.dataset.category = categoryKey;
 
-              const span = document.createElement('span');
+              const span = applyScope(document.createElement('span'));
               span.textContent = typeLabel;
 
               label.append(input, span);
@@ -353,11 +460,11 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
 
             panel.appendChild(typesList);
           } else {
-            const textList = document.createElement('ul');
+            const textList = applyScope(document.createElement('ul'));
             textList.className = 'filter-lorem';
 
             categoryTypes.forEach((typeItem) => {
-              const item = document.createElement('li');
+              const item = applyScope(document.createElement('li'));
               item.textContent = typeItem?.label || '';
               textList.appendChild(item);
             });
@@ -372,8 +479,22 @@ const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/col
         bindFilterInteractions();
 
         const defaultCategory = previewCategories.find((category) => category?.key === 'shower-doors') || previewCategories[0];
-        if (defaultCategory?.key) {
-          setActiveCategory(defaultCategory.key);
+        const nextCategory = previewCategories.some((category) => category?.key === previousActiveCategory)
+          ? previousActiveCategory
+          : defaultCategory?.key;
+
+        if (nextCategory) {
+          setActiveCategory(nextCategory);
+        }
+
+        checkboxes.forEach((checkbox) => {
+          const categoryKey = checkbox.dataset.category || checkbox.closest('.filter-section')?.dataset.category || '';
+          const typeRef = `${categoryKey}::${checkbox.dataset.type || ''}`;
+          checkbox.checked = previouslyCheckedTypes.has(typeRef);
+        });
+
+        if (nextCategory) {
+          applyGalleryState();
         }
       }
     };
