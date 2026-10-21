@@ -4,7 +4,8 @@
   "locale": "es",
   "meta": {
     "seo_title": "Colecciones | Policrafters",
-    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños."
+    "search_description": "Colecciones destacadas de Policrafters para puertas, ventanas, pérgolas, cocinas, terrazas y baños.",
+    "translations": { "en": "collections", "es": "collections" }
   },
   "fields": {
     "hero_title": "Colecciones",

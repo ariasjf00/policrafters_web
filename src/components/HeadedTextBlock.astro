@@ -3,32 +3,24 @@
 // Identity" sections: a large uppercase heading set off by a 1px left rule
 // (same recipe as service-row__title / warranty-intro), with body paragraphs
 // below at full width, outside the bordered block.
+//
+// Purely presentational and single-language: the host page is already
+// rendered in one language (route-based i18n — see src/lib/i18n.ts), so
+// there is nothing left to swap client-side.
 interface Props {
-  lang: 'en' | 'es';
-  headingEs: string;
-  headingEn: string;
-  body: { es: string; en: string }[];
+  heading: string;
+  body: string[];
 }
 
-const { lang, headingEs, headingEn, body } = Astro.props;
-const isEs = lang === 'es';
-const pick = (es: string, en: string) => (isEs ? es : (en ?? es));
+const { heading, body } = Astro.props;
 ---
 
 <div class="headed-text-block">
   <div class="headed-text-block__title">
-    <h3
-      class="headed-text-block__heading"
-      data-copy-es={headingEs}
-      data-copy-en={headingEn}
-    >{pick(headingEs, headingEn)}</h3>
+    <h3 class="headed-text-block__heading">{heading}</h3>
   </div>
   {body.map((para) => (
-    <p
-      class="headed-text-block__body"
-      data-copy-es={para.es}
-      data-copy-en={para.en}
-    >{pick(para.es, para.en)}</p>
+    <p class="headed-text-block__body">{para}</p>
   ))}
 </div>
 

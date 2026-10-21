@@ -50,7 +50,8 @@ work through it when the site is actually ready to launch on
   Why: nothing gets crawled faster just because robots.txt allows it —
   submitting the sitemap is what gets it discovered promptly.
   How to verify: both consoles show the sitemap as "Success" with the
-  expected URL count (27 pages as of this phase, before Phase 2 adds `/es/`).
+  expected URL count (48 pages as of Phase 2 — 24 English + 24 Spanish,
+  the legacy `/collections/product` redirect stub excluded in both languages).
 
 - [ ] **Replace the default Open Graph image.**
   What: commission/crop a dedicated 1200×630 share image (under ~300 KB) and
@@ -82,15 +83,15 @@ work through it when the site is actually ready to launch on
   - `src/components/Footer.astro:168` — commercial project links (`commercial-link-*`)
   - `src/components/Footer.astro:190` — each social media icon in `socialLinks` (Instagram/Facebook/etc.)
   - `src/components/Footer.astro:136` — falls back to `#` when `linkHrefs[index]` is unset; most footer column links are still unset
-  - `src/components/Header.astro:91` and `:516` — brand mega-menu items (`url: '#'`; the component already has a `TODO: replace the '#' placeholders with each brand's real external URL`)
-  - `src/pages/index.astro:221` — a link in the "about" section
-  - `src/pages/index.astro:239` — each home "featured projects" card (`.projects-card`)
-  - `src/pages/index.astro:270` — the projects section CTA button
-  - `src/pages/index.astro:293` — the "about" section CTA button
-  - `src/pages/collections/product.astro:312` — each "related model" card (`.related-card`)
-  - `src/components/CatalogsCarousel.astro:59` — falls back to `#` when a catalog item has no `file_url` (download PDF missing)
-  - `src/components/DirectContact.astro:40` — falls back to `#` when a direct-contact item has no `url`
-  - `src/pages/collections.astro:156` and `src/pages/collections/product.astro:276` fall back to `#` too, but only when the underlying `product.slug` / `link.url` is genuinely missing from the data — not placeholders by design, just missing-data guards. Worth a final data audit before launch, but no code change expected.
+  - `src/components/Header.astro:73` — brand mega-menu items (`url: '#'`; the component already has a `TODO: replace the '#' placeholders with each brand's real external URL`). One spot now, not two — Phase 2 removed `Header.astro`'s separate client-side nav table, which used to carry a second copy of this.
+  - `src/views/HomePage.astro:192` — a link in the "about" section
+  - `src/views/HomePage.astro:210` — each home "featured projects" card (`.projects-card`)
+  - `src/views/HomePage.astro:241` — the projects section CTA button
+  - `src/views/HomePage.astro:264` — the "about" section CTA button
+  - `src/views/ProductPage.astro:168` — each "related model" card (`.related-card`)
+  - `src/components/CatalogsCarousel.astro` — falls back to `#` when a catalog item has no `file_url` (download PDF missing)
+  - `src/components/DirectContact.astro` — falls back to `#` when a direct-contact item has no `url`
+  - `src/views/CollectionsPage.astro` (`productHref`) and `src/views/ProductPage.astro` (`backToMenuHref`/related models) fall back to `#` too, but only when the underlying `product.slug` / `link.url` is genuinely missing from the data — not placeholders by design, just missing-data guards. Worth a final data audit before launch, but no code change expected.
   Why: a crawled `href="#"` is a dead link to search engines; several of
   these are also intended to be real internal/external destinations that
   readers will click.
@@ -104,24 +105,28 @@ work through it when the site is actually ready to launch on
   page/route defined anywhere, including in `Docs/API_CONTRACT.md`. Decide
   with the backend whether renovation products get their own detail page
   (and route/contract) or link elsewhere (e.g. into `/collections/<slug>`
-  where the same product exists), then update `src/pages/renovations.astro:180`
+  where the same product exists), then update `src/views/RenovationsPage.astro:41`
   and the mocks/contract together.
-  Where: `src/pages/renovations.astro`, `src/mocks/renovations-page.*.json`,
+  Where: `src/views/RenovationsPage.astro`, `src/mocks/renovations-page.*.json`,
   `Docs/API_CONTRACT.md`.
   Why: same as above — currently a guaranteed dead link on every renovation
   product card.
   How to verify: after the decision, confirm the generated hrefs resolve
   to real, 200-status pages.
 
-- [ ] **Decide the fate of `/projects`.**
-  What: either give `src/pages/projects.astro` real content (projects,
+- [ ] **Decide the fate of `/projects` and `/es/projects`.**
+  What: either give `src/views/ProjectsPage.astro` real content (projects,
   photos, copy) and remove its `noindex` + the sitemap `filter` exclusion in
-  `astro.config.mjs`, or delete the route entirely.
-  Where: `src/pages/projects.astro`, `astro.config.mjs`.
+  `astro.config.mjs`, or delete the route entirely (both
+  `src/pages/projects.astro` and `src/pages/es/projects.astro`).
+  Where: `src/views/ProjectsPage.astro`, `src/pages/projects.astro`,
+  `src/pages/es/projects.astro`, `astro.config.mjs`.
   Why: it's currently a placeholder stub ("Projects served from Wagtail or
   static content will appear here.") with no links pointing to it anywhere
   in the site (confirmed via a repo-wide search) — it exists but isn't part
-  of the actual site structure yet.
+  of the actual site structure yet. See also Phase 4's local-SEO section in
+  the "Fase 4 - SEO Policrafters.docx" plan, which turns this into a real
+  project gallery.
   How to verify: if kept, it has real unique content and is reachable from
   navigation; if removed, `/projects` 404s cleanly and nothing links to it.
 

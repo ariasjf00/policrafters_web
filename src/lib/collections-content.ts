@@ -1,6 +1,7 @@
 import collectionsEnMock from '../mocks/collections-page.en.json';
 import collectionsEsMock from '../mocks/collections-page.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
 export interface CollectionProductImage {
   url?: string;
@@ -41,8 +42,6 @@ export interface CollectionPagePayload {
     categories: CollectionCategory[];
   };
 }
-
-type Lang = 'en' | 'es';
 
 const mocks: Record<Lang, CollectionPagePayload> = {
   en: collectionsEnMock as CollectionPagePayload,
@@ -106,14 +105,9 @@ const fetchLang = async (lang: Lang): Promise<CollectionPagePayload> => {
   const fallback = mocks[lang];
   if (!useApi || !apiUrl) return toPayload(fallback, false, fallback);
 
-  let requestUrl = apiUrl;
-  try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('locale', lang);
-    requestUrl = url.toString();
-  } catch {
-    // Relative endpoint: send it as configured.
-  }
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) — see Docs/API_CONTRACT.md.
+  const requestUrl = withLocaleParam(apiUrl, lang);
 
   try {
     const response = await fetch(requestUrl);
@@ -128,7 +122,4 @@ const fetchLang = async (lang: Lang): Promise<CollectionPagePayload> => {
   return toPayload(fallback, false, fallback);
 };
 
-export const loadCollectionsPageContent = async (): Promise<{ en: CollectionPagePayload; es: CollectionPagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en'), fetchLang('es')]);
-  return { en, es };
-};
+export const loadCollectionsPageContent = async (lang: Lang): Promise<CollectionPagePayload> => fetchLang(lang);

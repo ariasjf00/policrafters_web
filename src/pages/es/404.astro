@@ -1,0 +1,54 @@
+---
+// Custom 404, Spanish only — see src/pages/404.astro for the English twin and
+// nginx.conf for how each language's 404 is served.
+import PageLayout from '../../layouts/PageLayout.astro';
+---
+
+<PageLayout lang="es" title="Página no encontrada | Policrafters" description="La página que buscas no existe." showHero={false} noindex>
+  <section class="not-found">
+    <div class="not-found__block">
+      <h1 class="not-found__heading">Página no encontrada</h1>
+      <p class="not-found__body">
+        La página que buscas no existe o fue movida. Vuelve a la <a href="/es">página de inicio</a> o explora nuestras <a href="/es/collections">colecciones</a>.
+      </p>
+    </div>
+  </section>
+</PageLayout>
+
+<style>
+  /* Same left-rule recipe as terms-and-conditions.astro's .terms-intro. */
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .not-found__block {
+    border-left-style: solid;
+    border-left-color: #2f3437;
+    border-left-width: 1px;
+    padding-left: 1rem;
+  }
+
+  .not-found__heading {
+    margin: 0 0 .75rem;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #111;
+  }
+
+  .not-found__body {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .not-found__body a {
+    color: #111;
+    text-decoration: underline;
+  }
+</style>

@@ -5,10 +5,14 @@
 // preflight (margin/padding/border resets) into the homepage's hand-written CSS.
 
 import { loadBrandsPageContent } from '../lib/brands-content';
-import { toDevApiUrl } from '../lib/dev-proxy';
+import { type Lang, LANGS, localizePath, stripLangPrefix, normalizePathname } from '../lib/i18n';
 
 interface Props {
-	lang?: 'es' | 'en';
+	lang: Lang;
+	/* Which languages the current page exists in (from meta.translations) — see
+	   SeoHead.astro/PageLayout.astro. Defaults to both. Governs where the EN/ESP
+	   switcher points when the counterpart page doesn't exist. */
+	availableLangs?: Lang[];
 	logo?: { url: string; alt: string };
 	position?: 'sticky' | 'fixed';
 	scrollShadow?: boolean;
@@ -16,7 +20,8 @@ interface Props {
 }
 
 const {
-	lang = 'en',
+	lang,
+	availableLangs,
 	logo = { url: '/logo_black.png', alt: 'Policrafters logo' },
 	position = 'sticky',
 	scrollShadow = false,
@@ -24,11 +29,11 @@ const {
 } = Astro.props;
 
 const isEs = lang === 'es';
-const { en: brandsEn, es: brandsEs } = await loadBrandsPageContent();
+const brands = await loadBrandsPageContent(lang);
 
-// The one menu table. Its client-side twin lives in this file's script block; keeping both
-// here is what prevents the 4-way drift this component exists to fix.
-const navItems = isEs
+// The one menu table — no separate client-side copy anymore (MENU_BY_LANG is
+// gone): hrefs are already correct for `lang` at build time.
+const navItems = (isEs
 	? [
 			{ key: 'collections', label: 'Colecciones', href: '/collections' },
 			{ key: 'renovations', label: 'Renovaciones', href: '/renovations' },
@@ -42,77 +47,58 @@ const navItems = isEs
 			{ key: 'services', label: 'Services', href: '/services' },
 			{ key: 'brands', label: 'Brands', href: '' },
 			{ key: 'contact', label: 'Contact Us', href: '/contact-us' },
-		];
+		]
+).map((item) => ({ ...item, href: item.href ? localizePath(item.href, lang) : item.href }));
 
-// English is the default, so it is never stamped into a URL; Spanish always is.
-const hasPreviewFlag = (value: string | null | undefined) => {
-	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
-	return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
-};
-
-const appendLang = (href: string, value: string) => {
-	const [path, query = ''] = href.split('?');
-	const params = new URLSearchParams(query);
-	if (value === 'es') params.set('lang', 'es');
-	else params.delete('lang');
-	const queryString = params.toString();
-	return queryString ? `${path}?${queryString}` : path;
-};
-
-// Brands mega menu. Both languages ship in data-* attributes so the client
-// script can swap them in place — no third copy of this table in the script block.
+// Brands mega menu, single language now — no more EN/ES pairing by key/index.
 // TODO: replace the '#' placeholders with each brand's real external URL.
 const brandLinks: {
 	key: string;
 	url: string;
-	image: { url: string; alt: { en: string; es: string } } | null;
-	placeholder: { en: string; es: string };
+	image: { url: string; alt: string } | null;
+	placeholder: string;
 }[] = (() => {
-	const enLogos = Array.isArray(brandsEn.fields?.brand_logos) ? brandsEn.fields.brand_logos : [];
-	const esLogos = Array.isArray(brandsEs.fields?.brand_logos) ? brandsEs.fields.brand_logos : [];
-	const base = enLogos.length ? enLogos : esLogos;
+	const logos = Array.isArray(brands.fields?.brand_logos) ? brands.fields.brand_logos : [];
 
 	const toSafeText = (value: unknown, fallback = '') =>
 		typeof value === 'string' && value.trim() ? value : fallback;
 
-	return base.map((logo, index) => {
-		const sameKeyEs = esLogos.find((candidate) => candidate?.key && candidate.key === logo?.key);
-		const byIndexEs = esLogos[index];
-		const esLogo = sameKeyEs ?? byIndexEs ?? logo;
-
-		const enPlaceholder = toSafeText(logo?.placeholder_text, 'Crafters Design & Renovations logo');
-		const esPlaceholder = toSafeText(esLogo?.placeholder_text, enPlaceholder);
-
-		const imageUrl = toSafeText(logo?.image?.url) || toSafeText(esLogo?.image?.url);
-		const enAlt = toSafeText(logo?.image?.alt);
-		const esAlt = toSafeText(esLogo?.image?.alt, enAlt);
+	return logos.map((logo, index) => {
+		const placeholder = toSafeText(logo?.placeholder_text, 'Crafters Design & Renovations logo');
+		const imageUrl = toSafeText(logo?.image?.url);
+		const alt = toSafeText(logo?.image?.alt, placeholder);
 
 		return {
 			key: toSafeText(logo?.key, `brand-${index + 1}`),
 			url: '#',
-			image: imageUrl
-				? {
-					url: imageUrl,
-					alt: { en: enAlt || esAlt || enPlaceholder, es: esAlt || enAlt || esPlaceholder },
-				}
-				: null,
-			placeholder: { en: enPlaceholder, es: esPlaceholder },
+			image: imageUrl ? { url: imageUrl, alt } : null,
+			placeholder,
 		};
 	});
 })();
 const isExternal = (url: string) => /^https?:\/\//.test(url);
 
-// Tolerate a trailing slash so /collections/ keeps its active-page highlight.
-const normalizedPath = currentPath.replace(/\/+$/, '') || '/';
-const esHref = appendLang(Astro.url.pathname + Astro.url.search, 'es');
-const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
+// Tolerate a trailing slash so /collections/ keeps its active-page highlight,
+// and compare against the path with any /es prefix stripped, since navItems'
+// hrefs are already localized.
+const normalizedPath = stripLangPrefix(normalizePathname(currentPath)).replace(/\/+$/, '') || '/';
+
+// EN/ESP switcher: plain links to the same page in the other language — no
+// auto-redirect, no localStorage. If the page doesn't exist in that language
+// (meta.translations), fall back to that language's home.
+const resolvedAvailableLangs = availableLangs && availableLangs.length ? availableLangs : LANGS;
+const currentPagePath = stripLangPrefix(normalizePathname(Astro.url.pathname)) + Astro.url.search;
+const hrefForLang = (target: Lang) =>
+	resolvedAvailableLangs.includes(target) ? localizePath(currentPagePath, target) : (target === 'es' ? '/es' : '/');
+const enHref = hrefForLang('en');
+const esHref = hrefForLang('es');
 ---
 
 <header
 	class:list={['site-header', position === 'fixed' && 'is-fixed']}
 	data-scroll-shadow={scrollShadow ? '' : undefined}
 >
-	<a class="logo" href="/">
+	<a class="logo" href={localizePath('/', lang)}>
 		<img id="site-logo" src={logo.url} alt={logo.alt} />
 	</a>
 	<button
@@ -154,19 +140,14 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 									const cellClass = isPlaceholder
 										? 'brands-menu__cell brands-menu__cell--placeholder'
 										: 'brands-menu__cell';
-									const cellLabel = isEs ? brand.placeholder.es : brand.placeholder.en;
 
 									return isPlaceholder ? (
 										<div
 											class={cellClass}
 											data-brand-key={brand.key}
-											aria-label={cellLabel}
+											aria-label={brand.placeholder}
 										>
-											<span
-												class="brands-menu__placeholder"
-												data-copy-en={brand.placeholder.en}
-												data-copy-es={brand.placeholder.es}
-											>{cellLabel}</span>
+											<span class="brands-menu__placeholder">{brand.placeholder}</span>
 										</div>
 									) : (
 										<a
@@ -179,9 +160,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 											<img
 												class="brands-menu__image"
 												src={brand.image.url}
-												alt={isEs ? brand.image.alt.es : brand.image.alt.en}
-												data-alt-en={brand.image.alt.en}
-												data-alt-es={brand.image.alt.es}
+												alt={brand.image.alt}
 												loading="lazy"
 												decoding="async"
 											/>
@@ -194,7 +173,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 				) : (
 					<li>
 						<a
-							href={appendLang(item.href, lang)}
+							href={item.href}
 							data-menu-key={item.key}
 							class:list={["nav-link", normalizedPath === item.href && "is-active-page"]}
 						>
@@ -221,26 +200,13 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 </header>
 
 <script>
-	// This component owns the site's language state.
-	// INVARIANT: only this file dispatches `sitelangchange`. Subscribers (Footer,
-	// index, collections) self-boot then listen — they must never re-dispatch, or
-	// Header's boot -> subscriber -> re-dispatch becomes a feedback loop.
-	const MENU_BY_LANG = {
-		es: {
-			collections: { label: 'Colecciones', href: '/collections' },
-			renovations: { label: 'Renovaciones', href: '/renovations' },
-			services: { label: 'Servicios', href: '/services' },
-			brands: { label: 'Marcas', href: '' },
-			contact: { label: 'Contáctanos', href: '/contact-us' }
-		},
-		en: {
-			collections: { label: 'Collections', href: '/collections' },
-			renovations: { label: 'Renovations', href: '/renovations' },
-			services: { label: 'Services', href: '/services' },
-			brands: { label: 'Brands', href: '' },
-			contact: { label: 'Contact Us', href: '/contact-us' }
-		}
-	};
+	// Header no longer owns any language state — each page is single-language
+	// (route-based i18n, src/lib/i18n.ts) and the EN/ESP switcher above is a
+	// plain server-rendered link. This script only handles: the mobile nav
+	// drawer, the brands disclosure, the scroll-shadow effect, keeping the
+	// language switcher's query string/hash in sync with client-side URL
+	// changes (e.g. a collections category filter), and Wagtail preview.
+	import { toDevApiUrl } from '../lib/dev-proxy';
 
 	const header = document.querySelector('.site-header');
 
@@ -268,77 +234,19 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		return stored === '1' || stored === 'true';
 	};
 
-	const getLangFromUrl = () => {
-		const params = new URLSearchParams(window.location.search);
-		const lang = params.get('lang');
-		return lang === 'en' || lang === 'es' ? lang : null;
+	// The switcher's href is built at render time from Astro.url.search, which
+	// only sees the query string the page was *requested* with. If a filter
+	// (e.g. collections' ?category=) changes the URL client-side afterwards via
+	// history.replaceState, keep the switcher's query string/hash in sync.
+	const syncLangSwitcherQuery = () => {
+		const search = window.location.search;
+		const hash = window.location.hash;
+		header?.querySelectorAll('.lang-link').forEach((link) => {
+			const base = (link.getAttribute('href') || '').split('?')[0].split('#')[0];
+			link.setAttribute('href', `${base}${search}${hash}`);
+		});
 	};
-
-	// Mirrors the frontmatter helper: English stays out of the URL, Spanish is stamped in.
-	const appendLang = (href, lang) => {
-		const [path, query = ''] = href.split('?');
-		const params = new URLSearchParams(query);
-		if (lang === 'es') params.set('lang', 'es');
-		else params.delete('lang');
-		const queryString = params.toString();
-		return queryString ? `${path}?${queryString}` : path;
-	};
-
-	// url -> localStorage -> 'en'. Seeds `siteLang` on first visit so subscribers
-	// (Footer, ScrollToTop, collections) all read the same stored value.
-	const resolveActiveLang = () => {
-		const langInUrl = getLangFromUrl();
-		if (langInUrl) return langInUrl;
-		const stored = localStorage.getItem('siteLang');
-		if (stored === 'en' || stored === 'es') return stored;
-		localStorage.setItem('siteLang', 'en');
-		return 'en';
-	};
-
-	const applyHeaderLanguage = (lang) => {
-		const activeLang = lang === 'en' ? 'en' : 'es';
-		const copy = MENU_BY_LANG[activeLang];
-		localStorage.setItem('siteLang', activeLang);
-		document.documentElement.lang = activeLang;
-
-		if (header) {
-			header.querySelectorAll('[data-menu-key]').forEach((link) => {
-				const key = link.getAttribute('data-menu-key');
-				if (!key || !copy[key]) return;
-				// The Brands trigger is a <button> with a chevron: only its label changes, no href.
-				if (link.tagName !== 'A') {
-					const label = link.querySelector('.nav-trigger-label');
-					if (label) label.textContent = copy[key as keyof typeof copy].label;
-					return;
-				}
-				link.textContent = copy[key].label;
-				link.setAttribute('href', appendLang(copy[key].href, activeLang));
-			});
-
-			header.querySelectorAll('.brands-menu [data-copy-en]').forEach((node) => {
-				node.textContent = node.getAttribute(`data-copy-${activeLang}`) ?? '';
-			});
-			header.querySelectorAll('.brands-menu [data-alt-en]').forEach((img) => {
-				img.setAttribute('alt', img.getAttribute(`data-alt-${activeLang}`) ?? '');
-			});
-
-			header.querySelectorAll('.lang-link').forEach((link) => {
-				const linkLang = link.dataset.lang === 'en' ? 'en' : 'es';
-				link.classList.toggle('is-active', linkLang === activeLang);
-				// Keep the href truthful so middle-click / copy-link yield the right language.
-				link.setAttribute('href', appendLang(window.location.pathname + window.location.search, linkLang));
-			});
-
-			const toggle = header.querySelector('.nav-toggle');
-			toggle?.setAttribute('aria-label', activeLang === 'es' ? 'Abrir menú' : 'Open menu');
-			const search = header.querySelector('.search-icon');
-			search?.setAttribute('aria-label', activeLang === 'es' ? 'Buscar' : 'Search');
-			const langSwitch = header.querySelector('.lang-switch');
-			langSwitch?.setAttribute('aria-label', activeLang === 'es' ? 'Selector de idioma' : 'Language selector');
-		}
-
-		document.dispatchEvent(new CustomEvent('sitelangchange', { detail: activeLang }));
-	};
+	syncLangSwitcherQuery();
 
 	const navToggle = header?.querySelector('.nav-toggle');
 	const primaryNav = header?.querySelector('nav[aria-label="Main navigation"]');
@@ -346,10 +254,10 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 	const mobileNavQuery = window.matchMedia('(max-width: 900px)');
 
 	// Brands mega menu: a disclosure, not a link, so the visitor stays on their page.
-	const brandsTrigger = header?.querySelector<HTMLButtonElement>('.nav-trigger');
-	const brandsMenu = header?.querySelector<HTMLElement>('#brands-menu');
+	const brandsTrigger = header?.querySelector('.nav-trigger');
+	const brandsMenu = header?.querySelector('#brands-menu');
 
-	const setBrandsOpen = (open: boolean) => {
+	const setBrandsOpen = (open) => {
 		if (!brandsTrigger || !brandsMenu) return;
 		brandsTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
 		brandsMenu.classList.toggle('is-open', open);
@@ -413,16 +321,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		});
 	}
 
-	header?.querySelectorAll('.lang-link').forEach((link) => {
-		link.addEventListener('click', (event) => {
-			event.preventDefault();
-			const target = link.dataset.lang === 'en' ? 'en' : 'es';
-			localStorage.setItem('siteLang', target);
-			applyHeaderLanguage(target);
-			syncLangInUrl(target);
-			closeMenu();
-		});
-	});
+	header?.querySelectorAll('.lang-link').forEach((link) => link.addEventListener('click', closeMenu));
 
 	// Runs on every page: `is-scrolled` compacts the header. The drop shadow it also
 	// drives is gated in CSS behind [data-scroll-shadow], so it stays home-page only.
@@ -435,21 +334,6 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
 	}
 
-	// English is the default, so keep it out of the URL: only Spanish is stamped in.
-	// A redundant ?lang=en is stripped so shared links stay canonical.
-	const syncLangInUrl = (lang) => {
-		const nextUrl = new URL(window.location.href);
-		const current = nextUrl.searchParams.get('lang');
-		if (lang === 'en') {
-			if (current === null) return;
-			nextUrl.searchParams.delete('lang');
-		} else {
-			if (current === 'es') return;
-			nextUrl.searchParams.set('lang', 'es');
-		}
-		window.history.replaceState({}, '', nextUrl);
-	};
-
 	const brandsApiUrl = toDevApiUrl(import.meta.env.PUBLIC_BRANDS_API_URL || '', 'browser');
 	const brandsGrid = document.querySelector('.brands-menu__grid');
 	const staticBrandMenuMarkup = brandsGrid ? brandsGrid.innerHTML : '';
@@ -457,6 +341,10 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		if (!brandsGrid || !staticBrandMenuMarkup) return;
 		brandsGrid.innerHTML = staticBrandMenuMarkup;
 	};
+
+	// The page itself is single-language, so preview only ever needs this page's
+	// own language, read from <html lang> — not resolved from a URL/localStorage.
+	const pageLang = document.documentElement.lang === 'es' ? 'es' : 'en';
 
 	const readPreviewStatus = () => {
 		const apiEnabled = import.meta.env.PUBLIC_USE_API === 'true' && Boolean(brandsApiUrl);
@@ -472,7 +360,7 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 				preview: previewEnabled,
 				source: previewEnabled ? 'runtime' : 'static',
 				endpoint: previewEnabled ? brandsApiUrl : null,
-				lang: resolveActiveLang()
+				lang: pageLang
 			});
 		}
 		return previewEnabled;
@@ -540,23 +428,18 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 		}
 
 		try {
-			const payloads = await Promise.all(['en', 'es'].map(async (lang) => {
-				const url = new URL(brandsApiUrl);
-				url.searchParams.set('lang', lang);
-				if (import.meta.env.DEV) {
-					console.debug('[brands-header-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
-				}
-				const response = await fetch(url.toString(), { cache: 'no-store' });
-				if (!response.ok) {
-					throw new Error(`Brands ${lang} status ${response.status}`);
-				}
-				return response.json();
-			}));
-
-			if (Array.isArray(payloads) && payloads.length === 2) {
-				const activeLang = resolveActiveLang();
-				renderBrandsMenuFromPayload(activeLang === 'es' ? payloads[1] : payloads[0], activeLang);
+			const url = new URL(brandsApiUrl);
+			url.searchParams.set('locale', pageLang);
+			url.searchParams.set('lang', pageLang);
+			if (import.meta.env.DEV) {
+				console.debug('[brands-header-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang: pageLang, cache: 'no-store' });
 			}
+			const response = await fetch(url.toString(), { cache: 'no-store' });
+			if (!response.ok) {
+				throw new Error(`Brands ${pageLang} status ${response.status}`);
+			}
+			const payload = await response.json();
+			renderBrandsMenuFromPayload(payload, pageLang);
 		} catch (error) {
 			if (import.meta.env.DEV) {
 				console.warn('[brands-header-fetch] Preview runtime failed; keeping static content.', error);
@@ -572,15 +455,12 @@ const enHref = appendLang(Astro.url.pathname + Astro.url.search, 'en');
 				preview: previewEnabled,
 				source: 'runtime-message',
 				endpoint: brandsApiUrl || null,
-				lang: resolveActiveLang()
+				lang: pageLang
 			});
 		}
 		void hydratePreviewBrands();
 	});
 
-	const activeLang = resolveActiveLang();
-	syncLangInUrl(activeLang);
-	applyHeaderLanguage(activeLang);
 	restoreStaticBrandsMenu();
 	void hydratePreviewBrands();
 </script>

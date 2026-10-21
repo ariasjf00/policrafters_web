@@ -4,52 +4,32 @@
 // once per independent column stack (see .warranty-columns in warranty.astro's
 // <style>) — and a shared component beats duplicating the JSX inline.
 //
-// Purely presentational: it ships both languages as data-copy-es/-en but does
-// NOT subscribe to sitelangchange itself. warranty.astro's own script already
-// walks `.warranty-shell [data-copy-es]` on every language change, and this
-// component's markup lands inside that shell, so one subscriber covers it —
-// unlike DirectContact.astro/CatalogsCarousel.astro, which stand outside any
-// page shell and so own their own subscription.
+// Purely presentational and single-language: the host page is already
+// rendered in one language (route-based i18n — see src/lib/i18n.ts), so
+// there is nothing left to swap client-side.
 interface WarrantyItemProp {
-  labelEs: string;
-  labelEn: string;
-  textEs: string;
-  textEn: string;
+  label: string;
+  text: string;
 }
 
 interface Props {
-  lang?: 'en' | 'es';
   number: number;
-  titleEs: string;
-  titleEn: string;
-  introEs: string;
-  introEn: string;
+  title: string;
+  intro: string;
   items: WarrantyItemProp[];
 }
 
-const { lang = 'en', number, titleEs, titleEn, introEs, introEn, items } = Astro.props;
-const isEs = lang === 'es';
-const pick = (es: string, en: string) => (isEs ? es : en);
+const { number, title, intro, items } = Astro.props;
 ---
 
 <div class="warranty-section" style={`order: ${number}`}>
   <h2 class="warranty-section__title">
-    {`${number}. `}<span data-copy-es={titleEs} data-copy-en={titleEn}>{pick(titleEs, titleEn)}</span>
+    {`${number}. `}<span>{title}</span>
   </h2>
-  <p
-    class="warranty-section__intro"
-    data-copy-es={introEs}
-    data-copy-en={introEn}
-  >{pick(introEs, introEn)}</p>
+  <p class="warranty-section__intro">{intro}</p>
   <ul class="warranty-section__list">
     {items.map((item) => (
-      <li><strong
-        data-copy-es={item.labelEs}
-        data-copy-en={item.labelEn}
-      >{pick(item.labelEs, item.labelEn)}</strong><span
-        data-copy-es={item.textEs}
-        data-copy-en={item.textEn}
-      >{pick(item.textEs, item.textEn)}</span></li>
+      <li><strong>{item.label}</strong><span>{item.text}</span></li>
     ))}
   </ul>
 </div>

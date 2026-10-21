@@ -1,6 +1,7 @@
 import financeEnMock from '../mocks/finance-page.en.json';
 import financeEsMock from '../mocks/finance-page.es.json';
 import { toDevApiUrl } from './dev-proxy';
+import { type Lang, withLocaleParam } from './i18n';
 
 export interface FinanceImage {
   url?: string;
@@ -39,8 +40,6 @@ export interface FinancePagePayload {
     contact?: FinanceContact;
   };
 }
-
-type Lang = 'en' | 'es';
 
 const mocks: Record<Lang, FinancePagePayload> = {
   en: financeEnMock as FinancePagePayload,
@@ -125,22 +124,10 @@ const fetchLang = async (lang: Lang): Promise<FinancePagePayload> => {
   const fallback = mocks[lang];
   if (!useApi || !apiUrl) return toPayload(fallback, false, fallback);
 
-  let requestUrl = apiUrl;
-  let legacyLangUrl = apiUrl;
-  try {
-    const url = new URL(apiUrl);
-    url.searchParams.set('locale', lang);
-    requestUrl = url.toString();
-
-    const legacyUrl = new URL(apiUrl);
-    legacyUrl.searchParams.set('lang', lang);
-    legacyLangUrl = legacyUrl.toString();
-  } catch {
-    // Relative endpoint: send it as configured.
-    const separator = apiUrl.includes('?') ? '&' : '?';
-    requestUrl = `${apiUrl}${separator}locale=${lang}`;
-    legacyLangUrl = `${apiUrl}${separator}lang=${lang}`;
-  }
+  // withLocaleParam sets both `locale` (the unified param) and `lang` (the
+  // alias the current API still reads) on a single request — see
+  // Docs/API_CONTRACT.md "Convenciones generales".
+  const requestUrl = withLocaleParam(apiUrl, lang);
 
   try {
     const unwrapPayload = (payload: any): any => {
@@ -151,19 +138,12 @@ const fetchLang = async (lang: Lang): Promise<FinancePagePayload> => {
       return payload;
     };
 
-    const tryParse = async (url: string): Promise<FinancePagePayload | null> => {
-      const response = await fetch(url);
-      if (!response.ok) return null;
+    const response = await fetch(requestUrl);
+    if (response.ok) {
       const raw = await response.json();
       const payload = unwrapPayload(raw);
-      return payload && typeof payload === 'object' ? toPayload(payload, true, fallback) : null;
-    };
-
-    const fromLocale = await tryParse(requestUrl);
-    if (fromLocale) return fromLocale;
-
-    const fromLang = await tryParse(legacyLangUrl);
-    if (fromLang) return fromLang;
+      if (payload && typeof payload === 'object') return toPayload(payload, true, fallback);
+    }
   } catch (error) {
     console.warn(`No se pudo cargar Finance desde ${requestUrl}. Usando mock local.`, error);
   }
@@ -171,7 +151,4 @@ const fetchLang = async (lang: Lang): Promise<FinancePagePayload> => {
   return toPayload(fallback, false, fallback);
 };
 
-export const loadFinancePageContent = async (): Promise<{ en: FinancePagePayload; es: FinancePagePayload }> => {
-  const [en, es] = await Promise.all([fetchLang('en'), fetchLang('es')]);
-  return { en, es };
-};
+export const loadFinancePageContent = async (lang: Lang): Promise<FinancePagePayload> => fetchLang(lang);

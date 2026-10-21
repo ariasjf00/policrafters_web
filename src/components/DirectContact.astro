@@ -2,79 +2,41 @@
 // Shared "direct contact" block: the heading plus the row of link columns that
 // closes the homepage. Built to drop into any page as-is.
 //
-// Two rules shape this component, the same two as CatalogsCarousel.astro:
-//  - It must NOT import global.css. index.astro deliberately ships no Tailwind,
-//    and preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
-//    <style> below carries everything it needs; `--text` and `--muted` are declared
-//    by both index.astro and PageLayout.astro, so the vars resolve on either page.
-//  - It owns its own language switching. Both languages ship in the markup as
-//    data-copy-es/-en and the script subscribes to `sitelangchange` —
-//    Header.astro remains the sole dispatcher.
+// Must NOT import global.css. index.astro deliberately ships no Tailwind, and
+// preflight would land on its hand-written CSS (see CLAUDE.md). The scoped
+// <style> below carries everything it needs; `--text` and `--muted` are declared
+// by both index.astro and PageLayout.astro, so the vars resolve on either page.
 //
 // The host page supplies the container: this renders a bare <section>, so place it
 // inside whatever `.container`/wrapper that page already uses.
 
 import type { DirectContactPayload } from '../lib/direct-contact';
-import { toDevApiUrl } from '../lib/dev-proxy';
 
 interface Props {
-  lang?: 'en' | 'es';
-  en: DirectContactPayload;
-  es: DirectContactPayload;
+  lang: 'en' | 'es';
+  data: DirectContactPayload;
 }
 
-const { lang = 'en', en, es } = Astro.props;
-const isEs = lang === 'es';
-const pick = (enValue = '', esValue = '') => (isEs ? esValue : enValue);
+const { data } = Astro.props;
 
-const enCopy = en.copy ?? {};
-const esCopy = es.copy ?? {};
-const enItems = en.items ?? [];
-const esItems = es.items ?? [];
-
-// English is the spine: the destination URL is language-neutral, so only the title
-// and description are looked up per language (matching index.astro's previous
-// re-render, which also paired the two arrays by index).
-const items = enItems.map((item, index) => {
-  const esItem = esItems[index] ?? item;
-  return {
-    href: item.url || '#',
-    title: { en: item.title ?? '', es: esItem.title ?? item.title ?? '' },
-    description: { en: item.description ?? '', es: esItem.description ?? item.description ?? '' }
-  };
-});
-
-// One CTA label for every column, exactly as the page rendered it.
-const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
+const copy = data.copy ?? {};
+const items = (data.items ?? []).map((item) => ({
+  href: item.url || '#',
+  title: item.title ?? '',
+  description: item.description ?? ''
+}));
+const cta = copy.contact_cta ?? '';
 ---
 
 <section class="direct-contact">
-  <h2
-    id="contact-heading"
-    class="contact-heading"
-    data-copy-en={enCopy.contact_heading ?? ''}
-    data-copy-es={esCopy.contact_heading ?? ''}
-  >{pick(enCopy.contact_heading, esCopy.contact_heading)}</h2>
+  <h2 id="contact-heading" class="contact-heading">{copy.contact_heading ?? ''}</h2>
 
   <div class="contact-grid">
     {items.map((item) => (
       <div class="contact-col">
-        <h3
-          class="contact-col__title"
-          data-copy-en={item.title.en}
-          data-copy-es={item.title.es}
-        >{pick(item.title.en, item.title.es)}</h3>
-        <p
-          class="contact-col__description"
-          data-copy-en={item.description.en}
-          data-copy-es={item.description.es}
-        >{pick(item.description.en, item.description.es)}</p>
-        <a
-          class="contact-col__btn"
-          href={item.href}
-          data-copy-en={cta.en}
-          data-copy-es={cta.es}
-        >{pick(cta.en, cta.es)}</a>
+        <h3 class="contact-col__title">{item.title}</h3>
+        <p class="contact-col__description">{item.description}</p>
+        <a class="contact-col__btn" href={item.href}>{cta}</a>
       </div>
     ))}
   </div>
@@ -82,6 +44,8 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
 
 <script>
   // @ts-nocheck
+  import { toDevApiUrl } from '../lib/dev-proxy';
+
   const section = document.querySelector('.direct-contact');
 
   if (section) {
@@ -100,41 +64,13 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
       return stored === '1' || stored === 'true';
     };
 
-    const getLangFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      const lang = params.get('lang');
-      return lang === 'en' || lang === 'es' ? lang : null;
-    };
-
-    // Mirrors Header.astro's resolver: url -> localStorage -> 'en'.
-    const resolveActiveLang = () => {
-      const inUrl = getLangFromUrl();
-      if (inUrl) return inUrl;
-      const stored = localStorage.getItem('siteLang');
-      if (stored === 'en' || stored === 'es') return stored;
-      return 'en';
-    };
-
-    const applyDirectContactLanguage = (lang) => {
-      const key = lang === 'es' ? 'es' : 'en';
-
-      // Scoped to this section so the host page's own subscriber stays in charge
-      // of everything around it.
-      section.querySelectorAll('[data-copy-en]').forEach((el) => {
-        const value = el.getAttribute('data-copy-' + key);
-        if (value !== null) el.textContent = value;
-      });
-    };
-
-    const applyRuntimeDirectContact = (payload, lang) => {
-      const key = lang === 'es' ? 'es' : 'en';
-      const heading = section.querySelector('#contact-heading');
+    // The page itself is single-language (route-based i18n — see src/lib/i18n.ts),
+    // so a live preview only ever needs to refresh this block in that language.
+    const applyRuntimeDirectContact = (payload) => {
       const copy = payload?.copy ?? {};
-      if (heading) {
-        const headingValue = typeof copy.contact_heading === 'string' ? copy.contact_heading : '';
-        if (headingValue.trim()) {
-          heading.setAttribute('data-copy-' + key, headingValue);
-        }
+      const heading = section.querySelector('#contact-heading');
+      if (heading && typeof copy.contact_heading === 'string' && copy.contact_heading.trim()) {
+        heading.textContent = copy.contact_heading;
       }
 
       const items = Array.isArray(payload?.items) ? payload.items : [];
@@ -145,36 +81,33 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
         const description = column.querySelector('.contact-col__description');
         const button = column.querySelector('.contact-col__btn');
 
-        const titleValue = typeof item.title === 'string' ? item.title : '';
-        const descriptionValue = typeof item.description === 'string' ? item.description : '';
-        const ctaValue = typeof copy.contact_cta === 'string' ? copy.contact_cta : '';
-
-        if (title && titleValue.trim()) title.setAttribute('data-copy-' + key, titleValue);
-        if (description && descriptionValue.trim()) description.setAttribute('data-copy-' + key, descriptionValue);
-        if (button && ctaValue.trim()) button.setAttribute('data-copy-' + key, ctaValue);
+        if (title && typeof item.title === 'string' && item.title.trim()) title.textContent = item.title;
+        if (description && typeof item.description === 'string' && item.description.trim()) {
+          description.textContent = item.description;
+        }
+        if (button && typeof copy.contact_cta === 'string' && copy.contact_cta.trim()) {
+          button.textContent = copy.contact_cta;
+        }
       });
-
-      applyDirectContactLanguage(resolveActiveLang());
     };
 
     const runtimeDirectContactApiUrl = toDevApiUrl(import.meta.env.PUBLIC_DIRECT_CONTACT_API_URL || '', 'browser');
     const hydratePreviewDirectContact = async () => {
       if (!getPreviewState() || !runtimeDirectContactApiUrl) return;
 
-      try {
-        const results = await Promise.all(['en', 'es'].map(async (lang) => {
-          const url = new URL(runtimeDirectContactApiUrl);
-          url.searchParams.set('lang', lang);
-          if (import.meta.env.DEV) {
-            console.debug('[direct-contact-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
-          }
-          const response = await fetch(url.toString(), { cache: 'no-store' });
-          if (!response.ok) throw new Error(`Direct contact ${lang} status ${response.status}`);
-          return response.json();
-        }));
+      const lang = document.documentElement.lang === 'es' ? 'es' : 'en';
 
-        if (results[0]) applyRuntimeDirectContact(results[0], 'en');
-        if (results[1]) applyRuntimeDirectContact(results[1], 'es');
+      try {
+        const url = new URL(runtimeDirectContactApiUrl);
+        url.searchParams.set('locale', lang);
+        url.searchParams.set('lang', lang);
+        if (import.meta.env.DEV) {
+          console.debug('[direct-contact-fetch]', { preview: true, source: 'runtime', endpoint: url.toString(), lang, cache: 'no-store' });
+        }
+        const response = await fetch(url.toString(), { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Direct contact ${lang} status ${response.status}`);
+        const payload = await response.json();
+        if (payload) applyRuntimeDirectContact(payload);
       } catch (error) {
         if (import.meta.env.DEV) {
           console.warn('[direct-contact-fetch] Preview runtime failed; keeping static content.', error);
@@ -182,10 +115,6 @@ const cta = { en: enCopy.contact_cta ?? '', es: esCopy.contact_cta ?? '' };
       }
     };
 
-    // Subscriber only: self-boot first, since Header's boot dispatch fires before
-    // this script runs (same pattern as Footer.astro and CatalogsCarousel.astro).
-    applyDirectContactLanguage(resolveActiveLang());
-    document.addEventListener('sitelangchange', (event) => applyDirectContactLanguage(event.detail));
     void hydratePreviewDirectContact();
   }
 </script>
