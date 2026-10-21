@@ -92,7 +92,13 @@ const galleryByCategory = Object.fromEntries(
                       return (
                         <li>
                           <label class="filter-type" for={inputId}>
-                            <input type="checkbox" id={inputId} class="filter-type__checkbox" data-type={type.key} />
+                            <input
+                              type="checkbox"
+                              id={inputId}
+                              class="filter-type__checkbox"
+                              data-type={type.key}
+                              data-category={category.key}
+                            />
                             <span>{type.label}</span>
                           </label>
                         </li>
@@ -145,6 +151,7 @@ const galleryByCategory = Object.fromEntries(
     let cards = [];
     let checkboxes = [];
     let previewCategoryMap = new Map();
+    let lastPreviewSignature = '';
 
     // Astro's scoped <style> block only stamps its data-astro-cid-* attribute onto
     // markup it renders server-side; an element built by this script never gets
@@ -342,6 +349,28 @@ const galleryByCategory = Object.fromEntries(
 
     const applyRenovationsPreview = (previewData) => {
       const fields = previewData?.fields ?? {};
+      const previewCategories = Array.isArray(fields.categories) ? fields.categories : [];
+
+      const previewSignature = JSON.stringify({
+        seoTitle: previewData?.meta?.seo_title ?? '',
+        searchDescription: previewData?.meta?.search_description ?? '',
+        heroTitle: fields.hero_title ?? '',
+        introText: fields.intro_text ?? '',
+        emptyStateText: fields.empty_state_text ?? '',
+        categories: previewCategories
+      });
+      if (previewSignature === lastPreviewSignature) return;
+      lastPreviewSignature = previewSignature;
+
+      const previousActiveCategory = activeCategory;
+      const previouslyCheckedTypes = new Set(
+        checkboxes
+          .filter((checkbox) => checkbox.checked)
+          .map((checkbox) => {
+            const categoryKey = checkbox.dataset.category || checkbox.closest('.filter-section')?.dataset.category || '';
+            return `${categoryKey}::${checkbox.dataset.type || ''}`;
+          })
+      );
 
       setText(shell.querySelector('#renovations-title'), fields.hero_title);
       setText(shell.querySelector('#renovations-intro'), fields.intro_text);
@@ -358,7 +387,6 @@ const galleryByCategory = Object.fromEntries(
         }
       }
 
-      const previewCategories = Array.isArray(fields.categories) ? fields.categories : [];
       previewCategoryMap = new Map(previewCategories.map((category) => [category?.key, category]));
 
       if (filtersContainer && previewCategories.length > 0) {
@@ -409,6 +437,7 @@ const galleryByCategory = Object.fromEntries(
               input.id = inputId;
               input.className = 'filter-type__checkbox';
               input.dataset.type = typeKey;
+              input.dataset.category = categoryKey;
 
               const span = applyScope(document.createElement('span'));
               span.textContent = typeLabel;
@@ -439,8 +468,22 @@ const galleryByCategory = Object.fromEntries(
         bindFilterInteractions();
 
         const defaultCategory = previewCategories.find((category) => category?.key === 'commercial') || previewCategories[0];
-        if (defaultCategory?.key) {
-          setActiveCategory(defaultCategory.key);
+        const nextCategory = previewCategories.some((category) => category?.key === previousActiveCategory)
+          ? previousActiveCategory
+          : defaultCategory?.key;
+
+        if (nextCategory) {
+          setActiveCategory(nextCategory);
+        }
+
+        checkboxes.forEach((checkbox) => {
+          const categoryKey = checkbox.dataset.category || checkbox.closest('.filter-section')?.dataset.category || '';
+          const typeRef = `${categoryKey}::${checkbox.dataset.type || ''}`;
+          checkbox.checked = previouslyCheckedTypes.has(typeRef);
+        });
+
+        if (nextCategory) {
+          applyGalleryState();
         }
       }
     };
