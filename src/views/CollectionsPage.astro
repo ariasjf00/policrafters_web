@@ -587,15 +587,21 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
     cursor: pointer;
   }
 
+  /* Arrow icons (mdi arrow-right-thin / arrow-down-thin) drawn as a mask on ::after,
+     not <Icon>: the preview script rebuilds toggles client-side and would lose a child. */
   .filter-section__toggle::after {
-    content: '+';
-    font-size: 1.15rem;
-    line-height: 1;
+    content: '';
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask: var(--filter-toggle-icon) center / contain no-repeat;
+    mask: var(--filter-toggle-icon) center / contain no-repeat;
+    --filter-toggle-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 16.94v-4H5.08l-.03-2.01H14V6.94l5 5Z'/%3E%3C/svg%3E");
   }
 
   .filter-section__toggle[aria-expanded="true"]::after {
-    content: '\2212';
+    --filter-toggle-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7.03 13.92h4V5l2.01-.03v8.95h3.99l-5 5Z'/%3E%3C/svg%3E");
   }
 
   .filter-section__panel {

@@ -250,6 +250,7 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
     grid-auto-flow: column;
     grid-auto-columns: calc((100% - (3 * var(--catalogs-gap))) / 4);
     gap: var(--catalogs-gap);
+    justify-content: safe center;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
