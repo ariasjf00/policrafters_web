@@ -144,7 +144,7 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 			description={resolvedMeta.search_description}
 			lang={selectedLang}
 			availableLangs={availableLangs}
-			image={{ url: heroImageHorizontal, alt: heroImageAlt }} jsonLd={jsonLd}
+			image={heroImageHorizontal.startsWith("/images/") ? undefined : { url: heroImageHorizontal, alt: heroImageAlt }} jsonLd={jsonLd}
 		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
