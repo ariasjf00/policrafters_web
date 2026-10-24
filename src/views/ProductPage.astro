@@ -5,6 +5,7 @@ import { loadDirectContact } from '../lib/direct-contact';
 import { loadProductPageContent } from '../lib/product-content';
 import { type Lang, localizePath } from '../lib/i18n';
 import { breadcrumbLabels, breadcrumbLd, productLd } from '../lib/structured-data';
+import { resolveImage } from '../lib/images';
 
 type AnyRecord = Record<string, any>;
 
@@ -25,18 +26,21 @@ const searchDescription = data.meta?.search_description || 'Policrafters product
 
 const heroAlt = fields.hero_image?.alt || '';
 const heroImageUrl = fields.hero_image?.url || '';
+const heroImage = resolveImage({ url: heroImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const intro1 = fields.intro_text_1 || '';
 
 const secondaryAlt = fields.secondary_image?.alt || '';
 const secondaryImageUrl = fields.secondary_image?.url || '';
+const secondaryImage = resolveImage({ url: secondaryImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const intro2 = fields.intro_text_2 || '';
 const introProduct = fields.intro_text_product || fields.product_body || '';
 
 const galleryPair = (Array.isArray(fields.gallery_pair) ? fields.gallery_pair : []).map((image: AnyRecord) => ({
   url: image?.url || '',
-  alt: image?.alt || ''
+  alt: image?.alt || '',
+  img: resolveImage({ url: image?.url || '' }, { sizes: '(max-width: 700px) 100vw, 50vw', maxSrcWidth: 1200 })
 }));
 
 const eyebrow = fields.product_eyebrow || '';
@@ -65,7 +69,8 @@ const backToMenuLabel = fields.back_to_menu_label || '';
 // The CMS may return more than 4; this strip only ever shows 4.
 const relatedModels = (Array.isArray(fields.related_models) ? fields.related_models : []).slice(0, 4).map((model: AnyRecord) => ({
   title: model?.title || '',
-  thumbnail: { url: model?.thumbnail?.url || '', alt: model?.thumbnail?.alt || '' }
+  thumbnail: { url: model?.thumbnail?.url || '', alt: model?.thumbnail?.alt || '' },
+  img: resolveImage({ url: model?.thumbnail?.url || '' }, { sizes: '(max-width: 700px) 50vw, 25vw', maxSrcWidth: 800 })
 }));
 
 // Structured data. The collection has no URL of its own (categories are only a
@@ -104,7 +109,9 @@ const jsonLd = [
          so this image sits directly against the Header with no gap. -->
     <div class="product-bleed product-hero">
       <img
-        src={heroImageUrl}
+        src={heroImage.src}
+        srcset={heroImage.srcset}
+        sizes={heroImage.sizes}
         alt={heroAlt}
         width="2160"
         height="1440"
@@ -120,7 +127,9 @@ const jsonLd = [
     <!-- c. Secondary image — full-bleed, same treatment minus the top margin. -->
     <div class="product-bleed">
       <img
-        src={secondaryImageUrl}
+        src={secondaryImage.src}
+        srcset={secondaryImage.srcset}
+        sizes={secondaryImage.sizes}
         alt={secondaryAlt}
         width="2123"
         height="1440"
@@ -135,7 +144,7 @@ const jsonLd = [
     <!-- e. Image pair, edge to edge with visible white space between. -->
     <div class="product-pair">
       {galleryPair.map((image: AnyRecord) => (
-        <img src={image.url} alt={image.alt} width="1440" height="960" loading="lazy" decoding="async" />
+        <img src={image.img.src} srcset={image.img.srcset} sizes={image.img.sizes} alt={image.alt} width="1440" height="960" loading="lazy" decoding="async" />
       ))}
     </div>
 
@@ -195,7 +204,7 @@ const jsonLd = [
       <div class="related-products__grid">
         {relatedModels.map((model: AnyRecord) => (
           <a href="#" class="related-card">
-            <img src={model.thumbnail.url} alt={model.thumbnail.alt} width="2700" height="1800" loading="lazy" decoding="async" />
+            <img src={model.img.src} srcset={model.img.srcset} sizes={model.img.sizes} alt={model.thumbnail.alt} width="2700" height="1800" loading="lazy" decoding="async" />
             <span class="related-card__title">{model.title}</span>
           </a>
         ))}

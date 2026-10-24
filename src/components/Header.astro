@@ -6,6 +6,7 @@
 
 import { loadBrandsPageContent } from '../lib/brands-content';
 import { type Lang, LANGS, localizePath, stripLangPrefix, normalizePathname } from '../lib/i18n';
+import { getImageSize, resolveImage } from '../lib/images';
 
 interface Props {
 	lang: Lang;
@@ -78,6 +79,9 @@ const brandLinks: {
 })();
 const isExternal = (url: string) => /^https?:\/\//.test(url);
 
+// Real intrinsic size of the logo so it reserves its space (CSS still sets the rendered height).
+const logoSize = getImageSize(logo.url);
+
 // Tolerate a trailing slash so /collections/ keeps its active-page highlight,
 // and compare against the path with any /es prefix stripped, since navItems'
 // hrefs are already localized.
@@ -99,7 +103,7 @@ const esHref = hrefForLang('es');
 	data-scroll-shadow={scrollShadow ? '' : undefined}
 >
 	<a class="logo" href={localizePath('/', lang)}>
-		<img id="site-logo" src={logo.url} alt={logo.alt} />
+		<img id="site-logo" src={logo.url} alt={logo.alt} width={logoSize.width} height={logoSize.height} decoding="async" />
 	</a>
 	<button
 		type="button"
@@ -159,8 +163,7 @@ const esHref = hrefForLang('es');
 										>
 											<img
 												class="brands-menu__image"
-												src={brand.image.url}
-												alt={brand.image.alt}
+												{...resolveImage(brand.image ?? undefined, { sizes: '220px', maxSrcWidth: 480 })}
 												loading="lazy"
 												decoding="async"
 											/>

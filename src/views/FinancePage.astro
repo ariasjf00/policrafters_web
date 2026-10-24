@@ -3,6 +3,7 @@ import PageLayout from '../layouts/PageLayout.astro';
 import FinanceStep from '../components/FinanceStep.astro';
 import { loadFinancePageContent } from '../lib/finance-content';
 import type { Lang } from '../lib/i18n';
+import { resolveImage } from '../lib/images';
 
 type AnyRecord = Record<string, any>;
 
@@ -22,6 +23,7 @@ const searchDescription = data.meta?.search_description || '';
 // Hero image falls back to a generic asset; alt text comes from the CMS.
 const heroImageUrl = fields.hero_image?.url || '/images/pages/values_1.webp';
 const heroAlt = fields.hero_image?.alt || '';
+const heroImage = resolveImage({ url: heroImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const introHeading = fields.intro_heading || '';
 const introBody = fields.intro_body || '';
@@ -68,7 +70,9 @@ const contactEmail = contact.email || 'info@policrafters.com';
          against the Header with no gap. No text overlay. -->
     <div class="finance-bleed finance-hero">
       <img
-        src={heroImageUrl}
+        src={heroImage.src}
+        srcset={heroImage.srcset}
+        sizes={heroImage.sizes}
         alt={heroAlt}
         width="2160"
         height="1440"
@@ -220,7 +224,10 @@ const contactEmail = contact.email || 'info@policrafters.com';
       const heroImage = shell.querySelector('.finance-hero img');
       if (heroImage && fields.hero_image && typeof fields.hero_image === 'object') {
         const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
-        if (heroUrl) heroImage.setAttribute('src', heroUrl);
+        if (heroUrl) {
+          heroImage.removeAttribute('srcset');
+          heroImage.setAttribute('src', heroUrl);
+        }
         if (fields.hero_image.alt) heroImage.setAttribute('alt', fields.hero_image.alt);
       }
 

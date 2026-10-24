@@ -3,6 +3,7 @@ import { Icon } from 'astro-icon/components';
 import PageLayout from '../layouts/PageLayout.astro';
 import { loadCatalogs } from '../lib/catalogs';
 import type { Lang } from '../lib/i18n';
+import { resolveImage } from '../lib/images';
 
 type AnyRecord = Record<string, any>;
 
@@ -38,7 +39,7 @@ const catalogs = (Array.isArray(data.items) ? data.items : []).map((item: AnyRec
   return {
     href,
     opensNewTab: href !== '#',
-    imageUrl: item.image?.url ?? '',
+    img: resolveImage({ url: item.image?.url ?? '' }, { sizes: '(max-width: 560px) 100vw, 300px', maxSrcWidth: 800 }),
     alt: item.image?.alt ?? '',
     title: item.title ?? '',
     categories: (Array.isArray(item.categories) ? item.categories : []).join(' ')
@@ -99,7 +100,9 @@ const catalogs = (Array.isArray(data.items) ? data.items : []).map((item: AnyRec
               >
                 <img
                   class="catalog-tile__image"
-                  src={catalog.imageUrl}
+                  src={catalog.img.src}
+                  srcset={catalog.img.srcset}
+                  sizes={catalog.img.sizes}
                   alt={catalog.alt}
                   width="600"
                   height="800"

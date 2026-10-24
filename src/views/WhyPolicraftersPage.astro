@@ -3,6 +3,7 @@ import PageLayout from '../layouts/PageLayout.astro';
 import HeadedTextBlock from '../components/HeadedTextBlock.astro';
 import { loadWhyPolicraftersPageContent } from '../lib/why-policrafters-content';
 import type { Lang } from '../lib/i18n';
+import { resolveImage } from '../lib/images';
 
 type AnyRecord = Record<string, any>;
 
@@ -22,6 +23,7 @@ const searchDescription = data.meta?.search_description || '';
 // Section 1: banner + intro.
 const heroAlt = fields.hero_image?.alt || '';
 const heroImageUrl = fields.hero_image?.url || '';
+const heroImage = resolveImage({ url: heroImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const introEyebrow = fields.intro_eyebrow || '';
 const introHeading = fields.intro_heading || '';
@@ -38,6 +40,7 @@ const whyItems = (Array.isArray(fields.why_items) ? fields.why_items : []).map((
 // Section 3: Certifications.
 const certImageAlt = fields.certifications_image?.alt || '';
 const certImageUrl = fields.certifications_image?.url || '';
+const certImage = resolveImage({ url: certImageUrl }, { sizes: '(max-width: 900px) 100vw, 1100px', maxSrcWidth: 1600 });
 
 const certEyebrow = fields.certifications_eyebrow || '';
 const certHeading = fields.certifications_heading || '';
@@ -77,6 +80,7 @@ const partnersIntro = fields.partners_intro || '';
 const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((partner: AnyRecord) => ({
   logo: { url: partner.logo?.url || '', alt: partner.logo?.alt || '' },
   image: { url: partner.image?.url || '', alt: partner.image?.alt || '' },
+  img: resolveImage({ url: partner.image?.url || '' }, { sizes: '(max-width: 900px) 100vw, 50vw', maxSrcWidth: 1200 }),
   body: Array.isArray(partner.body) ? partner.body : []
 }));
 ---
@@ -87,7 +91,9 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
          services.astro's .services-bleed/.services-hero. -->
     <div class="why-bleed why-hero">
       <img
-        src={heroImageUrl}
+        src={heroImage.src}
+        srcset={heroImage.srcset}
+        sizes={heroImage.sizes}
         alt={heroAlt}
         width="1440"
         height="960"
@@ -126,7 +132,9 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
       <div class="why-cert-image-wrap">
         <img
           class="why-cert-image"
-          src={certImageUrl}
+          src={certImage.src}
+          srcset={certImage.srcset}
+          sizes={certImage.sizes}
           alt={certImageAlt}
           width="1440"
           height="500"
@@ -208,7 +216,9 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
           <div class="service-row__image-wrap">
             <img
               class="service-row__image"
-              src={partner.image.url}
+              src={partner.img.src}
+              srcset={partner.img.srcset}
+              sizes={partner.img.sizes}
               alt={partner.image.alt}
               width="1440"
               height="768"
@@ -259,7 +269,10 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
       const hero = shell.querySelector('.why-bleed img');
       if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
         const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
-        if (heroUrl) hero.setAttribute('src', heroUrl);
+        if (heroUrl) {
+          hero.removeAttribute('srcset');
+          hero.setAttribute('src', heroUrl);
+        }
         if (fields.hero_image.alt) hero.setAttribute('alt', fields.hero_image.alt);
       }
 
@@ -302,7 +315,10 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
       const certImage = certSection ? certSection.querySelector('.why-cert-image') : null;
       if (certImage && fields.certifications_image && typeof fields.certifications_image === 'object') {
         const certUrl = normalizePreviewAssetUrl(fields.certifications_image.url || '');
-        if (certUrl) certImage.setAttribute('src', certUrl);
+        if (certUrl) {
+          certImage.removeAttribute('srcset');
+          certImage.setAttribute('src', certUrl);
+        }
         if (fields.certifications_image.alt) certImage.setAttribute('alt', fields.certifications_image.alt);
       }
 
@@ -368,7 +384,10 @@ const partners = (Array.isArray(fields.partners) ? fields.partners : []).map((pa
         const image = row.querySelector('.service-row__image');
         if (image && partner.image && typeof partner.image === 'object') {
           const imageUrl = normalizePreviewAssetUrl(partner.image.url || '');
-          if (imageUrl) image.setAttribute('src', imageUrl);
+          if (imageUrl) {
+            image.removeAttribute('srcset');
+            image.setAttribute('src', imageUrl);
+          }
           if (partner.image.alt) image.setAttribute('alt', partner.image.alt);
         }
 

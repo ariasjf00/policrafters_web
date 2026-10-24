@@ -5,6 +5,7 @@ import { loadCollectionsPageContent } from '../lib/collections-content';
 import { loadDirectContact } from '../lib/direct-contact';
 import { type Lang, localizePath } from '../lib/i18n';
 import { breadcrumbLabels, breadcrumbLd } from '../lib/structured-data';
+import { resolveImage } from '../lib/images';
 
 type AnyRecord = Record<string, any>;
 
@@ -35,7 +36,8 @@ const categories = (Array.isArray(fields.categories) ? fields.categories : []).m
       typeKey: type.key,
       slug: product.slug ?? '#',
       title: product.title ?? '',
-      image: { url: product.image?.url ?? '', alt: product.image?.alt ?? '' }
+      image: { url: product.image?.url ?? '', alt: product.image?.alt ?? '' },
+      img: resolveImage({ url: product.image?.url ?? '' }, { sizes: '(max-width: 680px) 100vw, (max-width: 900px) 50vw, 25vw', maxSrcWidth: 800 })
     }))
   }))
 }));
@@ -108,7 +110,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
         <div class="gallery-grid" id="shower-doors-grid">
           {showerDoorProducts.map((product: AnyRecord) => (
             <a href={productHref(product.slug)} class="gallery-card" data-product-type={product.typeKey}>
-              <img src={product.image?.url || ''} alt={product.image?.alt || ''} loading="lazy" decoding="async" />
+              <img src={product.img.src} srcset={product.img.srcset} sizes={product.img.sizes} alt={product.image?.alt || ''} loading="lazy" decoding="async" />
               <span class="gallery-card__title">{product.title}</span>
             </a>
           ))}

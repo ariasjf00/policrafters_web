@@ -1,6 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components';
 import type { Lang } from '../lib/i18n';
+import { resolveImage } from '../lib/images';
 
 // Shared "Our Catalogs" slider, used by index.astro, contact-us.astro and
 // services.astro. Each page passes its own already-localized payload — this
@@ -41,11 +42,12 @@ interface Props {
 const { data, perPage = 4 } = Astro.props;
 
 const copy = data.copy ?? {};
+// Four cards per row on desktop, two then one at the breakpoints (see the track CSS).
+const cardSizes = '(max-width: 560px) 100vw, (max-width: 900px) 50vw, 25vw';
 const items = (data.items ?? []).map((item) => ({
-  url: item.image?.url ?? '',
+  image: resolveImage(item.image, { sizes: cardSizes, maxSrcWidth: 800 }),
   href: item.file_url || '#',
-  title: item.title ?? '',
-  alt: item.image?.alt ?? ''
+  title: item.title ?? ''
 }));
 
 const dotCount = Math.max(1, Math.ceil(items.length / perPage));
@@ -69,8 +71,10 @@ const shouldOpenInNewTab = (href = '') => Boolean(href && href !== '#');
       >
         <img
           class="catalog-card__image"
-          src={item.url}
-          alt={item.alt}
+          src={item.image.src}
+          srcset={item.image.srcset}
+          sizes={item.image.sizes}
+          alt={item.image.alt}
           loading="lazy"
           decoding="async"
         />

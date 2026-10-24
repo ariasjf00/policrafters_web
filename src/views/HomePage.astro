@@ -14,6 +14,7 @@ import "../styles/links.css";
 import { type Lang, localizePath } from "../lib/i18n";
 import { loadSiteSettings } from "../lib/site-settings";
 import { localBusinessLd } from "../lib/structured-data";
+import { resolveImage, resolveVideo } from "../lib/images";
 
 type AnyRecord = Record<string, any>;
 
@@ -44,6 +45,11 @@ const resolvedFields = resolvedData.fields ?? localHome.fields ?? {};
 const resolvedMeta = resolvedData.meta ?? localHome.meta ?? {};
 const fallbackFields = localHome.fields ?? {};
 const featuredProjects = Array.isArray(resolvedFields.featured_projects) ? resolvedFields.featured_projects : [];
+const featuredProjectCards = featuredProjects.map((project) => ({
+	...project,
+	img: resolveImage(project.thumbnail, { sizes: "(max-width: 700px) 85vw, 33vw", maxSrcWidth: 800 })
+}));
+const aboutImage = resolveImage({ url: "/images/pages/about_us.png" }, { sizes: "(max-width: 900px) 100vw, 33vw", maxSrcWidth: 800 });
 const copyFields = resolvedFields.copy ?? fallbackFields.copy ?? {};
 const getCopyText = (key, fallback = "") => {
 	const value = copyFields[key];
@@ -61,7 +67,8 @@ const teamMembers = teamMembersRaw.map((member) => ({
 	photo: {
 		url: heroAsset(member.photo?.url, member.photo?.url),
 		alt: member.photo?.alt || ""
-	}
+	},
+	img: resolveImage({ url: heroAsset(member.photo?.url, member.photo?.url) }, { sizes: "(max-width: 700px) 50vw, 25vw", maxSrcWidth: 800 })
 }));
 const valuesSlidesRaw = Array.isArray(resolvedFields.values_slides) && resolvedFields.values_slides.length
 	? resolvedFields.values_slides
@@ -71,7 +78,8 @@ const valuesSlides = valuesSlidesRaw.map((slide) => ({
 	image: {
 		url: heroAsset(slide.image?.url, slide.image?.url),
 		alt: slide.image?.alt || ""
-	}
+	},
+	img: resolveImage({ url: heroAsset(slide.image?.url, slide.image?.url) }, { sizes: "100vw", maxSrcWidth: 1600 })
 }));
 // Catalogs and direct contact are shared blocks, fetched once in the page's
 // own language — same pattern as every other page that uses them.
@@ -95,6 +103,11 @@ const heroImageVertical = heroAsset(
 	resolvedFields.hero_image_vertical?.url,
 	fallbackFields.hero_image_vertical?.url || "/images/pages/vertical_video_static_image.png"
 );
+const heroPosterHorizontal = resolveImage({ url: heroImageHorizontal }, { sizes: "100vw", maxSrcWidth: 1600 });
+const heroPosterVertical = resolveImage({ url: heroImageVertical }, { sizes: "100vw", maxSrcWidth: 1200 });
+// Compressed videos from scripts/optimize-media.mjs when they exist; the originals otherwise.
+const heroVideoHorizontalSrc = resolveVideo(heroVideoHorizontal).hd;
+const heroVideoVerticalSrc = resolveVideo(heroVideoVertical).sd;
 const heroImageAlt = resolvedFields.hero_image_horizontal?.alt || fallbackFields.hero_image_horizontal?.alt || "Policrafters";
 const siteLogoCandidate = resolvedFields.site_logo ?? resolvedFields.logo ?? resolvedFields.header_logo ?? fallbackFields.site_logo ?? fallbackFields.logo ?? fallbackFields.header_logo;
 const siteLogo = typeof siteLogoCandidate === "string"
@@ -155,8 +168,8 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 
 		<section class="hero">
 			<picture class="hero-poster">
-				<source media="(max-width: 900px)" srcset={heroImageVertical} />
-				<img src={heroImageHorizontal} alt={heroImageAlt} loading="eager" fetchpriority="high" />
+				<source media="(max-width: 900px)" srcset={heroPosterVertical.srcset ?? heroPosterVertical.src} sizes={heroPosterVertical.sizes} type={heroPosterVertical.srcset ? "image/webp" : undefined} />
+				<img src={heroPosterHorizontal.src} srcset={heroPosterHorizontal.srcset} sizes={heroPosterHorizontal.sizes} alt={heroImageAlt} width={heroPosterHorizontal.width} height={heroPosterHorizontal.height} loading="eager" fetchpriority="high" decoding="async" />
 			</picture>
 			<video
 				class="hero-video"
@@ -166,8 +179,8 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 				playsinline
 				preload="none"
 				aria-hidden="true"
-				data-src-horizontal={heroVideoHorizontal}
-				data-src-vertical={heroVideoVertical}
+				data-src-horizontal={heroVideoHorizontalSrc}
+				data-src-vertical={heroVideoVerticalSrc}
 			></video>
 			<div class="hero-overlay" />
 			<div class="hero-content">
@@ -211,9 +224,9 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 						</template>
 
 						<div class="projects-carousel" id="projects-carousel" aria-label={localizedProjectsCarouselAria}>
-							{featuredProjects.map((p, index) => (
+							{featuredProjectCards.map((p, index) => (
 								<a href="#" class="projects-card" data-project-index={index}>
-									<img src={p.thumbnail.url} alt={p.thumbnail.alt} loading="lazy" />
+									<img src={p.img.src} srcset={p.img.srcset} sizes={p.img.sizes} alt={p.thumbnail.alt} loading="lazy" decoding="async" />
 									<div class="projects-card__body">
 										<h3 class="projects-card__title">{p.title}</h3>
 										<p class="projects-card__description">{p.description}</p>
@@ -252,9 +265,12 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 				<div class="about-grid">
 					<img
 						class="about-image"
-						src="/images/pages/about_us.png"
+						src={aboutImage.src}
+						srcset={aboutImage.srcset}
+						sizes={aboutImage.sizes}
 						alt={localizedAboutAlt}
 						loading="lazy"
+						decoding="async"
 					/>
 					<div class="about-copy">
 						<p id="about-eyebrow" class="section-eyebrow">{localizedAboutEyebrow}</p>
@@ -282,9 +298,12 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 						<div class="team-card">
 							<img
 								class="team-card__photo"
-								src={member.photo.url}
+								src={member.img.src}
+								srcset={member.img.srcset}
+								sizes={member.img.sizes}
 								alt={member.photo.alt || (isEs ? "Integrante del equipo Policrafters" : "Policrafters team member")}
 								loading="lazy"
+								decoding="async"
 							/>
 							<div class="team-card__meta">
 								<p class="team-card__role">{member.role}</p>
@@ -309,7 +328,9 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 						<div class:list={["values-slide", index === 0 && "is-active"]} data-slide-index={index} aria-hidden={index === 0 ? "false" : "true"}>
 							<img
 								class="values-slide__image"
-								src={slide.image.url}
+								src={slide.img.src}
+								srcset={slide.img.srcset}
+								sizes={slide.img.sizes}
 								alt={slide.image.alt}
 								loading={index === 0 ? "eager" : "lazy"}
 							/>
@@ -406,6 +427,7 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 							);
 						}
 
+						image.removeAttribute('srcset');
 						image.setAttribute('src', imageUrl);
 						image.setAttribute(
 							'alt',
@@ -468,6 +490,7 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 							);
 						}
 
+						image.removeAttribute('srcset');
 						image.src = imageUrl;
 						image.alt = value.image?.alt || '';
 						image.loading = index === 0 ? 'eager' : 'lazy';
@@ -516,6 +539,8 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 
 					const photo = document.createElement('img');
 					photo.className = 'team-card__photo';
+					photo.loading = 'lazy';
+					photo.decoding = 'async';
 					applyAstroScope(photo);
 
 					let photoUrl = member.photo?.url || '';
@@ -531,6 +556,7 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 						);
 					}
 
+					photo.removeAttribute('srcset');
 					photo.src = photoUrl;
 					photo.alt =
 						member.photo?.alt ||
