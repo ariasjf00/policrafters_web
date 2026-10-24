@@ -10,6 +10,7 @@ import ScrollToTop from "../components/ScrollToTop.astro";
 import CatalogsCarousel from "../components/CatalogsCarousel.astro";
 import DirectContact from "../components/DirectContact.astro";
 import SeoHead from "../components/SeoHead.astro";
+import Analytics from "../components/Analytics.astro";
 import "../styles/links.css";
 import { type Lang, localizePath } from "../lib/i18n";
 import { loadSiteSettings } from "../lib/site-settings";
@@ -159,6 +160,7 @@ const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 			availableLangs={availableLangs}
 			image={heroImageHorizontal.startsWith("/images/") ? undefined : { url: heroImageHorizontal, alt: heroImageAlt }} jsonLd={jsonLd}
 		/>
+		<Analytics />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet" />
