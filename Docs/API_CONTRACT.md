@@ -15,6 +15,25 @@ Este documento vive en `Docs/API_CONTRACT.md` en ambos repos (mismo archivo, ref
   llegan, `locale` gana. Si no viene ninguno, o el valor no es válido, la respuesta es en inglés.
 - `locale` (en la respuesta): `"en"` o `"es"`, el idioma resuelto de la página consultada.
 - Todo campo de imagen sigue la forma `{ "url": "string", "alt": "string" }`.
+- **Imagen extendida (Fase 3 SEO).** `url` y `alt` siguen siendo obligatorios y no cambian. Se
+  agregan tres campos **opcionales**: `width` y `height` (píxeles del archivo original) y
+  `renditions` (`{ "<ancho>": "<url>" }`, versiones WebP redimensionadas generadas con las
+  *renditions* de Wagtail). El frontend funciona con cualquier subconjunto de estos campos: sin
+  `renditions` usa `url`; sin `width`/`height` no declara dimensiones. Además, el texto
+  alternativo (`alt`) debería ser obligatorio al subir una imagen en Wagtail.
+
+  ```json
+  {
+    "url": "/media/images/foto.original.jpg",
+    "alt": "Puerta de ducha fija de vidrio templado",
+    "width": 2400,
+    "height": 1600,
+    "renditions": {
+      "800": "/media/images/foto.width-800.webp",
+      "1600": "/media/images/foto.width-1600.webp"
+    }
+  }
+  ```
 - Campos opcionales/nulos se marcan explícitamente como `"string | null"`.
 - `meta.seo_title` y `meta.search_description` vienen de los campos SEO nativos de Wagtail — siempre presentes, pueden estar vacíos.
 - `meta.translations` (opcional): `{ "en": "<slug>", "es": "<slug>" }`, tomado del `translation_key`
@@ -1146,6 +1165,98 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 
 ---
 
+## SiteSettings — datos de la empresa
+
+Ficha única de la empresa para los datos estructurados (Schema.org / JSON-LD) de todo el sitio.
+Hoy la dirección y el teléfono solo existen dentro de la página de contacto y del pie de página;
+este endpoint los centraliza (un ajuste global de Wagtail, `Settings`).
+
+```
+GET /api/site-settings?locale=en|es
+```
+
+```json
+{
+  "type": "site.SiteSettings",
+  "title": "string",
+  "locale": "en | es",
+  "meta": { "seo_title": "string", "search_description": "string" },
+  "fields": {
+    "legal_name": "string",
+    "phone": "string",
+    "email": "string | null",
+    "addresses": [
+      {
+        "street": "string",
+        "city": "string",
+        "region": "string",
+        "postal_code": "string",
+        "country": "string"
+      }
+    ],
+    "opening_hours": ["Mo-Fr 08:00-17:00"],
+    "area_served": ["Miami-Dade", "Broward"],
+    "license_number": "string",
+    "certifications": [
+      { "name": "string", "issuer": "string | null", "url": "string | null" }
+    ],
+    "social_links": ["https://www.instagram.com/..."],
+    "logo": { "url": "string", "alt": "string" }
+  }
+}
+```
+
+### Reglas de implementación
+
+- **Estos datos hay que confirmarlos antes de cargarlos.** En los datos de prueba las cuatro
+  direcciones de contacto son la misma (7735 NW 75th Ave, Medley) y el teléfono es (813), código
+  de área de Tampa, mientras que la dirección queda en Miami-Dade. Google y los asistentes de IA
+  cruzan estos datos con otras fuentes: tienen que ser exactamente los mismos en todas partes.
+- `opening_hours` usa el formato de Schema.org (`"Mo-Fr 08:00-17:00"`).
+- Si un campo no tiene dato (listas vacías, `license_number` vacío), el frontend simplemente no
+  lo publica — nunca se inventa.
+- Mocks de referencia: [src/mocks/site-settings.en.json](../src/mocks/site-settings.en.json) y
+  [src/mocks/site-settings.es.json](../src/mocks/site-settings.es.json).
+
+---
+
+## Redirects — redirecciones administrables
+
+Lista de redirecciones del módulo `wagtail.contrib.redirects`. Como el sitio es estático, el
+frontend la lee **al construir el sitio** y la convierte en reglas de nginx (`nginx/redirects-301.map`
+y `nginx/redirects-302.map`); no se consulta en tiempo de ejecución.
+
+```
+GET /api/redirects
+```
+
+```json
+{
+  "type": "redirects.RedirectList",
+  "title": "Redirects",
+  "locale": "en",
+  "meta": {},
+  "fields": {
+    "items": [
+      { "old_path": "/collections/model-1", "new_path": "/collections/shower-doors/fixed", "is_permanent": true }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- Endpoint sin idioma: no lleva `?locale=`. Una ruta en español es simplemente otra ruta
+  (`/es/colecciones/...`).
+- `old_path` es una ruta relativa al sitio: empieza con `/`, sin barra final y sin query string.
+- `new_path` es una ruta relativa con las mismas reglas, o una URL absoluta `https://...`.
+- `is_permanent: true` → 301; `false` → 302.
+- El frontend descarta entradas con espacios, comillas, `;`, `{`, `}` o `$`, redirecciones a sí
+  mismas y ciclos simples (A→B, B→A), avisando por consola.
+- Mock de referencia: [src/mocks/redirects.json](../src/mocks/redirects.json) (lista vacía).
+
+---
+
 ## Pendiente de definir (próximos contratos)
 
 - [x] `RenovationIndexPage` (ver [RenovationIndexPage](#renovationindexpage))
@@ -1154,4 +1265,6 @@ en el payload, así que no reemplazan al rate limiting del servidor.
 - [x] `TermsPage` (ver [TermsPage](#termspage))
 - [x] `WarrantyPage` (ver [WarrantyPage](#warrantypage))
 - [x] `ContactPage` (contenido visual de `/contact-us`, excluye formulario)
+- [x] `SiteSettings` (ver [SiteSettings](#sitesettings--datos-de-la-empresa))
+- [x] `Redirects` (ver [Redirects](#redirects--redirecciones-administrables))
 - [x] Endpoint de leads (`POST /api/leads/from-web/` en el CRM) — ver [Formulario de contacto (leads)](#formulario-de-contacto-leads). Borrador del frontend, pendiente de acordar la ruta final con el backend.
