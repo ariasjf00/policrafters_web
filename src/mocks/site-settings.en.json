@@ -1,0 +1,26 @@
+{
+  "type": "site.SiteSettings",
+  "title": "Site settings",
+  "locale": "en",
+  "meta": { "seo_title": "", "search_description": "" },
+  "fields": {
+    "legal_name": "Policrafters",
+    "phone": "+1 (813) 812-0650",
+    "email": "info@policrafters.com",
+    "addresses": [
+      {
+        "street": "7735 NW 75th Ave",
+        "city": "Medley",
+        "region": "FL",
+        "postal_code": "33166",
+        "country": "US"
+      }
+    ],
+    "opening_hours": [],
+    "area_served": [],
+    "license_number": "",
+    "certifications": [],
+    "social_links": [],
+    "logo": { "url": "/logo_black.png", "alt": "Policrafters" }
+  }
+}

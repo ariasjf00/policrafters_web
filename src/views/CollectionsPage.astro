@@ -4,6 +4,7 @@ import DirectContact from '../components/DirectContact.astro';
 import { loadCollectionsPageContent } from '../lib/collections-content';
 import { loadDirectContact } from '../lib/direct-contact';
 import { type Lang, localizePath } from '../lib/i18n';
+import { breadcrumbLabels, breadcrumbLd } from '../lib/structured-data';
 
 type AnyRecord = Record<string, any>;
 
@@ -45,9 +46,12 @@ const showerDoorTypes = Array.isArray(showerDoorsCategory.types) ? showerDoorsCa
 const showerDoorProducts = showerDoorTypes.flatMap((type: AnyRecord) => type.products.map((product: AnyRecord) => product));
 
 const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/collections/${slug}`, lang) : '#');
+
+const labels = breadcrumbLabels[lang];
+const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.collections, path: '/collections' }], lang, Astro.site)];
 ---
 
-<PageLayout lang={lang} title={pageSeoTitle} description={pageDescription} showHero={false}>
+<PageLayout lang={lang} title={pageSeoTitle} description={pageDescription} showHero={false} jsonLd={jsonLd}>
   <section class="collections-shell">
     <h1 id="collections-title">{pageTitle}</h1>
     <p id="collections-intro" class="collections-copy">{introText}</p>

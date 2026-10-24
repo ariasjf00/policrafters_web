@@ -12,6 +12,8 @@ import DirectContact from "../components/DirectContact.astro";
 import SeoHead from "../components/SeoHead.astro";
 import "../styles/links.css";
 import { type Lang, localizePath } from "../lib/i18n";
+import { loadSiteSettings } from "../lib/site-settings";
+import { localBusinessLd } from "../lib/structured-data";
 
 type AnyRecord = Record<string, any>;
 
@@ -128,6 +130,9 @@ const localizedValuesNextAria = getCopyText("values_next_aria", "");
 const localizedValuesCarouselAria = getCopyText("values_carousel_aria", "");
 const localizedValuesDotAria = getCopyText("values_dot_aria", "");
 const heroCtaUrl = localizePath('/contact-us', lang);
+
+const siteSettings = await loadSiteSettings(lang);
+const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 ---
 
 <html lang={lang}>
@@ -139,7 +144,7 @@ const heroCtaUrl = localizePath('/contact-us', lang);
 			description={resolvedMeta.search_description}
 			lang={selectedLang}
 			availableLangs={availableLangs}
-			image={{ url: heroImageHorizontal, alt: heroImageAlt }}
+			image={{ url: heroImageHorizontal, alt: heroImageAlt }} jsonLd={jsonLd}
 		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

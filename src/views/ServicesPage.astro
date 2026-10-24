@@ -6,6 +6,8 @@ import { loadServicesPageContent } from '../lib/services-content';
 import { loadCatalogs } from '../lib/catalogs';
 import { loadDirectContact } from '../lib/direct-contact';
 import type { Lang } from '../lib/i18n';
+import { loadSiteSettings } from '../lib/site-settings';
+import { breadcrumbLabels, breadcrumbLd, serviceLd } from '../lib/structured-data';
 
 type AnyRecord = Record<string, any>;
 
@@ -37,9 +39,21 @@ const services = (Array.isArray(fields.services) ? fields.services : []).map((it
   body: Array.isArray(item.body) ? item.body : [],
   image: { url: item.image?.url || '', alt: item.image?.alt || '' }
 }));
+
+const siteSettings = await loadSiteSettings(lang);
+const labels = breadcrumbLabels[lang];
+const jsonLd = [
+  breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.services, path: '/services' }], lang, Astro.site),
+  ...serviceLd(
+    services.map((service) => ({ name: service.heading, description: service.body[0] })),
+    siteSettings,
+    lang,
+    Astro.site
+  )
+];
 ---
 
-<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false}>
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} jsonLd={jsonLd}>
   <section class="services-shell">
     <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
          top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`

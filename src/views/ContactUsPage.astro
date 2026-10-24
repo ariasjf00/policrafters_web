@@ -4,6 +4,8 @@ import CatalogsCarousel from '../components/CatalogsCarousel.astro';
 import { loadCatalogs } from '../lib/catalogs';
 import { loadContactPageContent } from '../lib/contact-content';
 import type { Lang } from '../lib/i18n';
+import { loadSiteSettings } from '../lib/site-settings';
+import { localBusinessLd } from '../lib/structured-data';
 
 interface Props {
   lang: Lang;
@@ -60,9 +62,12 @@ const locations = (Array.isArray(data.locations) ? data.locations : []).map((loc
       : `Policrafters ${location?.name || `LOCATION ${index + 1}`} building`)
   };
 });
+
+const siteSettings = await loadSiteSettings(lang);
+const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 ---
 
-<PageLayout lang={lang} title={pageTitle} description={pageDescription} showHero={false} image={{ url: bannerImageUrl, alt: bannerAlt }}>
+<PageLayout lang={lang} title={pageTitle} description={pageDescription} showHero={false} image={{ url: bannerImageUrl, alt: bannerAlt }} jsonLd={jsonLd}>
   <section class="contact-page">
     <header class="contact-intro">
       <h1>{contentCopy.heading}</h1>

@@ -4,6 +4,7 @@ import DirectContact from '../components/DirectContact.astro';
 import { loadDirectContact } from '../lib/direct-contact';
 import { loadProductPageContent } from '../lib/product-content';
 import { type Lang, localizePath } from '../lib/i18n';
+import { breadcrumbLabels, breadcrumbLd, productLd } from '../lib/structured-data';
 
 type AnyRecord = Record<string, any>;
 
@@ -66,9 +67,37 @@ const relatedModels = (Array.isArray(fields.related_models) ? fields.related_mod
   title: model?.title || '',
   thumbnail: { url: model?.thumbnail?.url || '', alt: model?.thumbnail?.alt || '' }
 }));
+
+// Structured data. The collection has no URL of its own (categories are only a
+// ?category= filter on /collections), so the trail is Home > Collections > product.
+const productPath = slug ? `/collections/${slug}` : '/collections/product';
+const productName = heading || data.title || '';
+const labels = breadcrumbLabels[lang];
+const jsonLd = [
+  breadcrumbLd(
+    [
+      { name: labels.home, path: '/' },
+      { name: labels.collections, path: '/collections' },
+      { name: productName, path: productPath }
+    ],
+    lang,
+    Astro.site
+  ),
+  productLd(
+    {
+      name: productName,
+      description: data.meta?.search_description || introProduct,
+      images: [heroImageUrl, secondaryImageUrl, ...galleryPair.map((image) => image.url)],
+      category: collectionName,
+      path: productPath
+    },
+    lang,
+    Astro.site
+  )
+];
 ---
 
-<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} image={{ url: heroImageUrl, alt: heroAlt }} ogType="product">
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} image={{ url: heroImageUrl, alt: heroAlt }} ogType="product" jsonLd={jsonLd}>
   <section class="product-shell">
     <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
          top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`

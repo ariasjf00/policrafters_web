@@ -4,6 +4,7 @@ import DirectContact from '../components/DirectContact.astro';
 import { loadRenovationsPageContent } from '../lib/renovations-content';
 import { loadDirectContact } from '../lib/direct-contact';
 import type { Lang } from '../lib/i18n';
+import { breadcrumbLabels, breadcrumbLd } from '../lib/structured-data';
 
 type AnyRecord = Record<string, any>;
 
@@ -63,9 +64,12 @@ const galleryByCategory = Object.fromEntries(
       (category.types ?? []).flatMap((type: AnyRecord) => type.products.map((product: AnyRecord) => product))
     ])
 );
+
+const labels = breadcrumbLabels[lang];
+const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.renovations, path: '/renovations' }], lang, Astro.site)];
 ---
 
-<PageLayout lang={lang} title={pageSeoTitle} description={pageDescription} showHero={false}>
+<PageLayout lang={lang} title={pageSeoTitle} description={pageDescription} showHero={false} jsonLd={jsonLd}>
   <section class="renovations-shell">
     <h1 id="renovations-title">{pageTitle}</h1>
     <p id="renovations-intro" class="renovations-copy">{introText}</p>
