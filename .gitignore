@@ -21,3 +21,10 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+# generated media (scripts/optimize-media.mjs)
+public/_media/
+src/data/media-manifest.json
+
+# generated nginx redirect maps (src/integrations/nginx-redirects.mjs)
+nginx/*.map

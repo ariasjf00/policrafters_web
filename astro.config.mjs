@@ -7,10 +7,13 @@ import icon from 'astro-icon';
 
 import sitemap from '@astrojs/sitemap';
 
+import nginxRedirects from './src/integrations/nginx-redirects.mjs';
+
 // astro.config.mjs runs in Node before Astro's own `import.meta.env` exists, so SEO-related
 // env vars (SITE_URL, PUBLIC_ALLOW_INDEXING) are read here with Vite's loadEnv instead.
 const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
 const siteUrl = env.SITE_URL || process.env.SITE_URL || 'https://policrafters.com';
+const allowIndexing = (env.PUBLIC_ALLOW_INDEXING || process.env.PUBLIC_ALLOW_INDEXING) === 'true';
 
 // Routes that should never appear in the sitemap: the CMS preview stub, the
 // still-placeholder /projects page (see src/pages/preview.astro,
@@ -34,7 +37,12 @@ export default defineConfig({
   },
   integrations: [
     icon(),
-    sitemap({
+    // CMS redirects -> nginx/redirects-{301,302}.map (see nginx.conf).
+    nginxRedirects({
+      useApi: (env.PUBLIC_USE_API || process.env.PUBLIC_USE_API) === 'true',
+      apiUrl: env.PUBLIC_REDIRECTS_API_URL || process.env.PUBLIC_REDIRECTS_API_URL || ''
+    }),
+    ...(allowIndexing ? [sitemap({
       // Emits xhtml:link alternates (hreflang) per URL — see
       // src/components/SeoHead.astro for the same pair in each page's <head>.
       // English has no path segment (it's the default locale), Spanish is /es.
@@ -47,7 +55,7 @@ export default defineConfig({
         const normalized = pathname.replace(/\/+$/, '') || '/';
         return !SITEMAP_EXCLUDED_PATHS.includes(normalized);
       }
-    })
+    })] : [])
   ],
   vite: {
     plugins: [tailwindcss()],

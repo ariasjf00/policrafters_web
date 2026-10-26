@@ -4,6 +4,9 @@ import CatalogsCarousel from '../components/CatalogsCarousel.astro';
 import { loadCatalogs } from '../lib/catalogs';
 import { loadContactPageContent } from '../lib/contact-content';
 import type { Lang } from '../lib/i18n';
+import { loadSiteSettings } from '../lib/site-settings';
+import { resolveImage } from '../lib/images';
+import { localBusinessLd } from '../lib/structured-data';
 
 interface Props {
   lang: Lang;
@@ -27,6 +30,7 @@ const contactUrl = data.contact?.url_contact || '';
 
 const bannerImageUrl = data.banner_image?.url || '/images/pages/values_1.webp';
 const bannerAlt = data.banner_image?.alt || '';
+const bannerImage = resolveImage({ url: bannerImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const copy = data.copy ?? {};
 const contentCopy = {
@@ -54,15 +58,18 @@ const locations = (Array.isArray(data.locations) ? data.locations : []).map((loc
     street,
     city,
     url: location?.url || (query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '#'),
-    imageUrl: location?.image?.url || '/images/pages/location.png',
+    image: resolveImage({ url: location?.image?.url || '/images/pages/location.png' }, { sizes: '252px', maxSrcWidth: 800 }),
     alt: location?.image?.alt || (isEs
       ? `Edificio de Policrafters ${location?.name || `UBICACIÓN ${index + 1}`}`
       : `Policrafters ${location?.name || `LOCATION ${index + 1}`} building`)
   };
 });
+
+const siteSettings = await loadSiteSettings(lang);
+const jsonLd = [localBusinessLd(siteSettings, lang, Astro.site)];
 ---
 
-<PageLayout lang={lang} title={pageTitle} description={pageDescription} showHero={false} image={{ url: bannerImageUrl, alt: bannerAlt }}>
+<PageLayout lang={lang} title={pageTitle} description={pageDescription} showHero={false} image={{ url: bannerImageUrl, alt: bannerAlt }} jsonLd={jsonLd}>
   <section class="contact-page">
     <header class="contact-intro">
       <h1>{contentCopy.heading}</h1>
@@ -82,7 +89,9 @@ const locations = (Array.isArray(data.locations) ? data.locations : []).map((loc
         <img
           class="contact-banner__image"
           data-contact-field="banner-image"
-          src={bannerImageUrl}
+          src={bannerImage.src}
+          srcset={bannerImage.srcset}
+          sizes={bannerImage.sizes}
           alt=""
           width="1600"
           height="896"
@@ -135,7 +144,9 @@ const locations = (Array.isArray(data.locations) ? data.locations : []).map((loc
           <li class="location-card">
             <img
               class="location-card__image"
-              src={location.imageUrl}
+              src={location.image.src}
+              srcset={location.image.srcset}
+              sizes={location.image.sizes}
               width="252"
               height="200"
               loading="lazy"
@@ -238,7 +249,10 @@ const locations = (Array.isArray(data.locations) ? data.locations : []).map((loc
     const bannerImage = document.querySelector('[data-contact-field="banner-image"]');
     if (bannerImage && fields.banner_image && typeof fields.banner_image === 'object') {
       const bannerUrl = normalizePreviewAssetUrl(fields.banner_image.url || '');
-      if (bannerUrl) bannerImage.setAttribute('src', bannerUrl);
+      if (bannerUrl) {
+        bannerImage.removeAttribute('srcset');
+        bannerImage.setAttribute('src', bannerUrl);
+      }
       if (fields.banner_image.alt) bannerImage.setAttribute('alt', fields.banner_image.alt);
     }
 

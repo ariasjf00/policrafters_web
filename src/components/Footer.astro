@@ -2,6 +2,7 @@
 import { Icon } from 'astro-icon/components';
 import '../styles/links.css';
 import { type Lang, localizePath } from '../lib/i18n';
+import { getImageSize } from '../lib/images';
 
 interface Props {
   lang: Lang;
@@ -118,13 +119,14 @@ const contactPhoneDisplay = '+1 (813) 812-0650';
 const contactPhoneHref = `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
 const contactEmail = 'info@policrafters.com';
 const contactAddress = '7735 NW 75th Ave, Medley, FL 33166';
-const contactMapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`;
+const footerLogoSize = getImageSize('/logo_grey.png');
+const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`;
 ---
 
 <footer class="site-footer">
   <div class="footer-grid">
     <div class="footer-col footer-col--brand">
-      <img class="footer-logo" src="/logo_grey.png" alt="Policrafters logo" />
+      <img class="footer-logo" src="/logo_grey.png" alt="Policrafters logo" width={footerLogoSize.width} height={footerLogoSize.height} loading="lazy" decoding="async" />
       <p id="footer-blurb-1" class="footer-blurb">{t.blurb1}</p>
       <p id="footer-blurb-2" class="footer-blurb">{t.blurb2}</p>
     </div>
