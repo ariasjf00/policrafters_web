@@ -1,34 +1,39 @@
 # SEO Phase 1 — pending changes for production
 
-Phase 1 (see `src/components/SeoHead.astro`, `src/lib/seo.ts`, `src/pages/robots.txt.ts`,
-`nginx.conf`) deliberately left the site in "development mode": noindex by default,
-pointed at the production domain but not yet serving from it, and several
-placeholder links left untouched. This file is the checklist for go-live —
+Phase 1 (see `src/components/SeoHead.astro`, `src/lib/seo.ts`,
+`src/pages/robots.txt.ts`, `astro.config.mjs`, `docker-compose.yml`) deliberately
+left the site in "development mode": noindex by default, pointed at the
+production domain but not yet serving from it, and several placeholder links
+left untouched. This file is the checklist for go-live —
 work through it when the site is actually ready to launch on
 `https://policrafters.com`. Later phases get their own
 `Docs/SEO_phaseN_prod_changes_pending.md` file; don't merge them into this one.
+
+- **Staging build settings:** use `SITE_URL=https://astro.novatierra.cloud` and
+  `PUBLIC_ALLOW_INDEXING=false`. The pages emit `noindex`, Traefik adds the
+  `X-Robots-Tag: noindex, nofollow` response header, `robots.txt` allows
+  crawling so search engines can read those directives, and no sitemap is
+  generated. Do not use `Disallow: /` as a substitute for `noindex`.
 
 - [ ] **Turn indexing on.**
   What: set `PUBLIC_ALLOW_INDEXING=true` in the production build environment.
   Where: production `.env` / CI build variables (see `.env.example`).
   Why: it defaults to unset (noindex) everywhere else — `src/lib/seo.ts`'s
   `isIndexingAllowed()`, `src/pages/robots.txt.ts`, every page's robots meta tag.
-  How to verify: build with it set, confirm `dist/robots.txt` says `Allow: /`
-  and no page (except `404`, `preview`, `projects`) has a `noindex` meta tag.
+  How to verify: build with it set, confirm `dist/robots.txt` says `Allow: /`,
+  the production sitemap is generated, and no indexable page (except `404`,
+  `preview`, `projects`) has a `noindex` meta tag.
 
 - [ ] **Point `SITE_URL` at production (and staging at itself).**
   What: set `SITE_URL=https://policrafters.com` for the production build.
   Where: production build env (`astro.config.mjs` reads it via `loadEnv`).
   Why: canonical, Open Graph and sitemap URLs are all built from this. It
   currently defaults to `https://policrafters.com` even for the staging
-  build at `astro.novatierra.cloud`, which is harmless only because staging
-  is also noindexed at three other layers (robots meta, robots.txt, the
-  Traefik `X-Robots-Tag` header below) — it should still be set explicitly
-  for staging (e.g. `SITE_URL=https://astro.novatierra.cloud`) so its own
-  canonical/OG tags are self-consistent if anyone inspects them directly.
-  How to verify: `grep -o 'canonical" href="[^"]*"' dist/*.html` and
-  `cat dist/sitemap-0.xml` — the origin should match the environment that
-  built them.
+  build at `astro.novatierra.cloud`; set it explicitly for staging so its
+  canonical/OG tags are self-consistent, and set it to the production domain
+  for production. How to verify: inspect a built page's canonical URL and,
+  on the indexable production build, the sitemap URLs; their origins should
+  match the environment that built them.
 
 - [ ] **Remove the staging noindex middleware; point the router at the real domain.**
   What: delete the `traefik.http.middlewares.policrafters-noindex...` and
@@ -39,6 +44,9 @@ work through it when the site is actually ready to launch on
   Where: `docker-compose.yml`.
   Why: that middleware sends `X-Robots-Tag: noindex, nofollow` on every
   response — correct for staging, would block indexing in production if left on.
+  Also change the router host to `policrafters.com`, configure DNS and TLS for
+  the production VPS, and choose whether `www.policrafters.com` redirects to
+  the apex domain or vice versa.
   How to verify: `curl -I https://policrafters.com/` shows no `X-Robots-Tag`
   header; `curl -I https://www.policrafters.com/` behaves as decided.
 

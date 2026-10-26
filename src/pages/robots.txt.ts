@@ -8,8 +8,8 @@ export const GET: APIRoute = ({ site }) => {
 	const sitemapUrl = new URL('sitemap-index.xml', site ?? 'https://policrafters.com').toString();
 
 	const body = isIndexingAllowed()
-		? `User-agent: *\nAllow: /\nDisallow: /preview\n\nSitemap: ${sitemapUrl}\n`
-		: `User-agent: *\nDisallow: /\n`;
+		? `User-agent: *\nAllow: /\n\nSitemap: ${sitemapUrl}\n`
+		: `User-agent: *\nAllow: /\n`;
 
 	return new Response(body, {
 		headers: { 'Content-Type': 'text/plain; charset=utf-8' },
