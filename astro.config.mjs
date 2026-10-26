@@ -7,6 +7,8 @@ import icon from 'astro-icon';
 
 import sitemap from '@astrojs/sitemap';
 
+import nginxRedirects from './src/integrations/nginx-redirects.mjs';
+
 // astro.config.mjs runs in Node before Astro's own `import.meta.env` exists, so SEO-related
 // env vars (SITE_URL, PUBLIC_ALLOW_INDEXING) are read here with Vite's loadEnv instead.
 const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
@@ -34,6 +36,11 @@ export default defineConfig({
   },
   integrations: [
     icon(),
+    // CMS redirects -> nginx/redirects-{301,302}.map (see nginx.conf).
+    nginxRedirects({
+      useApi: (env.PUBLIC_USE_API || process.env.PUBLIC_USE_API) === 'true',
+      apiUrl: env.PUBLIC_REDIRECTS_API_URL || process.env.PUBLIC_REDIRECTS_API_URL || ''
+    }),
     sitemap({
       // Emits xhtml:link alternates (hreflang) per URL — see
       // src/components/SeoHead.astro for the same pair in each page's <head>.

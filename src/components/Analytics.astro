@@ -1,0 +1,30 @@
+---
+// Google Analytics 4. Renders nothing unless BOTH hold:
+//  - PUBLIC_GA4_MEASUREMENT_ID is a valid "G-XXXXXXXXXX" ID, and
+//  - PUBLIC_ALLOW_INDEXING is "true" (the same switch that lifts noindex), so a
+//    staging build can never report into the production property.
+// Also skipped on noindex pages (the CMS /preview stub, 404s).
+//
+// Used by PageLayout.astro and by HomePage.astro (which writes its own <head>
+// and deliberately doesn't load Tailwind — see CLAUDE.md), so no <style> here.
+// No consent banner yet: see Docs/SEO_phase3_prod_changes_pending.md.
+interface Props {
+	noindex?: boolean;
+}
+
+const { noindex = false } = Astro.props;
+
+const measurementId = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
+const enabled =
+	!noindex && import.meta.env.PUBLIC_ALLOW_INDEXING === 'true' && /^G-[A-Z0-9]+$/.test(measurementId);
+---
+
+{enabled && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}></script>}
+{enabled && (
+	<script is:inline define:vars={{ measurementId }}>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', measurementId);
+	</script>
+)}

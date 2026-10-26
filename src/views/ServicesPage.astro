@@ -6,6 +6,9 @@ import { loadServicesPageContent } from '../lib/services-content';
 import { loadCatalogs } from '../lib/catalogs';
 import { loadDirectContact } from '../lib/direct-contact';
 import type { Lang } from '../lib/i18n';
+import { loadSiteSettings } from '../lib/site-settings';
+import { resolveImage } from '../lib/images';
+import { breadcrumbLabels, breadcrumbLd, serviceLd } from '../lib/structured-data';
 
 type AnyRecord = Record<string, any>;
 
@@ -26,6 +29,7 @@ const searchDescription = data.meta?.search_description || 'Policrafters service
 
 const heroAlt = fields.hero_image?.alt || '';
 const heroImageUrl = fields.hero_image?.url || '';
+const heroImage = resolveImage({ url: heroImageUrl }, { sizes: '100vw', maxSrcWidth: 1600 });
 
 const introEyebrow = fields.intro_eyebrow || '';
 const introHeading = fields.intro_heading || '';
@@ -35,11 +39,25 @@ const services = (Array.isArray(fields.services) ? fields.services : []).map((it
   heading: item.heading ?? '',
   subtitle: item.subtitle ?? '',
   body: Array.isArray(item.body) ? item.body : [],
-  image: { url: item.image?.url || '', alt: item.image?.alt || '' }
+  image: { url: item.image?.url || '', alt: item.image?.alt || '' },
+  // Half the viewport on desktop (about-grid 1fr/1fr), full width when stacked.
+  img: resolveImage({ url: item.image?.url || '' }, { sizes: '(max-width: 900px) 100vw, 50vw', maxSrcWidth: 1200 })
 }));
+
+const siteSettings = await loadSiteSettings(lang);
+const labels = breadcrumbLabels[lang];
+const jsonLd = [
+  breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.services, path: '/services' }], lang, Astro.site),
+  ...serviceLd(
+    services.map((service) => ({ name: service.heading, description: service.body[0] })),
+    siteSettings,
+    lang,
+    Astro.site
+  )
+];
 ---
 
-<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false}>
+<PageLayout lang={lang} title={seoTitle} description={searchDescription} showHero={false} jsonLd={jsonLd}>
   <section class="services-shell">
     <!-- a. Hero image — full-bleed, flush under the sticky nav. The negative
          top margin cancels PageLayout.astro's `.page-shell { padding: 3rem 0 4rem }`
@@ -47,7 +65,9 @@ const services = (Array.isArray(fields.services) ? fields.services : []).map((it
          mechanic and height rules as collections/product.astro's hero. -->
     <div class="services-bleed services-hero">
       <img
-        src={heroImageUrl}
+        src={heroImage.src}
+        srcset={heroImage.srcset}
+        sizes={heroImage.sizes}
         alt={heroAlt}
         width="1440"
         height="960"
@@ -76,7 +96,9 @@ const services = (Array.isArray(fields.services) ? fields.services : []).map((it
         <div class="service-row__image-wrap">
           <img
             class="service-row__image"
-            src={service.image.url}
+            src={service.img.src}
+            srcset={service.img.srcset}
+            sizes={service.img.sizes}
             alt={service.image.alt}
             width="1440"
             height="768"
@@ -139,7 +161,10 @@ const services = (Array.isArray(fields.services) ? fields.services : []).map((it
       const hero = shell.querySelector('.services-hero img');
       if (hero && fields.hero_image && typeof fields.hero_image === 'object') {
         const heroUrl = normalizePreviewAssetUrl(fields.hero_image.url || '');
-        if (heroUrl) hero.setAttribute('src', heroUrl);
+        if (heroUrl) {
+          hero.removeAttribute('srcset');
+          hero.setAttribute('src', heroUrl);
+        }
         if (fields.hero_image.alt) hero.setAttribute('alt', fields.hero_image.alt);
       }
 

@@ -53,7 +53,10 @@ work through it when the site is actually ready to launch on
   expected URL count (48 pages as of Phase 2 — 24 English + 24 Spanish,
   the legacy `/collections/product` redirect stub excluded in both languages).
 
-- [ ] **Replace the default Open Graph image.**
+- [ ] **Replace the default Open Graph image.** *(Placeholder generated in Phase 3:
+  `public/images/og/policrafters-og.jpg`, a 1200×630 crop of the hero poster built
+  by `scripts/optimize-media.mjs` — final design asset still pending; see
+  `Docs/SEO_phase3_prod_changes_pending.md`.)*
   What: commission/crop a dedicated 1200×630 share image (under ~300 KB) and
   wire it in as the fallback in `SeoHead.astro`.
   Where: `src/components/SeoHead.astro` (`DEFAULT_OG_IMAGE`), new file under

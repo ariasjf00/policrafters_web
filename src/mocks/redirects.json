@@ -1,0 +1,9 @@
+{
+  "type": "redirects.RedirectList",
+  "title": "Redirects",
+  "locale": "en",
+  "meta": {},
+  "fields": {
+    "items": []
+  }
+}
