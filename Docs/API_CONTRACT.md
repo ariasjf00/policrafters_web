@@ -552,6 +552,76 @@ Nota importante: la API devuelve un solo idioma por request, como en el resto de
 - Todo campo de imagen sigue la convención general del documento: `{ "url": "string", "alt": "string" }`.
 - Este contrato es independiente de páginas como Services o Home: solo alimenta el submenú de marcas del header.
 
+## Footer
+
+Contrato de los enlaces de navegación, enlaces de soluciones residenciales/comerciales y redes sociales del [Footer.astro](../src/components/Footer.astro).
+
+Mocks de referencia: [src/mocks/footer.en.json](../src/mocks/footer.en.json) y [src/mocks/footer.es.json](../src/mocks/footer.es.json).
+
+Endpoint sugerido: `PUBLIC_FOOTER_API_URL` (por ejemplo, `/api/footer/`). El frontend solicita el contenido por idioma mediante `?locale=<en|es>` y `lang` como alias.
+
+```json
+{
+  "type": "site.Footer",
+  "title": "string",
+  "locale": "en | es",
+  "fields": {
+    "copy": {
+      "blurb_1": "string",
+      "blurb_2": "string",
+      "phone_label": "string",
+      "residential_label": "string",
+      "email_label": "string",
+      "commercial_label": "string",
+      "address_label": "string",
+      "social_label": "string",
+      "copyright_text": "string"
+    },
+    "navigation_links": [
+      {
+        "key": "string",
+        "label": "string",
+        "href": "string",
+        "localizedPath": "string"
+      }
+    ],
+    "residential_links": [
+      {
+        "key": "string",
+        "label": "string",
+        "href": "string",
+        "localizedPath": "string"
+      }
+    ],
+    "commercial_links": [
+      {
+        "key": "string",
+        "label": "string",
+        "href": "string",
+        "localizedPath": "string"
+      }
+    ],
+    "social_links": [
+      {
+        "key": "string",
+        "label": "string",
+        "href": "string",
+        "localizedPath": "string",
+        "icon": "string"
+      }
+    ]
+  }
+}
+```
+
+### Reglas de implementación
+
+- `copy` y los cuatro arrays son contenido administrado en CMS y cuentan con mocks separados para inglés y español. El texto y las etiquetas del footer se leen de `copy`, no de textos hardcodeados en el componente.
+- `localizedPath` contiene la ruta final en el idioma de la respuesta y tiene prioridad sobre `href`; debe incluir prefijos y slugs traducidos cuando correspondan. Para URLs externas, `href` y `localizedPath` pueden contener la misma URL absoluta.
+- Si un enlace CMS no trae `localizedPath`, el frontend aplica `localizePath(href, locale)`; así `href` puede seguir siendo una ruta interna sin prefijo.
+- El endpoint devuelve un idioma por respuesta. Si no está configurado o falla la solicitud, el frontend utiliza el mock del idioma solicitado.
+- Teléfono, correo y dirección no pertenecen a este payload: el footer los lee de `SiteSettings` (`phone`, `email` y el primer elemento de `addresses`, respectivamente), que también dispone de mocks por idioma.
+
 ## TermsPage
 
 Página de términos y condiciones referenciada por [terms-and-conditions.astro](../src/pages/terms-and-conditions.astro). Contrato propio, sin depender de HomePage ni de otras páginas. No renderiza el carrusel de [CatalogIndex](#catalogindex--catálogos) ni el bloque de [DirectContactBlock](#directcontactblock--contacto-directo-compartido): la página termina en el footer.

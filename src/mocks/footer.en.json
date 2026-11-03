@@ -1,0 +1,48 @@
+{
+  "type": "site.Footer",
+  "title": "Footer",
+  "locale": "en",
+  "fields": {
+    "copy": {
+      "blurb_1": "Whether you're looking to renovate your home or revamp your commercial space, we're committed to delivering bespoke solutions that merge innovative design with unparalleled quality.",
+      "blurb_2": "We understand that every client has unique needs.",
+      "phone_label": "PHONE",
+      "residential_label": "RESIDENTIAL SOLUTIONS",
+      "email_label": "EMAIL",
+      "commercial_label": "COMMERCIAL SOLUTIONS",
+      "address_label": "ADDRESS",
+      "social_label": "VISIT OUR SOCIAL MEDIA",
+      "copyright_text": "Policrafters - All rights reserved. Copyright®"
+    },
+    "navigation_links": [
+      { "key": "news", "label": "News", "href": "#", "localizedPath": "#" },
+      { "key": "why-policrafters", "label": "Why Policrafters", "href": "/why-policrafters", "localizedPath": "/why-policrafters" },
+      { "key": "catalogs", "label": "Catalogs", "href": "/catalogs", "localizedPath": "/catalogs" },
+      { "key": "terms-and-conditions", "label": "Terms & Conditions", "href": "/terms-and-conditions", "localizedPath": "/terms-and-conditions" },
+      { "key": "warranty", "label": "Warranty", "href": "/warranty", "localizedPath": "/warranty" },
+      { "key": "franchise-partner", "label": "Become a Franchise Partner", "href": "#", "localizedPath": "#" },
+      { "key": "financing-options", "label": "Financing Options", "href": "/finance", "localizedPath": "/finance" },
+      { "key": "partners-area", "label": "Partners Area (Login)", "href": "https://policrafters.ancous.tech/accounts/login/?next=/", "localizedPath": "https://policrafters.ancous.tech/accounts/login/?next=/" },
+      { "key": "social-network", "label": "Social Network", "href": "#", "localizedPath": "#" }
+    ],
+    "residential_links": [
+      { "key": "decorative-mirrors", "label": "Decorative Mirrors", "href": "#", "localizedPath": "#" },
+      { "key": "impact-windows-doors", "label": "Impact Windows and Doors", "href": "#", "localizedPath": "#" },
+      { "key": "outdoor-kitchens", "label": "Outdoor Kitchens & living", "href": "#", "localizedPath": "#" },
+      { "key": "more-services", "label": "See more services", "href": "#", "localizedPath": "#" }
+    ],
+    "commercial_links": [
+      { "key": "office-partitions", "label": "Office Partitions", "href": "#", "localizedPath": "#" },
+      { "key": "commercial-guards-railings", "label": "Commercial Guards and Railings", "href": "#", "localizedPath": "#" },
+      { "key": "lightweight-roofs-awnings", "label": "Lightweight Roofs and Awnings", "href": "#", "localizedPath": "#" },
+      { "key": "more-services", "label": "See more services", "href": "#", "localizedPath": "#" }
+    ],
+    "social_links": [
+      { "key": "facebook", "label": "Policrafters on Facebook", "href": "#", "localizedPath": "#", "icon": "simple-icons:facebook" },
+      { "key": "instagram", "label": "Policrafters on Instagram", "href": "#", "localizedPath": "#", "icon": "simple-icons:instagram" },
+      { "key": "linkedin", "label": "Policrafters on LinkedIn", "href": "#", "localizedPath": "#", "icon": "simple-icons:linkedin" },
+      { "key": "youtube", "label": "Policrafters on YouTube", "href": "#", "localizedPath": "#", "icon": "simple-icons:youtube" },
+      { "key": "pinterest", "label": "Policrafters on Pinterest", "href": "#", "localizedPath": "#", "icon": "simple-icons:pinterest" }
+    ]
+  }
+}
