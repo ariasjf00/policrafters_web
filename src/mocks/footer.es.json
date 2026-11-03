@@ -1,0 +1,48 @@
+{
+  "type": "site.Footer",
+  "title": "Pie de página",
+  "locale": "es",
+  "fields": {
+    "copy": {
+      "blurb_1": "Ya sea que busques renovar tu hogar o renovar tu espacio comercial, nos comprometemos a ofrecer soluciones a la medida que combinan diseño innovador con una calidad inigualable.",
+      "blurb_2": "Entendemos que cada cliente tiene necesidades únicas.",
+      "phone_label": "TELÉFONO",
+      "residential_label": "SOLUCIONES RESIDENCIALES",
+      "email_label": "CORREO ELECTRÓNICO",
+      "commercial_label": "SOLUCIONES COMERCIALES",
+      "address_label": "DIRECCIÓN",
+      "social_label": "VISITA NUESTRAS REDES SOCIALES",
+      "copyright_text": "Policrafters - Todos los derechos reservados. Copyright®"
+    },
+    "navigation_links": [
+      { "key": "news", "label": "Noticias", "href": "#", "localizedPath": "#" },
+      { "key": "why-policrafters", "label": "Por qué Policrafters", "href": "/why-policrafters", "localizedPath": "/es/why-policrafters" },
+      { "key": "catalogs", "label": "Catálogos", "href": "/catalogs", "localizedPath": "/es/catalogs" },
+      { "key": "terms-and-conditions", "label": "Términos y condiciones", "href": "/terms-and-conditions", "localizedPath": "/es/terms-and-conditions" },
+      { "key": "warranty", "label": "Garantía", "href": "/warranty", "localizedPath": "/es/warranty" },
+      { "key": "franchise-partner", "label": "Conviértete en socio franquiciado", "href": "#", "localizedPath": "#" },
+      { "key": "financing-options", "label": "Opciones de financiamiento", "href": "/finance", "localizedPath": "/es/finance" },
+      { "key": "partners-area", "label": "Área de socios (Iniciar sesión)", "href": "https://policrafters.ancous.tech/accounts/login/?next=/", "localizedPath": "https://policrafters.ancous.tech/accounts/login/?next=/" },
+      { "key": "social-network", "label": "Red social", "href": "#", "localizedPath": "#" }
+    ],
+    "residential_links": [
+      { "key": "decorative-mirrors", "label": "Espejos decorativos", "href": "#", "localizedPath": "#" },
+      { "key": "impact-windows-doors", "label": "Ventanas y puertas resistentes a impactos", "href": "#", "localizedPath": "#" },
+      { "key": "outdoor-kitchens", "label": "Cocinas y espacios exteriores", "href": "#", "localizedPath": "#" },
+      { "key": "more-services", "label": "Ver más servicios", "href": "#", "localizedPath": "#" }
+    ],
+    "commercial_links": [
+      { "key": "office-partitions", "label": "Particiones de oficina", "href": "#", "localizedPath": "#" },
+      { "key": "commercial-guards-railings", "label": "Barandales y guardias comerciales", "href": "#", "localizedPath": "#" },
+      { "key": "lightweight-roofs-awnings", "label": "Techos y toldos ligeros", "href": "#", "localizedPath": "#" },
+      { "key": "more-services", "label": "Ver más servicios", "href": "#", "localizedPath": "#" }
+    ],
+    "social_links": [
+      { "key": "facebook", "label": "Policrafters en Facebook", "href": "#", "localizedPath": "#", "icon": "simple-icons:facebook" },
+      { "key": "instagram", "label": "Policrafters en Instagram", "href": "#", "localizedPath": "#", "icon": "simple-icons:instagram" },
+      { "key": "linkedin", "label": "Policrafters en LinkedIn", "href": "#", "localizedPath": "#", "icon": "simple-icons:linkedin" },
+      { "key": "youtube", "label": "Policrafters en YouTube", "href": "#", "localizedPath": "#", "icon": "simple-icons:youtube" },
+      { "key": "pinterest", "label": "Policrafters en Pinterest", "href": "#", "localizedPath": "#", "icon": "simple-icons:pinterest" }
+    ]
+  }
+}
