@@ -1,8 +1,10 @@
 ---
 import { Icon } from 'astro-icon/components';
 import '../styles/links.css';
-import { type Lang, localizePath } from '../lib/i18n';
+import { loadFooterContent } from '../lib/footer-content';
+import { type Lang } from '../lib/i18n';
 import { getImageSize } from '../lib/images';
+import { loadSiteSettings } from '../lib/site-settings';
 
 interface Props {
   lang: Lang;
@@ -10,140 +12,53 @@ interface Props {
 
 const { lang } = Astro.props;
 const currentYear = new Date().getFullYear();
+const footerLinks = await loadFooterContent(lang);
+const t = footerLinks.copy;
+const siteSettings = await loadSiteSettings(lang);
 
-const footerCopy = {
-  es: {
-    blurb1: 'Ya sea que busques renovar tu hogar o renovar tu espacio comercial, nos comprometemos a ofrecer soluciones a la medida que combinan diseño innovador con una calidad inigualable.',
-    blurb2: 'Entendemos que cada cliente tiene necesidades únicas.',
-    links: [
-      'Noticias',
-      'Por qué Policrafters',
-      'Catálogos',
-      'Términos y condiciones',
-      'Garantía',
-      'Conviértete en socio franquiciado',
-      'Opciones de financiamiento',
-      'Área de socios (Iniciar sesión)',
-      'Red social'
-    ],
-    phoneLabel: 'TELÉFONO',
-    residentialLabel: 'SOLUCIONES RESIDENCIALES',
-    residentialLinks: [
-      'Espejos decorativos',
-      'Ventanas y puertas resistentes a impactos',
-      'Cocinas y espacios exteriores',
-      'Ver más servicios'
-    ],
-    emailLabel: 'CORREO ELECTRÓNICO',
-    commercialLabel: 'SOLUCIONES COMERCIALES',
-    commercialLinks: [
-      'Particiones de oficina',
-      'Barandales y guardias comerciales',
-      'Techos y toldos ligeros',
-      'Ver más servicios'
-    ],
-    addressLabel: 'DIRECCIÓN',
-    socialLabel: 'VISITA NUESTRAS REDES SOCIALES',
-    copyrightText: 'Policrafters - Todos los derechos reservados. Copyright®'
-  },
-  en: {
-    blurb1: "Whether you're looking to renovate your home or revamp your commercial space, we're committed to delivering bespoke solutions that merge innovative design with unparalleled quality.",
-    blurb2: 'We understand that every client has unique needs.',
-    links: [
-      'News',
-      'Why Policrafters',
-      'Catalogs',
-      'Terms & Conditions',
-      'Warranty',
-      'Become a Franchise Partner',
-      'Financing Options',
-      'Partners Area (Login)',
-      'Social Network'
-    ],
-    phoneLabel: 'PHONE',
-    residentialLabel: 'RESIDENTIAL SOLUTIONS',
-    residentialLinks: [
-      'Decorative Mirrors',
-      'Impact Windows and Doors',
-      'Outdoor Kitchens & living',
-      'See more services'
-    ],
-    emailLabel: 'EMAIL',
-    commercialLabel: 'COMMERCIAL SOLUTIONS',
-    commercialLinks: [
-      'Office Partitions',
-      'Commercial Guards and Railings',
-      'Lightweight Roofs and Awnings',
-      'See more services'
-    ],
-    addressLabel: 'ADDRESS',
-    socialLabel: 'VISIT OUR SOCIAL MEDIA',
-    copyrightText: 'Policrafters - All rights reserved. Copyright®'
-  }
-};
+const isExternalLink = (href: string) => /^https?:\/\//i.test(href);
 
-const t = footerCopy[lang] ?? footerCopy.en;
-
-// Most footer links are placeholders (href="#") until their pages exist.
-// `linkHrefs` only overrides the ones that are real today, by index into
-// `t.links` / `footerCopy[lang].links` above — "Why Policrafters" is index 1,
-// "Catalogs" is index 2, "Terms & Conditions" is index 3, "Warranty" is index 4,
-// "Financing Options" is index 6.
-const linkHrefs: Record<number, string> = {
-  1: localizePath('/why-policrafters', lang),
-  2: localizePath('/catalogs', lang),
-  3: localizePath('/terms-and-conditions', lang),
-  4: localizePath('/warranty', lang),
-  6: localizePath('/finance', lang)
-};
-
-// External links don't go through localizePath — it already leaves anything
-// that isn't an internal page path untouched, but this URL carries its own
-// `?next=/` query string that must survive as-is. "Partners Area (Login)" is
-// index 7 — kept out of `linkHrefs` so only its label is ever touched.
-const externalLinkHrefs: Record<number, string> = {
-  7: 'https://policrafters.ancous.tech/accounts/login/?next=/'
-};
-
-const socialLinks = [
-  { name: 'facebook', icon: 'simple-icons:facebook', label: 'Policrafters on Facebook' },
-  { name: 'instagram', icon: 'simple-icons:instagram', label: 'Policrafters on Instagram' },
-  { name: 'linkedin', icon: 'simple-icons:linkedin', label: 'Policrafters on LinkedIn' },
-  { name: 'youtube', icon: 'simple-icons:youtube', label: 'Policrafters on YouTube' },
-  { name: 'pinterest', icon: 'simple-icons:pinterest', label: 'Policrafters on Pinterest' }
-];
-
-// Contact details. `tel:` must be punctuation-free E.164 to dial reliably, so the
-// dialled value is kept separate from the formatted one shown to the reader.
-const contactPhoneDisplay = '+1 (813) 812-0650';
-const contactPhoneHref = `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`;
-const contactEmail = 'info@policrafters.com';
-const contactAddress = '7735 NW 75th Ave, Medley, FL 33166';
+const contactPhoneDisplay = siteSettings.phone?.trim() ?? '';
+const contactPhoneHref = contactPhoneDisplay
+  ? `tel:${contactPhoneDisplay.replace(/[^\d+]/g, '')}`
+  : '';
+const contactEmail = siteSettings.email?.trim() ?? '';
+const siteAddress = siteSettings.addresses[0];
+const contactAddress = siteAddress
+  ? [
+      siteAddress.street,
+      [siteAddress.city, [siteAddress.region, siteAddress.postal_code].filter(Boolean).join(' ')]
+        .filter(Boolean)
+        .join(', ')
+    ].filter(Boolean).join(', ')
+  : '';
 const footerLogoSize = getImageSize('/logo_grey.png');
-const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`;
+const contactMapHref = contactAddress
+  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`
+  : '';
 ---
 
 <footer class="site-footer">
   <div class="footer-grid">
     <div class="footer-col footer-col--brand">
       <img class="footer-logo" src="/logo_grey.png" alt="Policrafters logo" width={footerLogoSize.width} height={footerLogoSize.height} loading="lazy" decoding="async" />
-      <p id="footer-blurb-1" class="footer-blurb">{t.blurb1}</p>
-      <p id="footer-blurb-2" class="footer-blurb">{t.blurb2}</p>
+      <p id="footer-blurb-1" class="footer-blurb">{t.blurb_1}</p>
+      <p id="footer-blurb-2" class="footer-blurb">{t.blurb_2}</p>
     </div>
 
     <div class="footer-col">
       <ul class="footer-links">
-        {t.links.map((label, index) => (
-          externalLinkHrefs[index] ? (
+        {footerLinks.navigation_links.map((link) => (
+          isExternalLink(link.href) ? (
             <li><a
-              href={externalLinkHrefs[index]}
+              href={link.href}
               class="link-underline"
               target="_blank"
               rel="noopener noreferrer"
-              data-footer-key={`link-${index}`}
-            >{label}</a></li>
+              data-footer-key={`link-${link.key}`}
+            >{link.label}</a></li>
           ) : (
-            <li><a href={linkHrefs[index] ?? '#'} class="link-underline" data-footer-key={`link-${index}`}>{label}</a></li>
+            <li><a href={link.href} class="link-underline" data-footer-key={`link-${link.key}`}>{link.label}</a></li>
           )
         ))}
       </ul>
@@ -153,14 +68,14 @@ const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeU
       <div class="footer-contact-block">
         <Icon name="mdi:phone-in-talk" class="footer-contact-icon" />
         <div>
-          <span id="footer-phone-label" class="footer-contact-label">{t.phoneLabel}</span>
-          <a class="footer-contact-value link-underline" href={contactPhoneHref}>{contactPhoneDisplay}</a>
+          <span id="footer-phone-label" class="footer-contact-label">{t.phone_label}</span>
+          {contactPhoneDisplay && <a class="footer-contact-value link-underline" href={contactPhoneHref}>{contactPhoneDisplay}</a>}
         </div>
       </div>
-      <span id="footer-residential-label" class="footer-section-label">{t.residentialLabel}</span>
+      <span id="footer-residential-label" class="footer-section-label">{t.residential_label}</span>
       <ul class="footer-sublinks">
-        {t.residentialLinks.map((label, index) => (
-          <li><a href="#" class="link-underline" data-footer-key={`residential-link-${index}`}>{label}</a></li>
+        {footerLinks.residential_links.map((link) => (
+          <li><a href={link.href} class="link-underline" data-footer-key={`residential-link-${link.key}`}>{link.label}</a></li>
         ))}
       </ul>
     </div>
@@ -169,14 +84,14 @@ const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeU
       <div class="footer-contact-block">
         <Icon name="mdi:email" class="footer-contact-icon" />
         <div>
-          <span id="footer-email-label" class="footer-contact-label">{t.emailLabel}</span>
-          <a class="footer-contact-value link-underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+          <span id="footer-email-label" class="footer-contact-label">{t.email_label}</span>
+          {contactEmail && <a class="footer-contact-value link-underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>}
         </div>
       </div>
-      <span id="footer-commercial-label" class="footer-section-label">{t.commercialLabel}</span>
+      <span id="footer-commercial-label" class="footer-section-label">{t.commercial_label}</span>
       <ul class="footer-sublinks">
-        {t.commercialLinks.map((label, index) => (
-          <li><a href="#" class="link-underline" data-footer-key={`commercial-link-${index}`}>{label}</a></li>
+        {footerLinks.commercial_links.map((link) => (
+          <li><a href={link.href} class="link-underline" data-footer-key={`commercial-link-${link.key}`}>{link.label}</a></li>
         ))}
       </ul>
     </div>
@@ -185,26 +100,26 @@ const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeU
       <div class="footer-contact-block">
         <Icon name="mdi:map-marker" class="footer-contact-icon" />
         <div>
-          <span id="footer-address-label" class="footer-contact-label">{t.addressLabel}</span>
-          <a
+          <span id="footer-address-label" class="footer-contact-label">{t.address_label}</span>
+          {contactAddress && <a
             class="footer-contact-value link-underline"
             href={contactMapHref}
             target="_blank"
             rel="noopener noreferrer"
-          >7735 NW 75th<br />Ave. Medley, FL. 33166</a>
+          >{contactAddress}</a>}
         </div>
       </div>
-      <span id="footer-social-label" class="footer-section-label">{t.socialLabel}</span>
+      <span id="footer-social-label" class="footer-section-label">{t.social_label}</span>
       <div class="footer-social-row">
-        {socialLinks.map((social) => (
+        {footerLinks.social_links.map((social) => (
           <a
-            href="#"
+            href={social.href}
             class="footer-social-icon"
             aria-label={social.label}
             target="_blank"
             rel="noopener"
           >
-            <Icon name={social.icon} />
+            {social.icon && <Icon name={social.icon} />}
           </a>
         ))}
       </div>
@@ -213,7 +128,7 @@ const contactMapHref =`https://www.google.com/maps/search/?api=1&query=${encodeU
 
   <div class="footer-bottom">
     <p class="footer-copyright">
-      <span id="footer-copyright-text">{t.copyrightText}</span> <span data-footer-year>{currentYear}</span>
+      <span id="footer-copyright-text">{t.copyright_text}</span> <span data-footer-year>{currentYear}</span>
     </p>
   </div>
 </footer>
