@@ -6,6 +6,9 @@ import { type Lang, withLocaleParam } from './i18n';
 export interface CollectionProductImage {
   url?: string;
   alt?: string;
+  width?: number;
+  height?: number;
+  renditions?: Record<string, string>;
 }
 
 export interface CollectionProduct {
@@ -76,9 +79,17 @@ const toPayload = (source: any, isRemote: boolean, fallback: CollectionPagePaylo
                 ...product,
                 image: {
                   url: normalizeAssetUrl(product?.image?.url, isRemote),
-                  alt: product?.image?.alt ?? ''
-                }
-              }))
+                alt: product?.image?.alt ?? '',
+                width: product?.image?.width,
+                height: product?.image?.height,
+                renditions: Object.fromEntries(
+                  Object.entries(product?.image?.renditions ?? {}).map(([width, url]) => [
+                    width,
+                    normalizeAssetUrl(url, isRemote)
+                  ])
+                )
+              }
+            }))
             : []
         }))
       : []

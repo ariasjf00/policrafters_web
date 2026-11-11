@@ -33,19 +33,20 @@ const categories = (Array.isArray(fields.categories) ? fields.categories : []).m
     key: type.key,
     label: type.label ?? '',
     products: (Array.isArray(type.products) ? type.products : []).map((product: AnyRecord) => ({
+      categoryKey: category.key,
       typeKey: type.key,
       slug: product.slug ?? '#',
       title: product.title ?? '',
-      image: { url: product.image?.url ?? '', alt: product.image?.alt ?? '' },
-      img: resolveImage({ url: product.image?.url ?? '' }, { sizes: '(max-width: 680px) 100vw, (max-width: 900px) 50vw, 25vw', maxSrcWidth: 800 })
+      image: product.image ?? { url: '', alt: '' },
+      img: resolveImage(product.image, { sizes: '(max-width: 680px) 100vw, (max-width: 900px) 50vw, 25vw', maxSrcWidth: 800 })
     }))
   }))
 }));
 
 const defaultCategoryKey = 'shower-doors';
-const showerDoorsCategory = categories.find((category: AnyRecord) => category.key === defaultCategoryKey) ?? { types: [] };
-const showerDoorTypes = Array.isArray(showerDoorsCategory.types) ? showerDoorsCategory.types : [];
-const showerDoorProducts = showerDoorTypes.flatMap((type: AnyRecord) => type.products.map((product: AnyRecord) => product));
+const allProducts = categories.flatMap((category: AnyRecord) =>
+  category.types.flatMap((type: AnyRecord) => type.products)
+);
 
 const productHref = (slug: string) => (slug && slug !== '#' ? localizePath(`/collections/${slug}`, lang) : '#');
 
@@ -64,7 +65,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
           const isDefault = category.key === defaultCategoryKey;
           const panelId = `filter-panel-${category.key}`;
           return (
-            <div class="filter-section" data-category={category.key}>
+            <div class="filter-section" data-category={category.key} data-has-products={category.hasProducts ? 'true' : 'false'}>
               <button
                 type="button"
                 class="filter-section__toggle"
@@ -76,7 +77,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
                 {category.hasProducts ? (
                   <ul class="filter-types">
                     {(category.types ?? []).map((type: AnyRecord) => {
-                      const inputId = `filter-type-${type.key}`;
+                      const inputId = `filter-type-${category.key}-${type.key}`;
                       return (
                         <li>
                           <label class="filter-type" for={inputId}>
@@ -107,10 +108,25 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
       </aside>
 
       <div class="gallery" aria-live="polite">
-        <div class="gallery-grid" id="shower-doors-grid">
-          {showerDoorProducts.map((product: AnyRecord) => (
-            <a href={productHref(product.slug)} class="gallery-card" data-product-type={product.typeKey}>
-              <img src={product.img.src} srcset={product.img.srcset} sizes={product.img.sizes} alt={product.image?.alt || ''} loading="lazy" decoding="async" />
+        <div class="gallery-grid" id="collections-grid">
+          {allProducts.map((product: AnyRecord) => (
+            <a
+              href={productHref(product.slug)}
+              class="gallery-card"
+              data-product-category={product.categoryKey}
+              data-product-type={product.typeKey}
+              hidden={product.categoryKey !== defaultCategoryKey}
+            >
+              <img
+                src={product.img.src}
+                srcset={product.img.srcset}
+                sizes={product.img.sizes}
+                width={product.img.width}
+                height={product.img.height}
+                alt={product.image?.alt || ''}
+                loading="lazy"
+                decoding="async"
+              />
               <span class="gallery-card__title">{product.title}</span>
             </a>
           ))}
@@ -133,7 +149,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
 
   if (shell) {
     const filtersContainer = shell.querySelector('.filters');
-    const galleryGrid = shell.querySelector('#shower-doors-grid');
+    const galleryGrid = shell.querySelector('#collections-grid');
     const galleryEmpty = shell.querySelector('#gallery-empty');
     let sections = [];
     let cards = [];
@@ -179,6 +195,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
         const products = Array.isArray(type?.products) ? type.products : [];
         return products.map((product) => ({
           ...product,
+          categoryKey: category?.key || '',
           typeKey: type?.key || ''
         }));
       });
@@ -193,6 +210,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
         const card = applyScope(document.createElement('a'));
         card.href = productHref(product?.slug);
         card.className = 'gallery-card';
+        card.dataset.productCategory = product.categoryKey || '';
         card.dataset.productType = product.typeKey || '';
 
         const image = applyScope(document.createElement('img'));
@@ -200,6 +218,14 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
         image.alt = product?.image?.alt || '';
         image.loading = 'lazy';
         image.decoding = 'async';
+        const renditions = product?.image?.renditions;
+        if (renditions && typeof renditions === 'object') {
+          image.srcset = Object.entries(renditions)
+            .map(([width, url]) => `${normalizePreviewAssetUrl(url)} ${width}w`)
+            .join(', ');
+        }
+        if (product?.image?.width) image.width = product.image.width;
+        if (product?.image?.height) image.height = product.image.height;
 
         const title = applyScope(document.createElement('span'));
         title.className = 'gallery-card__title';
@@ -228,9 +254,13 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
         return;
       }
 
-      const checkedTypes = checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.dataset.type);
+      const checkedTypes = checkboxes
+        .filter((checkbox) => checkbox.checked && checkbox.dataset.category === activeCategory)
+        .map((checkbox) => checkbox.dataset.type);
       cards.forEach((card) => {
-        const matches = checkedTypes.length === 0 || checkedTypes.includes(card.dataset.productType);
+        const matchesCategory = card.dataset.productCategory === activeCategory;
+        const matchesType = checkedTypes.length === 0 || checkedTypes.includes(card.dataset.productType);
+        const matches = matchesCategory && matchesType;
         card.hidden = !matches;
       });
 
@@ -280,7 +310,7 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
     // (see the back button in collections/product.astro). Keys are read off the
     // rendered sections rather than hard-coded, so adding a category to the mock
     // needs no change here. Falls through to the server-rendered default (shower-doors
-    // expanded, no type checked, all 14 cards visible) when the param is absent or
+    // expanded, no type checked) when the param is absent or
     // unknown, so there is no flash of different content on load in that case.
     const requestedCategory = new URLSearchParams(window.location.search).get('category');
     const knownCategories = sections.map((section) => section.dataset.category);
@@ -338,7 +368,10 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
                 slug: product.slug ?? '#',
                 image: {
                   url: imageCandidate.url ?? '',
-                  alt: imageCandidate.alt ?? ''
+                  alt: imageCandidate.alt ?? '',
+                  width: imageCandidate.width,
+                  height: imageCandidate.height,
+                  renditions: imageCandidate.renditions ?? {}
                 }
               };
             });
@@ -642,6 +675,11 @@ const jsonLd = [breadcrumbLd([{ name: labels.home, path: '/' }, { name: labels.c
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.75rem;
+  }
+
+  .gallery-grid[hidden],
+  .gallery-card[hidden] {
+    display: none;
   }
 
   .gallery-card {
